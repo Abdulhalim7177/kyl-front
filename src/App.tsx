@@ -1,34 +1,45 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
+import LandingPage from '@/pages/LandingPage'
+import AboutPage from '@/pages/AboutPage'
+import PoliticiansPage from '@/pages/PoliticiansPage'
+import PositionsPage from '@/pages/PositionsPage'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
-
+function Navigation() {
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <nav className="bg-gray-800 text-white p-4">
+      <div className="container mx-auto flex gap-6">
+        <Link to="/" className="hover:text-gray-300">Home</Link>
+        <Link to="/about" className="hover:text-gray-300">About</Link>
+        <Link to="/politicians" className="hover:text-gray-300">Politicians</Link>
+        <Link to="/positions" className="hover:text-gray-300">Positions</Link>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    </nav>
+  )
+}
+
+function NotFound() {
+  return (
+    <div className="container mx-auto px-4 py-8 text-center">
+      <h1 className="text-4xl font-bold mb-4">404 - Page Not Found</h1>
+      <p className="text-muted-foreground mb-4">The page you're looking for doesn't exist.</p>
+      <Link to="/" className="text-blue-600 hover:underline">Go back to home</Link>
+    </div>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Navigation />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/politicians" element={<PoliticiansPage />} />
+        <Route path="/positions" element={<PositionsPage />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
