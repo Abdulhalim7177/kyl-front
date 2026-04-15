@@ -27,25 +27,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = async (email: string, password: string) => {
-    setIsLoading(true)
-    try {
-      const response = await authService.login({ email, password })
-      const { token, user: userData } = response.data
-      authService.setAuth(token, userData)
-      setUser(userData)
-    } finally {
-      setIsLoading(false)
-    }
+    const response = await authService.login({ email, password })
+    const { token, user: userData } = response.data
+    authService.setAuth(token, userData)
+    setUser(userData)
   }
 
   const logout = async () => {
-    setIsLoading(true)
-    try {
-      await authService.logout()
-      setUser(null)
-    } finally {
-      setIsLoading(false)
-    }
+    await authService.logout()
+    setUser(null)
   }
 
   const hasPermission = (permissionName: string): boolean => {
