@@ -1,9 +1,48 @@
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import LandingPage from '@/pages/LandingPage'
 import AboutPage from '@/pages/AboutPage'
 import PoliticiansPage from '@/pages/PoliticiansPage'
 import PositionsPage from '@/pages/PositionsPage'
+import LoginPage from '@/pages/LoginPage'
+import DashboardPage from '@/pages/DashboardPage'
 import './App.css'
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth()
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/k8s9d7f3-auth-login" replace />
+  }
+  
+  return <>{children}</>
+}
+
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth()
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+  
+  if (isAuthenticated) {
+    return <Navigate to="/k8s9d7f3-admin-panel" replace />
+  }
+  
+  return <>{children}</>
+}
 
 function Navigation() {
   const location = useLocation()
@@ -87,20 +126,47 @@ function NotFound() {
   )
 }
 
+function PublicLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      {children}
+    </div>
+  )
+}
+
 function App() {
   return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-background">
-        <Navigation />
+    <AuthProvider>
+      <BrowserRouter>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/politicians" element={<PoliticiansPage />} />
-          <Route path="/positions" element={<PositionsPage />} />
-          <Route path="*" element={<NotFound />} />
+          <Route path="/" element={<PublicLayout><LandingPage /></PublicLayout>} />
+          <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
+          <Route path="/politicians" element={<PublicLayout><PoliticiansPage /></PublicLayout>} />
+          <Route path="/positions" element={<PublicLayout><PositionsPage /></PublicLayout>} />
+          
+          <Route
+            path="/k8s9d7f3-auth-login"
+            element={
+              <PublicRoute>
+                <LoginPage />
+              </PublicRoute>
+            }
+          />
+          
+          <Route
+            path="/k8s9d7f3-admin-panel"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
         </Routes>
-      </div>
-    </BrowserRouter>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
 
