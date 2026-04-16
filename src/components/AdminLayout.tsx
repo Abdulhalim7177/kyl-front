@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { AnimatedConfirmDialog } from '@/components/AnimatedConfirmDialog'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { 
@@ -94,10 +93,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
           </div>
         </div>
         <button 
-          onClick={() => { 
-            setMobileMenuOpen(false)
-            setIsLogoutOpen(true)
-          }} 
+          onClick={handleLogout} 
           className="p-2 text-gray-400 hover:text-red-500 transition-colors shrink-0"
         >
            <LogOut className="w-4 h-4" />
@@ -145,28 +141,6 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
           {children}
         </main>
       </div>
-
-      <AnimatedConfirmDialog
-        open={isLogoutOpen}
-        onOpenChange={setIsLogoutOpen}
-        variant="warning"
-        icon="alert"
-        title="Confirm Logout"
-        description="Are you sure you want to end your session?"
-        confirmText="Yes, Logout"
-        cancelText="Cancel"
-        onConfirm={handleLogout}
-        onCancel={() => setIsLogoutOpen(false)}
-      >
-        <div className="space-y-4">
-          <p className="text-gray-700 leading-relaxed">
-            You will be logged out of your admin session and redirected to the login page.
-          </p>
-          <div className="bg-gray-50 rounded-lg p-3 text-gray-600 text-sm border border-gray-100">
-            Make sure you've saved any unsaved changes before logging out.
-          </div>
-        </div>
-      </AnimatedConfirmDialog>
     </div>
   )
 }
