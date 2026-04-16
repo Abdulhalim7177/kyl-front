@@ -6,6 +6,7 @@ import PoliticiansPage from '@/pages/PoliticiansPage'
 import PositionsPage from '@/pages/PositionsPage'
 import LoginPage from '@/pages/LoginPage'
 import DashboardPage from '@/pages/DashboardPage'
+import UsersManagementPage from '@/pages/UsersManagementPage'
 import './App.css'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -44,63 +45,53 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
+import { Menu } from 'lucide-react'
+import { useState } from 'react'
+
 function Navigation() {
   const location = useLocation()
-  
+  const [open, setOpen] = useState(false)
   const isActive = (path: string) => location.pathname === path
   
+  const NavLinks = () => (
+    <>
+      <Link to="/" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Home</Link>
+      <Link to="/politicians" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/politicians') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Politicians</Link>
+      <Link to="/positions" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/positions') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Positions</Link>
+      <Link to="/about" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/about') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>About</Link>
+    </>
+  )
+
   return (
-    <nav className="bg-white border-b border-border sticky top-0 z-50 shadow-sm">
+    <nav className="bg-white border-b border-border sticky top-0 z-50 shadow-sm relative">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">K</span>
-            </div>
-            <span className="font-bold text-xl text-foreground">Know Your Leaders</span>
+          <Link to="/" className="flex items-center">
+             <img src="/logo.png" alt="KYL Logo" className="h-[2.5rem] w-auto object-contain" />
           </Link>
           
-          <div className="flex gap-1">
-            <Link 
-              to="/" 
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                isActive('/') 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-              }`}
-            >
-              Home
-            </Link>
-            <Link 
-              to="/politicians" 
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                isActive('/politicians') 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-              }`}
-            >
-              Politicians
-            </Link>
-            <Link 
-              to="/positions" 
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                isActive('/positions') 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-              }`}
-            >
-              Positions
-            </Link>
-            <Link 
-              to="/about" 
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                isActive('/about') 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-              }`}
-            >
-              About
-            </Link>
+          {/* Desktop Nav */}
+          <div className="hidden md:flex gap-1">
+            <NavLinks />
+          </div>
+
+          {/* Mobile Nav */}
+          <div className="md:hidden flex items-center gap-2">
+            <Link to="/k8s9d7f3-auth-login" className="text-sm font-medium text-primary hover:underline block mr-2">Admin Login</Link>
+            <Sheet open={open} onOpenChange={setOpen}>
+              <SheetTrigger asChild>
+                <button className="p-2 text-muted-foreground hover:bg-muted rounded-md focus:outline-none">
+                  <Menu className="w-6 h-6" />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[85vw] max-w-sm flex flex-col gap-4 pt-12">
+                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                <div className="flex flex-col gap-2 relative">
+                  <NavLinks />
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>
@@ -159,6 +150,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/k8s9d7f3-users"
+            element={
+              <ProtectedRoute>
+                <UsersManagementPage />
               </ProtectedRoute>
             }
           />
