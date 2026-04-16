@@ -7,6 +7,7 @@ import PositionsPage from '@/pages/PositionsPage'
 import LoginPage from '@/pages/LoginPage'
 import DashboardPage from '@/pages/DashboardPage'
 import UsersManagementPage from '@/pages/UsersManagementPage'
+import AdminLayout from '@/components/AdminLayout'
 import './App.css'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -68,7 +69,7 @@ function Navigation() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center">
-             <img src="/logo.png" alt="KYL Logo" className="h-[2.5rem] w-auto object-contain" />
+             <img src="/frame-51.png" alt="KYL Logo" className="h-[2.5rem] w-auto object-contain" />
           </Link>
           
           {/* Desktop Nav */}
@@ -149,7 +150,9 @@ function App() {
             path="/k8s9d7f3-admin-panel"
             element={
               <ProtectedRoute>
-                <DashboardPage />
+                <AdminLayout title="Admin Dashboard">
+                  <DashboardPage />
+                </AdminLayout>
               </ProtectedRoute>
             }
           />
@@ -158,7 +161,9 @@ function App() {
             path="/k8s9d7f3-users"
             element={
               <ProtectedRoute>
-                <UsersManagementPage />
+                <AdminLayout title="Admin / User Management">
+                  <UsersManagementPage />
+                </AdminLayout>
               </ProtectedRoute>
             }
           />
