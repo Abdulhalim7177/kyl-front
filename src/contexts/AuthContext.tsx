@@ -34,8 +34,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const logout = async () => {
-    await authService.logout()
-    setUser(null)
+    try {
+      await authService.logout()
+    } catch (error) {
+      console.error('Logout API error:', error)
+    } finally {
+      // Always clear local state regardless of API result
+      authService.clearAuth()
+      setUser(null)
+    }
   }
 
   const hasPermission = (permissionName: string): boolean => {

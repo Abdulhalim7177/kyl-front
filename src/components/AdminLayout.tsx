@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { AnimatedConfirmDialog } from '@/components/AnimatedConfirmDialog'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
@@ -40,15 +40,18 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children, title }: AdminLayoutProps) {
   const { user, logout } = useAuth()
-  const navigate = useNavigate()
   const location = useLocation()
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [isLogoutOpen, setIsLogoutOpen] = useState(false)
 
   const handleLogout = async () => {
-    await logout()
-    navigate('/k8s9d7f3-auth-login')
+    try {
+      await logout()
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
+    // Navigate to login page
+    window.location.href = '/k8s9d7f3-auth-login'
   }
 
   const SidebarContent = () => (
@@ -90,7 +93,13 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
             <span className="text-xs text-gray-500 truncate">{user?.role?.name || 'Super Admin'}</span>
           </div>
         </div>
-        <button onClick={() => { setMobileMenuOpen(false); setIsLogoutOpen(true) }} className="p-2 text-gray-400 hover:text-red-500 transition-colors shrink-0">
+        <button 
+          onClick={() => { 
+            setMobileMenuOpen(false)
+            setIsLogoutOpen(true)
+          }} 
+          className="p-2 text-gray-400 hover:text-red-500 transition-colors shrink-0"
+        >
            <LogOut className="w-4 h-4" />
         </button>
       </div>
@@ -140,14 +149,24 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       <AnimatedConfirmDialog
         open={isLogoutOpen}
         onOpenChange={setIsLogoutOpen}
-        variant="default"
+        variant="warning"
         icon="alert"
-        title="Logout Confirmation"
-        description="Are you sure you want to end your secure session?"
-        confirmText="Logout"
+        title="Confirm Logout"
+        description="Are you sure you want to end your session?"
+        confirmText="Yes, Logout"
+        cancelText="Cancel"
         onConfirm={handleLogout}
         onCancel={() => setIsLogoutOpen(false)}
-      />
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700 leading-relaxed">
+            You will be logged out of your admin session and redirected to the login page.
+          </p>
+          <div className="bg-gray-50 rounded-lg p-3 text-gray-600 text-sm border border-gray-100">
+            Make sure you've saved any unsaved changes before logging out.
+          </div>
+        </div>
+      </AnimatedConfirmDialog>
     </div>
   )
 }
