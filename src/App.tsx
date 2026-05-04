@@ -7,6 +7,9 @@ import PositionsPage from '@/pages/PositionsPage'
 import LoginPage from '@/pages/LoginPage'
 import DashboardPage from '@/pages/DashboardPage'
 import UsersManagementPage from '@/pages/UsersManagementPage'
+import CandidatesPage from '@/pages/CandidatesPage'
+import AddCandidateWizard from '@/pages/AddCandidateWizard'
+import CandidateDetailPage from '@/pages/CandidateDetailPage'
 import AdminLayout from '@/components/AdminLayout'
 import './App.css'
 
@@ -163,6 +166,50 @@ function App() {
               <ProtectedRoute>
                 <AdminLayout title="Admin / User Management">
                   <UsersManagementPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/k8s9d7f3-candidates"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Candidates">
+                  <CandidatesPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/k8s9d7f3-candidates-add"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Candidates / Add Candidate">
+                  <AddCandidateWizard />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/k8s9d7f3-candidates-edit/:id"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Candidates / Edit Candidate">
+                  <AddCandidateWizard />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/k8s9d7f3-candidates-view/:id"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Candidates / View Candidate">
+                  <CandidateDetailPage />
                 </AdminLayout>
               </ProtectedRoute>
             }
