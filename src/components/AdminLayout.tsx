@@ -22,11 +22,11 @@ import {
 const SIDEBAR_ITEMS = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/k8s9d7f3-admin-panel' },
   { name: 'Users', icon: Users, path: '/k8s9d7f3-users' },
+  { name: 'Candidates', icon: UserCheck, path: '/k8s9d7f3-candidates' },
   { name: 'Political Parties', icon: Flag, path: '#' },
   { name: 'Elections', icon: Vote, path: '#' },
   { name: 'Offices', icon: Building2, path: '#' },
   { name: 'Districts', icon: MapPin, path: '#' },
-  { name: 'Candidates', icon: UserCheck, path: '#' },
   { name: 'Elected Officials', icon: UserCheck, path: '#' },
   { name: 'Blogs', icon: FileText, path: '#' },
   { name: 'Activity Logs', icon: Activity, path: '#' },
