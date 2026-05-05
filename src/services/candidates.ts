@@ -129,30 +129,32 @@ class CandidateService {
       throw new Error(`Failed to fetch candidates: ${response.status} ${response.statusText}`)
     }
     
-    const rawData: PaginatedResponse<any> = await response.json()
+    const rawData = await response.json() as PaginatedResponse<Candidate>
     console.log('📊 Candidates API Response Data:', rawData)
 
-    const rawCandidates = Array.isArray(rawData.data?.data) ? rawData.data.data : []
-    console.log('📊 Raw candidates length:', rawCandidates.length)
+     const rawCandidates = Array.isArray(rawData.data?.data) ? rawData.data.data : []
+     console.log('📊 Raw candidates length:', rawCandidates.length)
 
-    const candidates = rawCandidates.map((candidate) => {
-      const rawStatus = candidate.status
-      const normalizedStatus =
-        rawStatus === 1 || rawStatus === '1' || rawStatus === true || String(rawStatus).toLowerCase() === 'active'
-          ? 'Active'
-          : 'Inactive'
+     const candidates = rawCandidates.map((candidate) => {
+       const rawStatus = candidate.status
+       const isActive =
+         rawStatus === 1 ||
+         rawStatus === true ||
+         String(rawStatus) === '1' ||
+         String(rawStatus).toLowerCase() === 'active'
+       const normalizedStatus = isActive ? 'Active' : 'Inactive'
 
-      return {
-        id: candidate.id,
-        user_id: candidate.code ?? String(candidate.id),
-        full_name: candidate.fullName ?? '',
-        political_party: candidate.party?.name ?? '',
-        senatorial_district: candidate.lga_district?.name ?? String(candidate.lga_district?.senetorial_district_id ?? ''),
-        state: candidate.state?.name ?? '',
-        status: normalizedStatus,
-        created_at: candidate.created_at ?? ''
-      }
-    })
+       return {
+         id: candidate.id,
+         user_id: candidate.code ?? String(candidate.id),
+         full_name: candidate.fullName ?? '',
+         political_party: candidate.party?.name ?? '',
+         senatorial_district: candidate.lga_district?.name ?? '',
+         state: candidate.state && typeof candidate.state === 'object' ? candidate.state.name : String(candidate.state ?? ''),
+         status: normalizedStatus,
+         created_at: candidate.created_at ?? ''
+       }
+     })
 
     console.log('✅ Returning normalized candidates:', candidates.length, 'items')
     return candidates
@@ -311,24 +313,26 @@ class CandidateService {
       throw new Error(`Failed to toggle candidate status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
     }
 
-    const data: SingleCandidateResponse<any> = await response.json()
+    const data: SingleCandidateResponse<CandidateDetail> = await response.json()
     const candidate = data.data
 
     const rawStatus = candidate.status
-    const normalizedStatus =
-      rawStatus === 1 || rawStatus === '1' || rawStatus === true || String(rawStatus).toLowerCase() === 'active'
-        ? 'Active'
-        : 'Inactive'
+    const isActive =
+      rawStatus === 1 ||
+      rawStatus === true ||
+      String(rawStatus) === '1' ||
+      String(rawStatus).toLowerCase() === 'active'
+    const normalizedStatus = isActive ? 'Active' : 'Inactive'
 
     return {
       id: candidate.id,
-      user_id: candidate.code ?? String(candidate.id),
-      full_name: candidate.fullName ?? '',
+      user_id: String(candidate.id),
+      full_name: candidate.fullName,
       political_party: candidate.party?.name ?? '',
-      senatorial_district: candidate.lga_district?.name ?? String(candidate.lga_district?.senetorial_district_id ?? ''),
+      senatorial_district: candidate.lga_district?.name ?? '',
       state: candidate.state?.name ?? '',
       status: normalizedStatus,
-      created_at: candidate.created_at ?? ''
+      created_at: candidate.created_at
     }
   }
 

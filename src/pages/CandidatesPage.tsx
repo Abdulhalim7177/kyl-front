@@ -384,9 +384,9 @@ export default function CandidatesPage() {
                         <TableCell className="text-gray-600">
                           {item.senatorial_district || '-'}
                         </TableCell>
-                        <TableCell className="text-gray-600">
-                          {item.state || '-'}
-                        </TableCell>
+                         <TableCell className="text-gray-600">
+                           {typeof item.state === 'object' && item.state !== null ? item.state.name : item.state || '-'}
+                         </TableCell>
                         <TableCell className="text-gray-600">
                           <div className="inline-flex items-center gap-2">
                             <span className={cn(

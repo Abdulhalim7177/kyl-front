@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, User, MapPin, Phone, Mail, Calendar, FileText, Building } from 'lucide-react'
+import { ArrowLeft, User, MapPin, Calendar, FileText, Building } from 'lucide-react'
 import { candidateService, CandidateDetail } from '@/services/candidates'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -12,31 +12,31 @@ export default function CandidateDetailPage() {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
   const [candidate, setCandidate] = useState<CandidateDetail | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+   const [loading, setLoading] = useState(true)
+   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (isAuthenticated && id) {
-      loadCandidate()
-    } else {
-      setLoading(false)
-      setError('You must be logged in to view candidate details.')
-    }
-  }, [isAuthenticated, id])
+   const loadCandidate = useCallback(async () => {
+     try {
+       setLoading(true)
+       setError(null)
+       const data = await candidateService.getCandidateById(parseInt(id!))
+       setCandidate(data)
+     } catch (err) {
+       console.error('Failed to load candidate:', err)
+       setError('Failed to load candidate details. Please check your connection and try again.')
+     } finally {
+       setLoading(false)
+     }
+   }, [isAuthenticated, id])
 
-  const loadCandidate = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await candidateService.getCandidateById(parseInt(id!))
-      setCandidate(data)
-    } catch (err) {
-      console.error('Failed to load candidate:', err)
-      setError('Failed to load candidate details. Please check your connection and try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
+   useEffect(() => {
+     if (isAuthenticated && id) {
+       loadCandidate()
+     } else {
+       setLoading(false)
+       setError('You must be logged in to view candidate details.')
+     }
+   }, [isAuthenticated, id, loadCandidate])
 
   if (loading) {
     return (

@@ -12,15 +12,14 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': {
-        target: 'https://kyl.aitshub.com.ng',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '/api/v1'),
-        ws: true,
-        followRedirects: true,
-        logLevel: 'debug'
-      }
+       '/api': {
+         target: 'https://kyl.aitshub.com.ng',
+         changeOrigin: true,
+         secure: false,
+         rewrite: (path) => path.replace(/^\/api/, '/api/v1'),
+         ws: true,
+         followRedirects: true
+       }
     }
   }
 })
