@@ -6,6 +6,9 @@ import PoliticiansPage from '@/pages/PoliticiansPage'
 import PositionsPage from '@/pages/PositionsPage'
 import LoginPage from '@/pages/LoginPage'
 import DashboardPage from '@/pages/DashboardPage'
+import PartiesPage from '@/pages/PartiesPage'
+import PartyProfilePage from '@/pages/PartyProfilePage'
+import PartyChairmanPage from '@/pages/PartyChairmanPage'
 import UsersManagementPage from '@/pages/UsersManagementPage'
 import AdminLayout from '@/components/AdminLayout'
 import './App.css'
@@ -152,6 +155,37 @@ function App() {
               <ProtectedRoute>
                 <AdminLayout title="Admin Dashboard">
                   <DashboardPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/k8s9d7f3-parties"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Party Management">
+                  <PartiesPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-parties/:partyId"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Party Profile">
+                  <PartyProfilePage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-parties/:partyId/chairman"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Party Chairman">
+                  <PartyChairmanPage />
                 </AdminLayout>
               </ProtectedRoute>
             }
