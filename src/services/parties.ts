@@ -1,6 +1,6 @@
 import { authService } from './auth'
 
-const API_BASE_URL = 'https://kyl.aitshub.com.ng/api/v1'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 export interface Party {
   id: number
