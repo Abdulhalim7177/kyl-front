@@ -7,9 +7,11 @@ import PositionsPage from '@/pages/PositionsPage'
 import LoginPage from '@/pages/LoginPage'
 import DashboardPage from '@/pages/DashboardPage'
 import UsersManagementPage from '@/pages/UsersManagementPage'
+import AddUserWizard from '@/pages/AddUserWizard'
 import CandidatesPage from '@/pages/CandidatesPage'
 import AddCandidateWizard from '@/pages/AddCandidateWizard'
 import CandidateDetailPage from '@/pages/CandidateDetailPage'
+import ActivityLogsPage from '@/pages/ActivityLogsPage'
 import AdminLayout from '@/components/AdminLayout'
 import './App.css'
 
@@ -170,6 +172,28 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/k8s9d7f3-users-add"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / User Management / Add User">
+                  <AddUserWizard />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/k8s9d7f3-users-edit/:id"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / User Management / Edit User">
+                  <AddUserWizard />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
           
           <Route
             path="/k8s9d7f3-candidates"
@@ -210,6 +234,17 @@ function App() {
               <ProtectedRoute>
                 <AdminLayout title="Admin / Candidates / View Candidate">
                   <CandidateDetailPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/k8s9d7f3-activity-logs"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Activity Logs">
+                  <ActivityLogsPage />
                 </AdminLayout>
               </ProtectedRoute>
             }

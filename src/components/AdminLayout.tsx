@@ -29,7 +29,7 @@ const SIDEBAR_ITEMS = [
   { name: 'Districts', icon: MapPin, path: '#' },
   { name: 'Elected Officials', icon: UserCheck, path: '#' },
   { name: 'Blogs', icon: FileText, path: '#' },
-  { name: 'Activity Logs', icon: Activity, path: '#' },
+  { name: 'Activity Logs', icon: Activity, path: '/k8s9d7f3-activity-logs' },
 ]
 
 interface AdminLayoutProps {

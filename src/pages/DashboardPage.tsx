@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,65 +23,55 @@ import {
   MdTrendingUp 
 } from "react-icons/md";
 import { FaLandmark } from "react-icons/fa";
+import { userService, ActivityLog } from "@/services/users";
+import { candidateService, Candidate } from "@/services/candidates";
+import { formatDistanceToNow } from "date-fns";
+import { Link } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 
 export default function DashboardPage() {
+  const [logs, setLogs] = useState<ActivityLog[]>([]);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [userCount, setUserCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [activityLogs, allCandidates, allUsers] = await Promise.all([
+        userService.getActivityLogs(),
+        candidateService.getAllCandidates(),
+        userService.getUsers()
+      ]);
+      setLogs(activityLogs.slice(0, 5));
+      setCandidates(allCandidates.slice(0, 5));
+      setUserCount(allUsers.length);
+    } catch (error) {
+      console.error("Failed to fetch dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const stats = [
-    { label: "Users", value: "1293", change: "+12%", icon: HiUsers, color: "text-teal-600", bgColor: "bg-teal-50" },
-    { label: "Political Parties", value: "12", change: "+12%", icon: FaLandmark, color: "text-blue-600", bgColor: "bg-blue-50" },
-    { label: "Elections", value: "7", change: "+12%", icon: MdHowToVote, color: "text-purple-600", bgColor: "bg-purple-50" },
-    { label: "Candidates", value: "123", change: "+12%", icon: MdPeople, color: "text-green-600", bgColor: "bg-green-50" },
+    { label: "Users", value: userCount.toString(), change: "+0%", icon: HiUsers, color: "text-teal-600", bgColor: "bg-teal-50" },
+    { label: "Political Parties", value: "12", change: "+0%", icon: FaLandmark, color: "text-blue-600", bgColor: "bg-blue-50" },
+    { label: "Elections", value: "7", change: "+0%", icon: MdHowToVote, color: "text-purple-600", bgColor: "bg-purple-50" },
+    { label: "Candidates", value: candidates.length.toString(), change: "+0%", icon: MdPeople, color: "text-green-600", bgColor: "bg-green-50" },
   ];
 
-  const recentCandidates = [
-    { name: "Babajide Sanwo-Olu", party: "APC", position: "Governor", state: "Lagos", status: "Active" },
-    { name: "Peter Obi", party: "LP", position: "President", state: "Anambra", status: "Active" },
-    { name: "Atiku Abubakar", party: "PDP", position: "President", state: "Adamawa", status: "Pending" },
-    { name: "Natasha Akpoti", party: "PDP", position: "Senator", state: "Kogi", status: "Active" },
-    { name: "Seyi Makinde", party: "PDP", position: "Governor", state: "Oyo", status: "Inactive" },
-  ];
-
-  const recentActivity = [
-    { 
-      icon: HiUserAdd, 
-      title: "Musa created new admin", 
-      desc: "Added Musa Musa as Party Support Admin", 
-      time: "2 minutes ago", 
-      color: "text-teal-600",
-      bgColor: "bg-teal-50"
-    },
-    { 
-      icon: HiPencilAlt, 
-      title: "Isa updated candidate", 
-      desc: "Updated profile for 'Nihi Tinubu'", 
-      time: "8 minutes ago", 
-      color: "text-blue-600",
-      bgColor: "bg-blue-50"
-    },
-    { 
-      icon: HiDocumentText, 
-      title: "Election list modified", 
-      desc: "New legislative election added", 
-      time: "12 minutes ago", 
-      color: "text-green-600",
-      bgColor: "bg-green-50"
-    },
-    { 
-      icon: HiTrash, 
-      title: "Position archived", 
-      desc: "LGA Governor' was removed", 
-      time: "1 hour ago", 
-      color: "text-red-600",
-      bgColor: "bg-red-50"
-    },
-    { 
-      icon: HiNewspaper, 
-      title: "New blog post published", 
-      desc: "'Tinubu's promises for the 2027 campaign'", 
-      time: "Yesterday", 
-      color: "text-green-600",
-      bgColor: "bg-green-50"
-    },
-  ];
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader2 className="w-8 h-8 animate-spin text-[#146c4f]" />
+        <p className="text-gray-500 font-medium">Loading dashboard data...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 md:space-y-6 p-4 md:p-0">
@@ -89,17 +80,21 @@ export default function DashboardPage() {
         <CardContent className="p-4 md:p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-lg md:text-xl font-semibold text-gray-900">Welcome Back, Aminu</h2>
+              <h2 className="text-lg md:text-xl font-semibold text-gray-900">Welcome Back Admin</h2>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-              <Button className="bg-primary hover:bg-primary/90 shadow-sm w-full sm:w-auto">
-                <HiUserAdd className="mr-2 h-4 w-4" />
-                Add User
-              </Button>
-              <Button className="bg-primary hover:bg-primary/90 shadow-sm w-full sm:w-auto">
-                <HiUserAdd className="mr-2 h-4 w-4" />
-                Add Candidate
-              </Button>
+              <Link to="/k8s9d7f3-users">
+                <Button className="bg-primary hover:bg-primary/90 shadow-sm w-full sm:w-auto">
+                  <HiUserAdd className="mr-2 h-4 w-4" />
+                  Add User
+                </Button>
+              </Link>
+              <Link to="/k8s9d7f3-candidates-add">
+                <Button className="bg-primary hover:bg-primary/90 shadow-sm w-full sm:w-auto">
+                  <HiUserAdd className="mr-2 h-4 w-4" />
+                  Add Candidate
+                </Button>
+              </Link>
             </div>
           </div>
         </CardContent>
@@ -137,9 +132,11 @@ export default function DashboardPage() {
         <CardHeader className="border-b border-gray-100 p-4 md:p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <CardTitle className="text-base md:text-lg font-semibold">Recent Candidates</CardTitle>
-            <Button variant="ghost" className="text-primary hover:text-primary/80 w-full sm:w-auto">
-              View All
-            </Button>
+            <Link to="/k8s9d7f3-candidates">
+              <Button variant="ghost" className="text-primary hover:text-primary/80 w-full sm:w-auto">
+                View All
+              </Button>
+            </Link>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -157,24 +154,22 @@ export default function DashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {recentCandidates.map((candidate, index) => (
+                  {candidates.map((candidate, index) => (
                     <TableRow key={index} className="group transition-colors border-gray-50 hover:bg-gray-50/50">
                       <TableCell className="font-semibold text-gray-900 whitespace-nowrap">
-                        {candidate.name}
+                        {candidate.full_name}
                       </TableCell>
-                      <TableCell className="text-gray-500 font-medium">{candidate.party}</TableCell>
-                      <TableCell className="text-gray-500 font-medium">{candidate.position}</TableCell>
+                      <TableCell className="text-gray-500 font-medium">{candidate.political_party}</TableCell>
+                      <TableCell className="text-gray-500 font-medium">{candidate.senatorial_district}</TableCell>
                       <TableCell className="font-medium text-gray-700">{candidate.state}</TableCell>
                       <TableCell>
                         <span className="flex items-center gap-1.5 font-semibold text-[0.8rem] whitespace-nowrap">
                           <span className={`w-1.5 h-1.5 rounded-full ${
                             candidate.status === 'Active' ? 'bg-emerald-500' : 
-                            candidate.status === 'Pending' ? 'bg-amber-500' : 
                             'bg-gray-400'
                           }`}></span>
                           <span className={
                             candidate.status === 'Active' ? 'text-emerald-600' : 
-                            candidate.status === 'Pending' ? 'text-amber-600' : 
                             'text-gray-500'
                           }>
                             {candidate.status}
@@ -182,9 +177,11 @@ export default function DashboardPage() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <button className="text-[#146c4f] font-semibold text-xs hover:underline">
-                          Edit
-                        </button>
+                        <Link to={`/k8s9d7f3-candidates-view/${candidate.id}`}>
+                          <button className="text-[#146c4f] font-semibold text-xs hover:underline">
+                            View
+                          </button>
+                        </Link>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -204,25 +201,41 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="p-4 md:p-6">
             <div className="space-y-3 md:space-y-4">
-              {recentActivity.map((activity, index) => {
-                const IconComponent = activity.icon;
+              {logs.map((activity, index) => {
+                const colors = [
+                  { color: "text-teal-600", bgColor: "bg-teal-50", icon: HiUserAdd },
+                  { color: "text-blue-600", bgColor: "bg-blue-50", icon: HiPencilAlt },
+                  { color: "text-green-600", bgColor: "bg-green-50", icon: HiDocumentText },
+                  { color: "text-red-600", bgColor: "bg-red-50", icon: HiTrash },
+                  { color: "text-amber-600", bgColor: "bg-amber-50", icon: HiNewspaper },
+                ];
+                const colorScheme = colors[index % colors.length];
+                const IconComponent = colorScheme.icon;
+                
                 return (
                   <div key={index} className="flex gap-3 md:gap-4">
-                    <div className={`w-9 h-9 md:w-10 md:h-10 rounded-lg ${activity.bgColor} flex items-center justify-center flex-shrink-0 shadow-sm`}>
-                      <IconComponent className={`h-4 w-4 md:h-5 md:w-5 ${activity.color}`} />
+                    <div className={`w-9 h-9 md:w-10 md:h-10 rounded-lg ${colorScheme.bgColor} flex items-center justify-center flex-shrink-0 shadow-sm`}>
+                      <IconComponent className={`h-4 w-4 md:h-5 md:w-5 ${colorScheme.color}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs md:text-sm font-medium text-gray-900">{activity.title}</p>
-                      <p className="text-xs md:text-sm text-gray-600 truncate">{activity.desc}</p>
-                      <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
+                      <p className="text-xs md:text-sm font-medium text-gray-900">{activity.user?.name || "System"}: {activity.action}</p>
+                      <p className="text-xs md:text-sm text-gray-600 truncate">{activity.details}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
+                      </p>
                     </div>
                   </div>
                 );
               })}
+              {logs.length === 0 && (
+                <p className="text-center text-gray-500 py-4">No recent activity found.</p>
+              )}
             </div>
-            <Button variant="ghost" className="w-full mt-4 text-primary hover:text-primary/80 text-sm">
-              View Full Logs
-            </Button>
+            <Link to="/k8s9d7f3-activity-logs">
+              <Button variant="ghost" className="w-full mt-4 text-primary hover:text-primary/80 text-sm">
+                View Full Logs
+              </Button>
+            </Link>
           </CardContent>
         </Card>
 
@@ -283,3 +296,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

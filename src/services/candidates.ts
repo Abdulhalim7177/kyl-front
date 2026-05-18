@@ -135,7 +135,7 @@ class CandidateService {
      const rawCandidates = Array.isArray(rawData.data?.data) ? rawData.data.data : []
      console.log('📊 Raw candidates length:', rawCandidates.length)
 
-     const candidates = rawCandidates.map((candidate) => {
+     const candidates = rawCandidates.map((candidate: any) => {
        const rawStatus = candidate.status
        const isActive =
          rawStatus === 1 ||
@@ -146,7 +146,7 @@ class CandidateService {
 
        return {
          id: candidate.id,
-         user_id: candidate.code ?? String(candidate.id),
+         user_id: String(candidate.id),
          full_name: candidate.fullName ?? '',
          political_party: candidate.party?.name ?? '',
          senatorial_district: candidate.lga_district?.name ?? '',
@@ -319,7 +319,6 @@ class CandidateService {
     const rawStatus = candidate.status
     const isActive =
       rawStatus === 1 ||
-      rawStatus === true ||
       String(rawStatus) === '1' ||
       String(rawStatus).toLowerCase() === 'active'
     const normalizedStatus = isActive ? 'Active' : 'Inactive'
