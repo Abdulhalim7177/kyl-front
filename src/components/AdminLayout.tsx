@@ -24,7 +24,7 @@ const SIDEBAR_ITEMS = [
   { name: 'Users', icon: Users, path: '/k8s9d7f3-users' },
   { name: 'Candidates', icon: UserCheck, path: '/k8s9d7f3-candidates' },
   { name: 'Political Parties', icon: Flag, path: '#' },
-  { name: 'Elections', icon: Vote, path: '#' },
+  { name: 'Elections', icon: Vote, path: '/k8s9d7f3-elections' },
   { name: 'Offices', icon: Building2, path: '#' },
   { name: 'Districts', icon: MapPin, path: '#' },
   { name: 'Elected Officials', icon: UserCheck, path: '#' },

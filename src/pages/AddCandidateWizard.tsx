@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { candidateService, Candidate, CreateCandidateData } from '@/services/candidates'
+import { candidateService, Candidate, CreateCandidateData, Party } from '@/services/candidates'
 
 // Wizard steps configuration
 const WIZARD_STEPS = [
@@ -33,6 +33,10 @@ export default function AddCandidateWizard() {
   const [isLoadingCandidate, setIsLoadingCandidate] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [submittedCandidate, setSubmittedCandidate] = useState<Candidate | null>(null)
+  const [parties, setParties] = useState<Party[]>([])
+  const [partySearch, setPartySearch] = useState('')
+  const [districtSearch, setDistrictSearch] = useState('')
+  const [loadingSelectData, setLoadingSelectData] = useState(false)
   
   const [formData, setFormData] = useState<CreateCandidateData>({
     fullName: '',
@@ -48,6 +52,23 @@ export default function AddCandidateWizard() {
     lga_district_id: 0,
     party_id: undefined
   })
+
+  // Load parties and states on component mount
+  useEffect(() => {
+    const fetchSelectData = async () => {
+      try {
+        setLoadingSelectData(true)
+        const partiesData = await candidateService.getAllParties()
+        setParties(partiesData)
+      } catch (error) {
+        console.error('Failed to load parties:', error)
+      } finally {
+        setLoadingSelectData(false)
+      }
+    }
+
+    fetchSelectData()
+  }, [])
 
   const handleNext = () => {
     // Validate required fields for current step before proceeding
@@ -276,16 +297,25 @@ export default function AddCandidateWizard() {
               <Select
                 value={formData.party_id?.toString() || ''}
                 onValueChange={(value) => setFormData({ ...formData, party_id: parseInt(value) })}
+                disabled={loadingSelectData}
               >
                 <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Select Political Party" />
+                  <SelectValue placeholder={loadingSelectData ? "Loading parties..." : "Select Political Party"} />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">APC - All Progressives Congress</SelectItem>
-                  <SelectItem value="2">PDP - People's Democratic Party</SelectItem>
-                  <SelectItem value="3">LP - Labour Party</SelectItem>
-                  <SelectItem value="4">NNPP - New Nigeria People's Party</SelectItem>
-                  <SelectItem value="5">APGA - All Progressives Grand Alliance</SelectItem>
+                <SelectContent
+                  searchable
+                  searchValue={partySearch}
+                  onSearchChange={setPartySearch}
+                >
+                  {parties
+                    .filter((party) =>
+                      party.name.toLowerCase().includes(partySearch.toLowerCase())
+                    )
+                    .map((party) => (
+                      <SelectItem key={party.id} value={party.id.toString()}>
+                        {party.name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -296,16 +326,31 @@ export default function AddCandidateWizard() {
               <Select
                 value={formData.lga_district_id?.toString() || ''}
                 onValueChange={(value) => setFormData({ ...formData, lga_district_id: parseInt(value) })}
+                disabled={loadingSelectData}
               >
                 <SelectTrigger className="h-12">
                   <SelectValue placeholder="Select LGA District" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">Aba North</SelectItem>
-                  <SelectItem value="2">Aba South</SelectItem>
-                  <SelectItem value="3">Arochukwu</SelectItem>
-                  <SelectItem value="4">Bende</SelectItem>
-                  <SelectItem value="5">Ikwuano</SelectItem>
+                <SelectContent
+                  searchable
+                  searchValue={districtSearch}
+                  onSearchChange={setDistrictSearch}
+                >
+                  {[
+                    { id: 1, label: 'Aba North' },
+                    { id: 2, label: 'Aba South' },
+                    { id: 3, label: 'Arochukwu' },
+                    { id: 4, label: 'Bende' },
+                    { id: 5, label: 'Ikwuano' },
+                  ]
+                    .filter((district) =>
+                      district.label.toLowerCase().includes(districtSearch.toLowerCase())
+                    )
+                    .map((district) => (
+                      <SelectItem key={district.id} value={district.id.toString()}>
+                        {district.label}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>

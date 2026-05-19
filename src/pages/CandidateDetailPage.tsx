@@ -1,42 +1,104 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+
 import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, User, MapPin, Phone, Mail, Calendar, FileText, Building } from 'lucide-react'
+import { ArrowLeft, User, MapPin, Calendar, FileText, Building, Upload } from 'lucide-react'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { candidateService, CandidateDetail } from '@/services/candidates'
 import { useAuth } from '@/contexts/AuthContext'
+
+const BACKEND_ORIGIN = 'https://kyl.aitshub.com.ng'
 
 export default function CandidateDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { isAuthenticated } = useAuth()
-  const [candidate, setCandidate] = useState<CandidateDetail | null>(null)
+  const { isAuthenticated } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [candidate, setCandidate] = useState<CandidateDetail | null>(null);
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (isAuthenticated && id) {
-      loadCandidate()
+      loadCandidate();
     } else {
-      setLoading(false)
-      setError('You must be logged in to view candidate details.')
+      setLoading(false);
+      setError('You must be logged in to view candidate details.');
     }
-  }, [isAuthenticated, id])
+  }, [isAuthenticated, id]);
 
-  const loadCandidate = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await candidateService.getCandidateById(parseInt(id!))
-      setCandidate(data)
-    } catch (err) {
-      console.error('Failed to load candidate:', err)
-      setError('Failed to load candidate details. Please check your connection and try again.')
-    } finally {
-      setLoading(false)
+  const getImageUrl = (image: any): string => {
+    if (!image) return ''
+    let path = ''
+    if (typeof image === 'string') {
+      path = image
+    } else if (typeof image === 'object') {
+      const val = image.url || image.path || image.image_path || image.filePath || image.image_url || image.logo_url
+      if (typeof val === 'string') {
+        path = val
+      }
     }
+    if (!path) return ''
+    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('blob:')) {
+      return path
+    }
+    const cleanPath = path.startsWith('/') ? path.slice(1) : path
+    return `${BACKEND_ORIGIN}/${cleanPath}`
   }
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!candidate) {
+      console.error('Candidate not loaded yet');
+      return;
+    }
+    if (!e.target.files || e.target.files.length === 0) {
+      console.log('📸 No files selected.');
+      return;
+    }
+    const file = e.target.files[0];
+    console.log('📸 Photo upload triggered. File:', file.name, 'Size:', file.size);
+    
+    // Show a temporary preview while the upload is in progress
+    setCandidate(prev => prev ? { ...prev, image: URL.createObjectURL(file) } : prev);
+    
+    try {
+      setError(null);
+      console.log('🚀 Calling candidateService.uploadCandidatePhoto...');
+      const updated = await candidateService.uploadCandidatePhoto(candidate.id, file);
+      console.log('✅ Photo uploaded successfully. Server response candidate:', updated);
+      
+      // Update state with new data from server
+      setCandidate(updated);
+      
+      // Refresh the full candidate data to ensure the correct image URL
+      console.log('🔄 Reloading candidate data...');
+      await loadCandidate();
+    } catch (err) {
+      console.error('❌ Failed to upload photo:', err);
+      setError(err instanceof Error ? err.message : 'Failed to upload photo.');
+    } finally {
+      // Reset input value so selecting the same file will trigger onChange again
+      if (e.target) {
+        e.target.value = '';
+      }
+    }
+  };
+
+  async function loadCandidate() {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await candidateService.getCandidateById(parseInt(id!));
+      setCandidate(data);
+    } catch (err) {
+      console.error('Failed to load candidate:', err);
+      setError('Failed to load candidate details. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -68,7 +130,8 @@ export default function CandidateDetailPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between w-full gap-4">
+        {/* Back button */}
         <Button
           variant="ghost"
           size="sm"
@@ -78,15 +141,38 @@ export default function CandidateDetailPage() {
           <ArrowLeft className="w-4 h-4" />
           Back to Candidates
         </Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900">{candidate.fullName}</h1>
+        {/* Title centered */}
+        <div className="flex-1 text-center">
+          <h1 className="text-2xl font-bold text-gray-900">{candidate?.fullName}</h1>
           <p className="text-gray-600">Candidate Details</p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => navigate(`/k8s9d7f3-candidates-edit/${candidate.id}`)}
-          >
+        {/* Avatar and actions on the right */}
+        <div className="flex items-center gap-4 ml-auto">
+          {candidate && (
+            <Avatar className="w-48 h-48">
+              {getImageUrl(candidate.image) ? (
+                <AvatarImage
+                  src={getImageUrl(candidate.image)}
+                  alt={candidate.fullName}
+                />
+              ) : (
+                <AvatarFallback>{candidate.fullName.charAt(0).toUpperCase()}</AvatarFallback>
+              )}
+            </Avatar>
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            id="photo-upload"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handlePhotoUpload}
+          />
+          <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+            <Upload className="w-4 h-4 mr-1" />
+            Upload Photo
+          </Button>
+          <Button variant="outline" onClick={() => navigate(`/k8s9f3-candidates-edit/${candidate?.id}`)}>
             Edit Candidate
           </Button>
         </div>

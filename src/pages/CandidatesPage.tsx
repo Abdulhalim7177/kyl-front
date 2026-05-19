@@ -43,7 +43,7 @@ import {
   RefreshCw,
   ToggleRight,
 } from 'lucide-react'
-import { candidateService, Candidate } from '@/services/candidates'
+import { candidateService, Candidate, Party, State } from '@/services/candidates'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function CandidatesPage() {
@@ -51,6 +51,8 @@ export default function CandidatesPage() {
   const location = useLocation()
   const { isAuthenticated, user } = useAuth()
   const [candidates, setCandidates] = useState<Candidate[]>([])
+  const [parties, setParties] = useState<Party[]>([])
+  const [states, setStates] = useState<State[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
@@ -58,19 +60,43 @@ export default function CandidatesPage() {
   const [stateFilter, setStateFilter] = useState('all')
   const [partyFilter, setPartyFilter] = useState('all')
   const [districtFilter, setDistrictFilter] = useState('all')
+  const [stateSearch, setStateSearch] = useState('')
+  const [partySearch, setPartySearch] = useState('')
+  const [districtSearch, setDistrictSearch] = useState('')
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [candidateToDelete, setCandidateToDelete] = useState<number | null>(null)
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set())
 
-  // Load candidates
+  // Load candidates, parties, and states
   useEffect(() => {
     if (isAuthenticated) {
-      loadCandidates()
+      loadData()
     } else {
       setLoading(false)
       setError('You must be logged in to view candidates.')
     }
   }, [isAuthenticated, user, location.pathname])
+
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const [candidatesData, partiesData, statesData] = await Promise.all([
+        candidateService.getAllCandidates(),
+        candidateService.getAllParties(),
+        candidateService.getAllStates()
+      ])
+      setCandidates(candidatesData)
+      setParties(partiesData)
+      setStates(statesData)
+    } catch (err) {
+      console.error('Failed to load data:', err)
+      setError('Failed to load candidates. Please check your connection and try again.')
+      setCandidates([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const loadCandidates = async () => {
     try {
@@ -173,9 +199,7 @@ export default function CandidatesPage() {
   const numSelected = selectedIds.size
   const isSelectionActive = numSelected > 0
 
-  // Get unique values for filters
-  const uniqueStates = [...new Set((candidates || []).map(c => c.state).filter(Boolean))]
-  const uniqueParties = [...new Set((candidates || []).map(c => c.political_party).filter(Boolean))]
+  // Get unique values for filters from candidates data
   const uniqueDistricts = [...new Set((candidates || []).map(c => c.senatorial_district).filter(Boolean))]
 
   return (
@@ -221,11 +245,19 @@ export default function CandidatesPage() {
              <SelectTrigger className="w-[130px] shrink-0 h-10 rounded-xl bg-gray-50/50 border-gray-200">
                <span className="text-gray-500 mr-1">State:</span> <SelectValue />
              </SelectTrigger>
-             <SelectContent>
+             <SelectContent
+               searchable
+               searchValue={stateSearch}
+               onSearchChange={setStateSearch}
+             >
                <SelectItem value="all">All</SelectItem>
-               {uniqueStates.map(state => (
-                 <SelectItem key={state} value={state}>{state}</SelectItem>
-               ))}
+               {states
+                 .filter((state) =>
+                   state.name.toLowerCase().includes(stateSearch.toLowerCase())
+                 )
+                 .map((state) => (
+                   <SelectItem key={state.id} value={state.name}>{state.name}</SelectItem>
+                 ))}
              </SelectContent>
            </Select>
 
@@ -233,11 +265,19 @@ export default function CandidatesPage() {
              <SelectTrigger className="w-[130px] shrink-0 h-10 rounded-xl bg-gray-50/50 border-gray-200">
                <span className="text-gray-500 mr-1">Party:</span> <SelectValue />
              </SelectTrigger>
-             <SelectContent>
+             <SelectContent
+               searchable
+               searchValue={partySearch}
+               onSearchChange={setPartySearch}
+             >
                <SelectItem value="all">All</SelectItem>
-               {uniqueParties.map(party => (
-                 <SelectItem key={party} value={party}>{party}</SelectItem>
-               ))}
+               {parties
+                 .filter((party) =>
+                   party.name.toLowerCase().includes(partySearch.toLowerCase())
+                 )
+                 .map((party) => (
+                   <SelectItem key={party.id} value={party.name}>{party.name}</SelectItem>
+                 ))}
              </SelectContent>
            </Select>
 
@@ -245,11 +285,19 @@ export default function CandidatesPage() {
              <SelectTrigger className="w-[160px] shrink-0 h-10 rounded-xl bg-gray-50/50 border-gray-200">
                <span className="text-gray-500 mr-1">District:</span> <SelectValue />
              </SelectTrigger>
-             <SelectContent>
+             <SelectContent
+               searchable
+               searchValue={districtSearch}
+               onSearchChange={setDistrictSearch}
+             >
                <SelectItem value="all">All</SelectItem>
-               {uniqueDistricts.map(district => (
-                 <SelectItem key={district} value={district}>{district}</SelectItem>
-               ))}
+               {uniqueDistricts
+                 .filter((district) =>
+                   district.toLowerCase().includes(districtSearch.toLowerCase())
+                 )
+                 .map((district) => (
+                   <SelectItem key={district} value={district}>{district}</SelectItem>
+                 ))}
              </SelectContent>
            </Select>
            
