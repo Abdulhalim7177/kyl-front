@@ -15,6 +15,9 @@ import CandidatesPage from '@/pages/CandidatesPage'
 import AddCandidateWizard from '@/pages/AddCandidateWizard'
 import CandidateDetailPage from '@/pages/CandidateDetailPage'
 import ActivityLogsPage from '@/pages/ActivityLogsPage'
+import ElectionsPage from '@/pages/ElectionsPage'
+import ElectionFormPage from '@/pages/ElectionFormPage'
+import ElectionDetailPage from '@/pages/ElectionDetailPage'
 import AdminLayout from '@/components/AdminLayout'
 import './App.css'
 
@@ -279,6 +282,50 @@ function App() {
               <ProtectedRoute>
                 <AdminLayout title="Admin / Activity Logs">
                   <ActivityLogsPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/k8s9d7f3-elections"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Elections">
+                  <ElectionsPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/k8s9d7f3-elections-add"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Elections / Add Election">
+                  <ElectionFormPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/k8s9d7f3-elections-edit/:id"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Elections / Edit Election">
+                  <ElectionFormPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/k8s9d7f3-elections-view/:id"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Elections / View Election">
+                  <ElectionDetailPage />
                 </AdminLayout>
               </ProtectedRoute>
             }

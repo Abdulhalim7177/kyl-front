@@ -32,6 +32,61 @@ export interface CandidateResponse {
   message: string
 }
 
+export interface Party {
+  id: number
+  name: string
+  description?: string
+  slogan?: string
+  philosophy?: string
+  address?: string
+  status: number
+  registrationYear?: string
+  logopath?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export interface State {
+  id: number
+  name: string
+  status?: number
+}
+
+export interface LGADistrict {
+  id: number
+  name: string
+  state_id?: number
+  senetorial_district_id?: number
+  status?: number
+}
+
+export interface PartyResponse {
+  success: boolean
+  data: Party[]
+  message: string
+}
+
+export interface StateResponse {
+  success: boolean
+  data: State[]
+  message: string
+}
+
+export interface LGADistrictResponse {
+  success: boolean
+  data: LGADistrict[]
+  message: string
+}
+
+const unwrapApiArray = (payload: any): any[] => {
+  if (Array.isArray(payload)) return payload
+  if (payload && typeof payload === 'object') {
+    if (Array.isArray(payload.data)) return payload.data
+    if (payload.data) return unwrapApiArray(payload.data)
+  }
+  return []
+}
+
 export interface CandidateDetail {
   id: number
   fullName: string
@@ -120,16 +175,16 @@ class CandidateService {
       method: 'GET',
       headers: this.getAuthHeaders()
     })
-    
+
     console.log('📨 Candidates API Response Status:', response.status, response.statusText)
-    
+
     if (!response.ok) {
       const errorText = await response.text()
       console.error('❌ API Error response:', errorText)
       throw new Error(`Failed to fetch candidates: ${response.status} ${response.statusText}`)
     }
-    
-    const rawData = await response.json() as PaginatedResponse<Candidate>
+
+    const rawData: PaginatedResponse<any> = await response.json()
     console.log('📊 Candidates API Response Data:', rawData)
 
      const rawCandidates = Array.isArray(rawData.data?.data) ? rawData.data.data : []
@@ -165,12 +220,13 @@ class CandidateService {
       method: 'GET',
       headers: this.getAuthHeaders()
     })
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch candidate')
     }
-    
+
     const data: SingleCandidateResponse<CandidateDetail> = await response.json()
+    console.log('📥 getCandidateById response data (JSON string):', JSON.stringify(data));
     return data.data
   }
 
@@ -281,12 +337,12 @@ class CandidateService {
       },
       body: JSON.stringify(payload)
     })
-    
+
     if (!response.ok) {
       const errorText = await response.text().catch(() => '')
       throw new Error(`Failed to update candidate: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
     }
-    
+
     const data: SingleCandidateResponse = await response.json()
     return data.data
   }
@@ -296,7 +352,7 @@ class CandidateService {
       method: 'DELETE',
       headers: this.getAuthHeaders()
     })
-    
+
     if (!response.ok) {
       throw new Error('Failed to delete candidate')
     }
@@ -341,11 +397,11 @@ class CandidateService {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(candidateData)
     })
-    
+
     if (!response.ok) {
       throw new Error('Failed to check candidate')
     }
-    
+
     const data: SingleCandidateResponse = await response.json()
     return data.data
   }
@@ -355,11 +411,11 @@ class CandidateService {
       method: 'POST',
       headers: this.getAuthHeaders()
     })
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch president candidates')
     }
-    
+
     const data: CandidateResponse = await response.json()
     return data.data
   }
@@ -369,11 +425,11 @@ class CandidateService {
       method: 'POST',
       headers: this.getAuthHeaders()
     })
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch governatorial candidates')
     }
-    
+
     const data: CandidateResponse = await response.json()
     return data.data
   }
@@ -383,11 +439,11 @@ class CandidateService {
       method: 'POST',
       headers: this.getAuthHeaders()
     })
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch senatorial candidates')
     }
-    
+
     const data: CandidateResponse = await response.json()
     return data.data
   }
@@ -397,11 +453,11 @@ class CandidateService {
       method: 'POST',
       headers: this.getAuthHeaders()
     })
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch reps candidates')
     }
-    
+
     const data: CandidateResponse = await response.json()
     return data.data
   }
@@ -411,11 +467,11 @@ class CandidateService {
       method: 'POST',
       headers: this.getAuthHeaders()
     })
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch assembly candidates')
     }
-    
+
     const data: CandidateResponse = await response.json()
     return data.data
   }
@@ -426,13 +482,131 @@ class CandidateService {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(districtData)
     })
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch district candidates')
     }
-    
+
     const data: CandidateResponse = await response.json()
     return data.data
+  }
+
+  async uploadCandidatePhoto(id: number, file: File): Promise<CandidateDetail> {
+    const url = `${API_BASE_URL}/candidates/upload-photo/${id}`;
+    console.log('📤 Sending photo upload request to:', url);
+    console.log('📤 HTTP Method used: POST (spoofing PATCH via X-HTTP-Method-Override header)');
+    const formData = new FormData();
+    formData.append('photo', file);
+    formData.append('_method', 'PATCH'); // Laravel method spoofing in body
+    
+    const response = await fetch(url, {
+      method: 'POST', // Send as POST to avoid Apache stripping Authorization header and PHP PATCH issues
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        'Accept': 'application/json',
+        'X-HTTP-Method-Override': 'PATCH', // Spoof PATCH via Symfony/Laravel header
+      },
+      body: formData,
+    });
+    
+    console.log('📥 Response status:', response.status, response.statusText);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Error response body:', errorText);
+      throw new Error(`Failed to upload candidate photo: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+    
+    const data: any = await response.json();
+    console.log('📥 Upload success data (JSON string):', JSON.stringify(data));
+    
+    // Normalize in case response wraps the candidate under a 'candidate' key
+    const candidateObj = (data.data && data.data.candidate) ? data.data.candidate : data.data;
+    return candidateObj;
+  }
+
+  async getAllParties(): Promise<Party[]> {
+    try {
+      console.log('🔍 Fetching all parties from /parties')
+      const response = await fetch(`${API_BASE_URL}/parties`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      })
+
+      console.log('📨 Parties API Response Status:', response.status, response.statusText)
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '')
+        console.error('❌ Failed to fetch parties:', response.status, response.statusText, errorText)
+        return []
+      }
+
+      const data = await response.json()
+      console.log('📊 Parties API Response Data:', data)
+
+      const partyList = unwrapApiArray(data)
+      console.log('✅ Returning parties:', partyList.length, 'items')
+      return partyList
+    } catch (error) {
+      console.error('❌ Error fetching parties:', error)
+      return []
+    }
+  }
+
+  async getAllStates(): Promise<State[]> {
+    try {
+      console.log('🔍 Fetching all states from /districts/get-states')
+      const response = await fetch(`${API_BASE_URL}/districts/get-states`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      })
+
+      console.log('📨 States API Response Status:', response.status, response.statusText)
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '')
+        console.error('❌ Failed to fetch states:', response.status, response.statusText, errorText)
+        return []
+      }
+
+      const data = await response.json()
+      console.log('📊 States API Response Data:', data)
+
+      const stateList = unwrapApiArray(data)
+      console.log('✅ Returning states:', stateList.length, 'items')
+      return stateList
+    } catch (error) {
+      console.error('❌ Error fetching states:', error)
+      return []
+    }
+  }
+
+  async getAllLGADistricts(): Promise<LGADistrict[]> {
+    try {
+      console.log('🔍 Fetching all LGA districts from /districts/get-lga-districts')
+      const response = await fetch(`${API_BASE_URL}/districts/get-lga-districts`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      })
+
+      console.log('📨 LGA Districts API Response Status:', response.status, response.statusText)
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '')
+        console.error('❌ Failed to fetch LGA districts:', response.status, response.statusText, errorText)
+        return []
+      }
+
+      const data = await response.json()
+      console.log('📊 LGA Districts API Response Data:', data)
+
+      const districtList = unwrapApiArray(data)
+      console.log('✅ Returning LGA districts:', districtList.length, 'items')
+      return districtList
+    } catch (error) {
+      console.error('❌ Error fetching LGA districts:', error)
+      return []
+    }
   }
 }
 
