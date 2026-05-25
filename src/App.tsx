@@ -11,6 +11,7 @@ import PartyProfilePage from '@/pages/PartyProfilePage'
 import PartyChairmanPage from '@/pages/PartyChairmanPage'
 import UsersManagementPage from '@/pages/UsersManagementPage'
 import AddUserWizard from '@/pages/AddUserWizard'
+import UserDetailPage from '@/pages/UserDetailPage'
 import CandidatesPage from '@/pages/CandidatesPage'
 import AddCandidateWizard from '@/pages/AddCandidateWizard'
 import CandidateDetailPage from '@/pages/CandidateDetailPage'
@@ -224,6 +225,17 @@ function App() {
               <ProtectedRoute>
                 <AdminLayout title="Admin / User Management / Edit User">
                   <AddUserWizard />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/k8s9d7f3-users-view/:id"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / User Management / View User">
+                  <UserDetailPage />
                 </AdminLayout>
               </ProtectedRoute>
             }

@@ -50,6 +50,12 @@ export interface Role {
   description?: string
 }
 
+export interface Permission {
+  id: number
+  name: string
+  module_id?: number
+}
+
 export interface State {
   id: number
   name: string
@@ -64,32 +70,52 @@ export interface Party {
 class UserService {
   private getAuthHeaders() {
     const token = localStorage.getItem('auth_token')
-    return {
+    const headers: Record<string, string> = {
       'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     }
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+
+    return headers
   }
 
   private extractDataArray<T>(data: any): T[] {
+    if (!data) return []
     if (Array.isArray(data.data)) {
       return data.data
-    } else if (data.data && Array.isArray(data.data.data)) {
+    }
+    if (data.data && Array.isArray(data.data.data)) {
       return data.data.data
     }
+    if (data.data && data.data.users) {
+      return Array.isArray(data.data.users) ? data.data.users : [data.data.users]
+    }
+    if (data.data && data.data.user) {
+      return Array.isArray(data.data.user) ? data.data.user : [data.data.user]
+    }
+
+    // Sometimes API returns the array directly
+    if (Array.isArray(data)) return data
+
     return []
   }
 
   async createUser(userData: CreateUserData): Promise<User> {
     // Clean payload: remove 0 values for state_id and party_id as they represent "None/National"
-    const payload = {
+    const payload: any = {
       ...userData,
       state_id: userData.state_id === 0 ? null : userData.state_id,
       party_id: userData.party_id === 0 ? null : userData.party_id,
-      permissions: userData.permissions?.length ? userData.permissions : [0] // Ensure at least [0] if empty, matching user's example
     }
 
-    const response = await fetch(`${API_BASE_URL}/users/create-user/`, { // Added trailing slash
+    if (userData.permissions && userData.permissions.length > 0) {
+      payload.permissions = userData.permissions
+    }
+
+    const response = await fetch(`${API_BASE_URL}/users/create-user`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
       body: JSON.stringify(payload)
@@ -118,8 +144,20 @@ class UserService {
       headers: this.getAuthHeaders()
     })
     if (!response.ok) throw new Error('Failed to fetch user')
-    const data: ApiResponse<User> = await response.json()
-    return data.data
+    const data = await response.json().catch(() => null)
+
+    if (!data) throw new Error('Failed to fetch user')
+
+    // Normalize various API shapes:
+    // - { success: true, data: { user: { ... } } }
+    // - { success: true, data: { ...userFields } }
+    // - { success: true, user: { ... } }
+    // - { success: true, data: { data: [ ... ] } } (not expected here)
+    if (data.data && data.data.user) return data.data.user as User
+    if (data.user) return data.user as User
+    if (data.data && typeof data.data === 'object') return data.data as User
+
+    return data as User
   }
 
   async getPartyUsers(partyId: number): Promise<User[]> {
@@ -127,8 +165,31 @@ class UserService {
       method: 'GET',
       headers: this.getAuthHeaders()
     })
-    if (!response.ok) throw new Error('Failed to fetch party users')
-    const data = await response.json()
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => null)
+      const message = errorBody?.message || response.statusText || 'Failed to fetch party users'
+      throw new Error(`${response.status} ${message}`)
+    }
+    const data = await response.json().catch(() => null)
+
+    // Normalize various possible API shapes into an array of users.
+    // Supported shapes:
+    // - { success: true, data: [ ...users ] }
+    // - { success: true, data: { data: [ ...users ] } }
+    // - { success: true, data: { users: [ ...users ] } }
+    // - { success: true, users: [ ...users ] }
+    // - { success: true, data: { user: { ... } } }
+    // - { success: true, user: { ... } }
+    if (!data) return []
+
+    if (Array.isArray(data.data)) return data.data as User[]
+    if (Array.isArray(data.data?.data)) return data.data.data as User[]
+    if (Array.isArray(data.data?.users)) return data.data.users as User[]
+    if (Array.isArray(data.users)) return data.users as User[]
+    if (data.data?.user && typeof data.data.user === 'object') return [data.data.user as User]
+    if (data.user && typeof data.user === 'object') return [data.user as User]
+
+    // Fallback to helper which already handles common envelope shapes.
     return this.extractDataArray<User>(data)
   }
 
@@ -143,10 +204,20 @@ class UserService {
   }
 
   async updateUser(id: number, userData: UserUpdateData): Promise<User> {
+    const payload: any = {
+      name: userData.name,
+      phoneNo: userData.phoneNo,
+      email: userData.email,
+      role_id: userData.role_id,
+      permissions: userData.permissions ?? [],
+      state_id: userData.state_id === 0 ? null : userData.state_id,
+      party_id: userData.party_id === 0 ? null : userData.party_id,
+    }
+
     const response = await fetch(`${API_BASE_URL}/users/update-user/${id}`, {
       method: 'PATCH',
       headers: this.getAuthHeaders(),
-      body: JSON.stringify(userData)
+      body: JSON.stringify(payload)
     })
     if (!response.ok) throw new Error('Failed to update user')
     const data: ApiResponse<User> = await response.json()
@@ -260,6 +331,26 @@ class UserService {
     return this.extractDataArray<Role>(data)
   }
 
+  async getPartyRoles(): Promise<Role[]> {
+    const response = await fetch(`${API_BASE_URL}/permissions/get-party-roles`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+    if (!response.ok) throw new Error('Failed to fetch party roles')
+    const data = await response.json()
+    return this.extractDataArray<Role>(data)
+  }
+
+  async getRolePermissions(roleId: number): Promise<Permission[]> {
+    const response = await fetch(`${API_BASE_URL}/permissions/get-role-permissions/${roleId}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+    if (!response.ok) throw new Error('Failed to fetch role permissions')
+    const data = await response.json()
+    return this.extractDataArray<Permission>(data)
+  }
+
   async getStates(): Promise<State[]> {
     const response = await fetch(`${API_BASE_URL}/districts/get-states`, {
       method: 'GET',
@@ -282,3 +373,5 @@ class UserService {
 }
 
 export const userService = new UserService()
+
+
