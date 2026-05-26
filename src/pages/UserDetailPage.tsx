@@ -15,6 +15,8 @@ import {
   Activity,
   Loader2,
   Edit,
+  Plus,
+  Trash2,
 } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -24,6 +26,7 @@ export default function UserDetailPage() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchUser()
@@ -42,6 +45,25 @@ export default function UserDetailPage() {
     }
   }
 
+  const handleDeleteUser = async () => {
+    if (!user) return
+    const confirmed = window.confirm('Delete this user? This action cannot be undone.')
+    if (!confirmed) return
+
+    try {
+      setDeleting(true)
+      await userService.deleteUser(user.id)
+      if (user.party_id) {
+        navigate(`/k8s9d7f3-parties/${user.party_id}`, { state: { activeTab: 'Users' } })
+      } else {
+        navigate('/k8s9d7f3-users')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete user.')
+      setDeleting(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
@@ -55,7 +77,17 @@ export default function UserDetailPage() {
     return (
       <div className="text-center py-12">
         <p className="text-red-500 font-medium">{error || 'User not found'}</p>
-        <Button variant="outline" onClick={() => navigate('/k8s9d7f3-users')} className="mt-4">
+        <Button
+          variant="outline"
+          onClick={() => {
+            if (user?.party_id) {
+              navigate(`/k8s9d7f3-parties/${user.party_id}`, { state: { activeTab: 'Users' } })
+            } else {
+              navigate('/k8s9d7f3-users')
+            }
+          }}
+          className="mt-4"
+        >
           Back to Users
         </Button>
       </div>
@@ -68,15 +100,42 @@ export default function UserDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={() => navigate('/k8s9d7f3-users')} className="gap-2">
+        <Button
+          variant="ghost"
+          onClick={() => {
+            if (user?.party_id) {
+              navigate(`/k8s9d7f3-parties/${user.party_id}`, { state: { activeTab: 'Users' } })
+            } else {
+              navigate('/k8s9d7f3-users')
+            }
+          }}
+          className="gap-2"
+        >
           <ArrowLeft className="w-4 h-4" /> Back to Users
         </Button>
-        <Button 
-          onClick={() => navigate(`/k8s9d7f3-users-edit/${user.id}`)}
-          className="bg-[#146c4f] hover:bg-[#115a42] text-white gap-2"
-        >
-          <Edit className="w-4 h-4" /> Edit Profile
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/k8s9d7f3-users-add')}
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" /> Add User
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleDeleteUser}
+            disabled={deleting}
+            className="gap-2 text-red-600 border-red-200 hover:bg-red-50"
+          >
+            <Trash2 className="w-4 h-4" /> {deleting ? 'Deleting...' : 'Delete'}
+          </Button>
+          <Button 
+            onClick={() => navigate(`/k8s9d7f3-users-edit/${user.id}`)}
+            className="bg-[#146c4f] hover:bg-[#115a42] text-white gap-2"
+          >
+            <Edit className="w-4 h-4" /> Edit Profile
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -122,7 +181,7 @@ export default function UserDetailPage() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Shield className="w-5 h-5 text-[#146c4f]" />
-                Access & Permissions
+                Access
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -136,21 +195,6 @@ export default function UserDetailPage() {
                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Geography</h4>
                   <p className="text-sm font-semibold text-gray-700">{user.state_id ? 'Assigned State' : 'National Authority'}</p>
                   <p className="text-xs text-gray-500 mt-1">{user.state_id ? `Monitoring State ID: ${user.state_id}` : 'Access to all states and districts.'}</p>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Permissions</h4>
-                <div className="flex flex-wrap gap-2">
-                  {user.permissions.length > 0 ? (
-                    user.permissions.map((p) => (
-                      <Badge key={p.id} variant="secondary" className="bg-gray-50 text-gray-600 border-gray-200">
-                        {p.name}
-                      </Badge>
-                    ))
-                  ) : (
-                    <span className="text-sm text-gray-400 italic">No specific permissions assigned.</span>
-                  )}
                 </div>
               </div>
             </CardContent>

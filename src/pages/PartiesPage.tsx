@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
-import { Switch } from '@/components/ui/switch'
 import { Party, partyService } from '@/services/parties'
 import {
   Table,
@@ -13,9 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Search, ChevronLeft, ChevronRight,} from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, ToggleRight } from 'lucide-react'
 import AddPartyDialog from '@/components/AddPartyDialog'
-import { getLogoUrl } from '@/lib/utils'
+import { getLogoUrl, cn } from '@/lib/utils'
 
 // Types/Interfaces
 interface PartiesPageState {
@@ -292,13 +291,26 @@ export default function PartiesPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-gray-600 text-sm py-4 max-w-xs truncate">{party.slogan}</TableCell>
-                      <TableCell className="py-4 text-center">
-                        <Switch
-                          checked={Boolean(party.status)}
-                          onCheckedChange={() => handleToggleParty(party.id)}
-                          disabled={togglingIds.has(party.id)}
-                          className="mx-auto"
-                        />
+                      <TableCell className="text-gray-600 py-4">
+                        <div className="inline-flex items-center gap-2">
+                          <span className={cn(
+                            'rounded-full px-2 py-1 text-[0.7rem] font-semibold',
+                            party.status
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-red-100 text-red-800'
+                          )}>
+                            {party.status ? 'Active' : 'Inactive'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleParty(party.id)}
+                            disabled={togglingIds.has(party.id)}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            aria-label={`Toggle status for ${party.name}`}
+                          >
+                            <ToggleRight className="w-4 h-4" />
+                          </button>
+                        </div>
                       </TableCell>
                       <TableCell className="text-gray-600 text-sm py-4">{party.registrationYear || 'N/A'}</TableCell>
                       <TableCell className="py-4">
