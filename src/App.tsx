@@ -19,6 +19,7 @@ import ActivityLogsPage from '@/pages/ActivityLogsPage'
 import ElectionsPage from '@/pages/ElectionsPage'
 import ElectionFormPage from '@/pages/ElectionFormPage'
 import ElectionDetailPage from '@/pages/ElectionDetailPage'
+import RolesManagementPage from '@/pages/RolesManagementPage'
 import AdminLayout from '@/components/AdminLayout'
 import './App.css'
 
@@ -239,6 +240,17 @@ function App() {
               <ProtectedRoute>
                 <AdminLayout title="Admin / User Management / View User">
                   <UserDetailPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/k8s9d7f3-roles"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Roles & Permissions">
+                  <RolesManagementPage />
                 </AdminLayout>
               </ProtectedRoute>
             }

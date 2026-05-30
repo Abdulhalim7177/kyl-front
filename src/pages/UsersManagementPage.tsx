@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { AnimatedConfirmDialog } from '@/components/AnimatedConfirmDialog'
-import { userService, Role, Party } from '@/services/users'
+import { userService, Party } from '@/services/users'
+import { roleService, Role } from '@/services/roles'
 import { User } from '@/services/auth'
 import {
   Table,
@@ -84,7 +85,7 @@ export default function UsersManagementPage() {
   const fetchMetadata = async () => {
     try {
       const [rolesData, partiesData] = await Promise.all([
-        userService.getUserRoles(),
+        roleService.getUserRoles(),
         userService.getParties()
       ])
       setRoles(rolesData)

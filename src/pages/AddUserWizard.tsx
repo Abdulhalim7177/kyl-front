@@ -13,8 +13,10 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { userService, CreateUserData, Role, State, Party } from '@/services/users'
+import { roleService, Role as ServiceRole, Permission } from '@/services/roles'
+import { userService, CreateUserData } from '@/services/users'
 import { User } from '@/services/auth'
+import { Checkbox } from '@/components/ui/checkbox'
 
 const WIZARD_STEPS = [
   { number: 1, label: 'Basic Info', icon: UserIcon },
@@ -28,11 +30,11 @@ export default function AddUserWizard() {
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [fetchingPermissions, setFetchingPermissions] = useState(false)
   const [submittedUser, setSubmittedUser] = useState<User | null>(null)
   
-  const [roles, setRoles] = useState<Role[]>([])
-  const [states, setStates] = useState<State[]>([])
-  const [parties, setParties] = useState<Party[]>([])
+  const [roles, setRoles] = useState<ServiceRole[]>([])
+  const [availablePermissions, setAvailablePermissions] = useState<Permission[]>([])
 
   const [formData, setFormData] = useState<CreateUserData>({
     name: '',
@@ -53,17 +55,56 @@ export default function AddUserWizard() {
 
   const fetchMetadata = async () => {
     try {
-      const [rolesData, statesData, partiesData] = await Promise.all([
-        userService.getUserRoles(),
-        userService.getStates(),
-        userService.getParties()
-      ])
+      const rolesData = await roleService.getUserRoles()
       setRoles(rolesData)
-      setStates(statesData)
-      setParties(partiesData)
     } catch (err) {
-      console.error('Failed to fetch metadata:', err)
+      console.error('Failed to fetch roles:', err)
     }
+  }
+
+  const handleRoleChange = async (roleId: string) => {
+    const id = parseInt(roleId)
+    setFormData({ ...formData, role_id: id, permissions: [] })
+    
+    try {
+      setFetchingPermissions(true)
+      const permissions = await roleService.getRolePermissions(id)
+      setAvailablePermissions(permissions)
+      // Keep permissions empty by default as requested
+      setFormData(prev => ({
+        ...prev,
+        role_id: id,
+        permissions: []
+      }))
+    } catch (err) {
+      console.error('Failed to fetch role permissions:', err)
+      setAvailablePermissions([])
+    } finally {
+      setFetchingPermissions(false)
+    }
+  }
+
+  const handleSelectAllPermissions = () => {
+    setFormData(prev => ({
+      ...prev,
+      permissions: availablePermissions.map(p => p.id)
+    }))
+  }
+
+  const handleClearAllPermissions = () => {
+    setFormData(prev => ({
+      ...prev,
+      permissions: []
+    }))
+  }
+
+  const togglePermission = (permissionId: number) => {
+    setFormData(prev => {
+      const next = new Set(prev.permissions || [])
+      if (next.has(permissionId)) next.delete(permissionId)
+      else next.add(permissionId)
+      return { ...prev, permissions: Array.from(next) }
+    })
   }
 
   const loadUser = async () => {
@@ -80,6 +121,12 @@ export default function AddUserWizard() {
         party_id: user.party_id || 0,
         permissions: user.permissions.map(p => p.id)
       })
+      
+      // Also fetch permissions for the user's current role to show checkboxes
+      if (user.role_id) {
+        const permissions = await roleService.getRolePermissions(user.role_id)
+        setAvailablePermissions(permissions)
+      }
     } catch (err) {
       console.error('Failed to load user details:', err)
     } finally {
@@ -167,12 +214,12 @@ export default function AddUserWizard() {
         )
       case 2:
         return (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Administrative Role *</label>
               <Select
                 value={formData.role_id?.toString()}
-                onValueChange={(value) => setFormData({ ...formData, role_id: parseInt(value) })}
+                onValueChange={handleRoleChange}
               >
                 <SelectTrigger className="h-12">
                   <SelectValue placeholder="Select Role" />
@@ -185,42 +232,67 @@ export default function AddUserWizard() {
               </Select>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Assign to State</label>
-                <Select
-                  value={formData.state_id?.toString()}
-                  onValueChange={(value) => setFormData({ ...formData, state_id: parseInt(value) })}
-                >
-                  <SelectTrigger className="h-12">
-                    <SelectValue placeholder="National / Select State" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">National (All States)</SelectItem>
-                    {states.map(state => (
-                      <SelectItem key={state.id} value={state.id.toString()}>{state.name}</SelectItem>
+            {formData.role_id > 0 && (
+              <div className="space-y-4 pt-4 border-t border-gray-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                   <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                     <Shield className="w-4 h-4 text-[#146c4f]" />
+                     Permissions for this User
+                   </label>
+                   
+                   <div className="flex items-center gap-2">
+                     <Button 
+                       type="button"
+                       variant="ghost" 
+                       size="sm" 
+                       className="h-8 text-[10px] font-bold uppercase tracking-wider text-[#146c4f] hover:text-[#115a42] hover:bg-emerald-50 px-2"
+                       onClick={handleSelectAllPermissions}
+                       disabled={availablePermissions.length === 0}
+                     >
+                       Select All
+                     </Button>
+                     <div className="w-px h-3 bg-gray-200" />
+                     <Button 
+                       type="button"
+                       variant="ghost" 
+                       size="sm" 
+                       className="h-8 text-[10px] font-bold uppercase tracking-wider text-red-500 hover:text-red-600 hover:bg-red-50 px-2"
+                       onClick={handleClearAllPermissions}
+                       disabled={formData.permissions?.length === 0}
+                     >
+                       Clear All
+                     </Button>
+                     {fetchingPermissions && <Loader2 className="w-4 h-4 animate-spin text-gray-400 ml-2" />}
+                   </div>
+                </div>
+                
+                {availablePermissions.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                    {availablePermissions.map((permission) => (
+                      <div 
+                        key={permission.id} 
+                        className="flex items-center space-x-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors"
+                      >
+                        <Checkbox 
+                          id={`wizard-perm-${permission.id}`}
+                          checked={formData.permissions?.includes(permission.id)}
+                          onCheckedChange={() => togglePermission(permission.id)}
+                          className="data-[state=checked]:bg-[#146c4f] data-[state=checked]:border-[#146c4f]"
+                        />
+                        <label 
+                          htmlFor={`wizard-perm-${permission.id}`}
+                          className="text-xs font-medium leading-none cursor-pointer text-gray-600 flex-1 py-1"
+                        >
+                          {permission.name}
+                        </label>
+                      </div>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </div>
+                ) : !fetchingPermissions && (
+                  <p className="text-sm text-gray-500 italic">No specific permissions found for this role.</p>
+                )}
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Assign to Party</label>
-                <Select
-                  value={formData.party_id?.toString()}
-                  onValueChange={(value) => setFormData({ ...formData, party_id: parseInt(value) })}
-                >
-                  <SelectTrigger className="h-12">
-                    <SelectValue placeholder="Select Political Party" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">None / Independent</SelectItem>
-                    {parties.map(party => (
-                      <SelectItem key={party.id} value={party.id.toString()}>{party.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            )}
           </div>
         )
       case 3:
@@ -270,7 +342,7 @@ export default function AddUserWizard() {
       </div>
 
       {/* Step Indicator */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 max-w-2xl mx-auto">
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 max-w-4xl mx-auto">
         <div className="flex items-center justify-between">
           {WIZARD_STEPS.map((step, index) => {
             const Icon = step.icon
@@ -297,7 +369,7 @@ export default function AddUserWizard() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-w-2xl mx-auto">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-w-4xl mx-auto">
         {currentStep < 3 && (
           <div className="mb-6">
             <h2 className="text-xl font-bold text-gray-900">{WIZARD_STEPS[currentStep-1].label}</h2>

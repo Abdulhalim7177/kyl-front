@@ -352,7 +352,7 @@ class UserService {
   }
 
   async getStates(): Promise<State[]> {
-    const response = await fetch(`${API_BASE_URL}/districts/get-states`, {
+    const response = await fetch(`${API_BASE_URL}/states`, {
       method: 'GET',
       headers: this.getAuthHeaders()
     })
@@ -362,7 +362,7 @@ class UserService {
   }
 
   async getParties(): Promise<Party[]> {
-    const response = await fetch(`${API_BASE_URL}/parties/`, {
+    const response = await fetch(`${API_BASE_URL}/parties`, {
       method: 'GET',
       headers: this.getAuthHeaders()
     })
@@ -370,7 +370,8 @@ class UserService {
     const data = await response.json()
     return this.extractDataArray<Party>(data)
   }
-}
+  }
+
 
 export const userService = new UserService()
 
