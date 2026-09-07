@@ -14,6 +14,7 @@ interface PartyChairman {
   avatarUrl?: string | null
   status?: string
   termStart?: string
+  endDate?: string
   addedBy?: string
   termLimit?: string
   period?: string
@@ -27,8 +28,16 @@ interface PartyChairmanResponse {
 
 function formatDate(value?: string) {
   if (!value) return 'N/A'
-  const date = new Date(value)
-  return isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
+
+  const trimmed = value.trim()
+  if (!trimmed) return 'N/A'
+
+  const slashMatch = trimmed.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/)
+  const date = slashMatch
+    ? new Date(Number(slashMatch[1]), Number(slashMatch[2]) - 1, Number(slashMatch[3]))
+    : new Date(trimmed)
+
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
 }
 
 export default function PartyChairmanPage() {
@@ -52,27 +61,8 @@ export default function PartyChairmanPage() {
         const currentChairmanResult = await partyService.getPartyChairman(partyId)
         setData(currentChairmanResult)
       } catch (err) {
-        // For development: provide mock data when API is not available
-        if (err instanceof Error && err.message.includes('404')) {
-          setData({
-            partyName: 'Sample Party',
-            currentChairman: {
-              id: 1,
-              userId: 'USR-001',
-              fullName: 'John Doe',
-              avatarUrl: null,
-              status: 'Active',
-              termStart: '2023-01-15',
-              addedBy: 'Admin User',
-              termLimit: '4 years',
-              period: '2023-2027',
-              duration: '2 years'
-            }
-          })
-        } else {
-          const message = err instanceof Error ? err.message : 'Unable to load party chairman data.'
-          setError(message)
-        }
+        const message = err instanceof Error ? err.message : 'Unable to load party chairman data.'
+        setError(message)
       } finally {
         setLoading(false)
       }
@@ -82,6 +72,9 @@ export default function PartyChairmanPage() {
   }, [partyId])
 
   const currentChairman = data?.currentChairman
+  const startDate = currentChairman?.termStart || (currentChairman as any)?.startDate || ''
+  const endDate = (currentChairman as any)?.endDate || ''
+  const termLimitValue = (currentChairman as any)?.termLimit || ''
 
   const handleDeleteChairman = async () => {
     if (!currentChairman?.id || !partyId) return
@@ -192,8 +185,11 @@ export default function PartyChairmanPage() {
             <div className="space-y-1">
               <p className="text-lg font-semibold text-slate-900">{currentChairman?.fullName || 'No chairman assigned'}</p>
               <p className="text-sm text-slate-500">
-                {currentChairman?.termStart ? `Assumed position ${formatDate(currentChairman.termStart)}` : 'Assumption date not available'}
+                {currentChairman?.period ? `Period ${currentChairman.period}` : startDate ? `Start date ${formatDate(startDate)}` : 'Start date not available'}
               </p>
+              {currentChairman?.duration ? (
+                <p className="text-sm text-slate-500">Duration {currentChairman.duration}</p>
+              ) : null}
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -203,7 +199,14 @@ export default function PartyChairmanPage() {
               </div>
               <div className="rounded-2xl bg-slate-50 p-4">
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Term limit</p>
-                <p className="mt-2 text-sm font-semibold text-slate-900">{currentChairman?.termLimit || 'N/A'}</p>
+                {termLimitValue ? (
+                  <p className="mt-2 text-sm font-semibold text-slate-900">{formatDate(termLimitValue)}</p>
+                ) : (
+                  <p className="mt-2 text-sm font-semibold text-slate-900">No term limit set</p>
+                )}
+                {!termLimitValue && endDate ? (
+                  <p className="mt-1 text-xs text-slate-500">End date: {formatDate(endDate)}</p>
+                ) : null}
               </div>
             </div>
           </div>
@@ -212,3 +215,4 @@ export default function PartyChairmanPage() {
     </div>
   )
 }
+

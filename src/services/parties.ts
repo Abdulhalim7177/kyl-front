@@ -128,13 +128,41 @@ class PartyService {
       let chairmenList: any[] = []
       let partyName: string | undefined
 
-      if (responseData.data && Array.isArray(responseData.data)) {
+      const parseChairmanDate = (value?: string | null) => {
+        if (!value) return null
+
+        const trimmed = String(value).trim()
+        if (!trimmed) return null
+
+        const slashMatch = trimmed.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/)
+        if (slashMatch) {
+          const [, year, month, day] = slashMatch
+          const parsed = new Date(Number(year), Number(month) - 1, Number(day))
+          if (!Number.isNaN(parsed.getTime())) return parsed
+        }
+
+        const parsed = new Date(trimmed)
+        return Number.isNaN(parsed.getTime()) ? null : parsed
+      }
+
+      if (responseData?.data && Array.isArray(responseData.data)) {
         // Paginated response structure
         chairmenList = responseData.data
         partyName = chairmenList[0]?.party?.name
       } else if (Array.isArray(responseData)) {
         // Direct array response
         chairmenList = responseData
+      } else if (responseData && typeof responseData === 'object') {
+        const singleRecord = (responseData as any).data && typeof (responseData as any).data === 'object'
+          ? (responseData as any).data
+          : responseData
+
+        if (singleRecord && typeof singleRecord === 'object' && ('candidate' in singleRecord || 'party_id' in singleRecord || 'startDate' in singleRecord || 'endDate' in singleRecord)) {
+          chairmenList = [singleRecord]
+          partyName = singleRecord.party?.name || (responseData as any).party?.name
+        } else {
+          return responseData as any
+        }
       } else {
         // Already formatted response
         return responseData
@@ -145,48 +173,77 @@ class PartyService {
       const isFormerStatus = (status: any) => status === 0 || status === false || status === '0' || status === 'false'
 
       const currentChairmanRecord = chairmenList.find((c) => isActiveStatus(c.status))
-      const formerChairmenRecords = chairmenList.filter((c) => isFormerStatus(c.status))
+      // Include both former and active records in the formerChairmen list so the table shows all historical
+      // records including the currently active chairman (as requested).
+      const formerChairmenRecords = chairmenList.filter((c) => isFormerStatus(c.status) || isActiveStatus(c.status))
+
+      // Deduplicate records by candidate + start/end dates to handle duplicates
+      // even when IDs differ or the backend returns duplicates.
+      const uniqueKeyMap = new Map<string, any>()
+      for (const r of formerChairmenRecords) {
+        const candidateId = r.candidate?.id ?? r.candidate_id ?? ''
+        const s = r.startDate || r.start_date || ''
+        const e = r.endDate || r.end_date || ''
+        const key = `${candidateId}::${s}::${e}`
+        if (!uniqueKeyMap.has(key)) uniqueKeyMap.set(key, r)
+      }
+      const uniqueFormerChairmenRecords = Array.from(uniqueKeyMap.values())
 
       const formatChairmanDate = (value?: string | null) => {
-        if (!value) return ''
-        try {
-          const date = new Date(value)
-          if (Number.isNaN(date.getTime())) return ''
-          const year = date.getFullYear()
-          const month = String(date.getMonth() + 1).padStart(2, '0')
-          const day = String(date.getDate()).padStart(2, '0')
-          return `${year}-${month}-${day}`
-        } catch {
-          return ''
-        }
+        const parsed = parseChairmanDate(value)
+        if (!parsed) return ''
+
+        const year = parsed.getFullYear()
+        const month = String(parsed.getMonth() + 1).padStart(2, '0')
+        const day = String(parsed.getDate()).padStart(2, '0')
+        // Use slash-separated format as requested (YYYY/MM/DD)
+        return `${year}/${month}/${day}`
       }
 
       const normalizeChairmanRecord = (record: any) => {
-        // Handle both camelCase (startDate) and snake_case (start_date) from backend
-        const startDate = record.startDate || record.start_date || record.created_at || null
-        const endDate = record.endDate || record.end_date || record.updated_at || null
+        const isActive = isActiveStatus(record.status)
+        // Prefer explicit start/end date fields from the API; do not fall back to metadata timestamps
+        const startDate = record.startDate || record.start_date || null
+        const endDate = record.endDate || record.end_date || null
+        const termLimit = record.termLimit || record.term_limit || record.termEnd || record.term_end || record.term_end_date || endDate || null
         const startFormatted = formatChairmanDate(startDate)
         const endFormatted = endDate ? formatChairmanDate(endDate) : ''
         const period = startFormatted
-          ? `${startFormatted} - ${endFormatted || 'Present'}`
+          ? endFormatted
+            ? `${startFormatted} - ${endFormatted}`
+            : isActive
+              ? `${startFormatted} - Present`
+              : `${startFormatted}`
           : endFormatted
           ? `Until ${endFormatted}`
           : 'N/A'
 
         let duration = 'N/A'
-        if (startDate && endDate) {
-          const startParsed = new Date(startDate)
-          const endParsed = new Date(endDate)
-          if (!Number.isNaN(startParsed.getTime()) && !Number.isNaN(endParsed.getTime())) {
-            const years = Math.max(0, endParsed.getFullYear() - startParsed.getFullYear())
-            duration = `${years} year${years !== 1 ? 's' : ''}`
+        const startParsed = parseChairmanDate(startDate)
+        const endParsed = endDate ? parseChairmanDate(endDate) : null
+
+        const yearsBetween = (from: Date, to: Date) => {
+          let years = to.getFullYear() - from.getFullYear()
+          if (to.getMonth() < from.getMonth() || (to.getMonth() === from.getMonth() && to.getDate() < from.getDate())) {
+            years--
           }
+          return years
+        }
+
+        if (startParsed && endParsed) {
+          const years = yearsBetween(startParsed, endParsed)
+          duration = years > 0 ? `${years} year${years !== 1 ? 's' : ''}` : 'Less than 1 year'
+        } else if (startParsed && isActive) {
+          const now = new Date()
+          const years = yearsBetween(startParsed, now)
+          duration = years > 0 ? `${years} year${years !== 1 ? 's' : ''}` : 'Less than 1 year'
         }
 
         return {
           startDate,
           endDate,
-          normalizedPeriod: period,
+          termLimit,
+          normalizedPeriod: period === '' ? 'N/A' : period,
           normalizedDuration: duration,
         }
       }
@@ -194,7 +251,7 @@ class PartyService {
       // Transform current chairman
       const currentChairman = currentChairmanRecord
         ? (() => {
-            const { startDate, endDate, normalizedPeriod } = normalizeChairmanRecord(currentChairmanRecord)
+            const { startDate, endDate, termLimit, normalizedPeriod, normalizedDuration } = normalizeChairmanRecord(currentChairmanRecord)
             return {
               id: currentChairmanRecord.id,
               userId: currentChairmanRecord.candidate?.id,
@@ -204,26 +261,29 @@ class PartyService {
               startDate,
               endDate,
               termStart: startDate,
+              termLimit,
               addedBy: 'Admin',
               period: normalizedPeriod,
-              duration: 'Active',
+              duration: normalizedDuration || 'Active',
             }
           })()
         : null
 
       // Transform former chairmen
-      const formerChairmen = formerChairmenRecords.map((c) => {
-        const { startDate, endDate, normalizedPeriod, normalizedDuration } = normalizeChairmanRecord(c)
+      const formerChairmen = uniqueFormerChairmenRecords.map((c) => {
+        const { startDate, endDate, termLimit, normalizedPeriod, normalizedDuration } = normalizeChairmanRecord(c)
+        const isActive = isActiveStatus(c.status)
 
         return {
           id: c.id,
           userId: c.candidate?.id,
           fullName: c.candidate?.fullName,
           avatarUrl: c.candidate?.avatarUrl || null,
-          status: 'former',
+          status: isActive ? 'active' : 'former',
           startDate,
           endDate,
           termStart: startDate,
+          termLimit,
           period: normalizedPeriod,
           duration: normalizedDuration,
         }
@@ -261,8 +321,8 @@ class PartyService {
 
       const record = data.data
       // Apply date normalization - handle both camelCase and snake_case
-      const startDate = record.startDate || record.start_date || record.created_at || null
-      const endDate = record.endDate || record.end_date || record.updated_at || null
+      const startDate = record.startDate || record.start_date || null
+      const endDate = record.endDate || record.end_date || null
 
       return {
         ...record,
@@ -324,8 +384,8 @@ class PartyService {
 
       // Apply date normalization to all chairman records - handle both camelCase and snake_case
       return chairmenList.map((record) => {
-        const startDate = record.startDate || record.start_date || record.created_at || null
-        const endDate = record.endDate || record.end_date || record.updated_at || null
+        const startDate = record.startDate || record.start_date || null
+        const endDate = record.endDate || record.end_date || null
 
         return {
           ...record,
@@ -504,6 +564,8 @@ class PartyService {
           candidate_id: chairmanData.candidateId,
           start_date: chairmanData.startDate,
           end_date: chairmanData.endDate,
+          startDate: chairmanData.startDate,
+          endDate: chairmanData.endDate,
           remark: chairmanData.remark || '',
         }),
       })
@@ -515,8 +577,8 @@ class PartyService {
       }
 
       const record = data.data
-      const startDate = record.startDate || record.start_date || record.created_at || null
-      const endDate = record.endDate || record.end_date || record.updated_at || null
+      const startDate = record.startDate || record.start_date || null
+      const endDate = record.endDate || record.end_date || null
 
       return {
         ...record,
@@ -557,3 +619,5 @@ class PartyService {
 }
 
 export const partyService = new PartyService()
+
+

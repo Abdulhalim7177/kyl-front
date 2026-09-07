@@ -82,8 +82,16 @@ function deriveStats(id: number) {
 
 function formatChairmanDate(value?: string) {
   if (!value) return 'N/A'
-  const date = new Date(value)
-  return isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
+
+  const trimmed = value.trim()
+  if (!trimmed) return 'N/A'
+
+  const slashMatch = trimmed.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/)
+  const date = slashMatch
+    ? new Date(Number(slashMatch[1]), Number(slashMatch[2]) - 1, Number(slashMatch[3]))
+    : new Date(trimmed)
+
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
 }
 
 export default function PartyProfilePage() {
@@ -404,36 +412,14 @@ export default function PartyProfilePage() {
       try {
         setChairmanLoading(true)
         const chairmanResult = await partyService.getPartyChairman(String(id))
+        // DEBUG: log chairman result to verify dates and status coming from service
+        // Remove this log after verification
+        // eslint-disable-next-line no-console
+        console.log('chairmanResult:', chairmanResult)
         setChairmanData(chairmanResult)
       } catch (err) {
         console.error('Unable to load party chairmen:', err)
-        // Mock data for demonstration
-        const mockData = {
-          partyName: party?.name,
-          currentChairman: {
-            id: 1,
-            fullName: 'John Doe',
-            status: 'active',
-            termStart: '2023-01-01',
-            addedBy: 'Admin',
-            period: '2023-2026',
-          },
-          formerChairmen: [
-            {
-              id: 2,
-              fullName: 'Jane Smith',
-              status: 'former',
-              period: '2020-2023',
-            },
-            {
-              id: 3,
-              fullName: 'Bob Johnson',
-              status: 'former',
-              period: '2017-2020',
-            },
-          ],
-        }
-        setChairmanData(mockData)
+        setChairmanData(null)
       } finally {
         setChairmanLoading(false)
       }
@@ -1112,8 +1098,11 @@ export default function PartyProfilePage() {
                   {chairmanData?.currentChairman && (
                     <>
                       <p className="text-sm text-slate-500">
-                        {chairmanData.currentChairman.termStart ? `Assumed position ${formatChairmanDate(chairmanData.currentChairman.termStart)}` : 'Assumption date not available'}
+                        {chairmanData.currentChairman.period ? `Period ${chairmanData.currentChairman.period}` : (chairmanData.currentChairman.termStart ? `Assumed position ${formatChairmanDate(chairmanData.currentChairman.termStart)}` : 'Assumption date not available')}
                       </p>
+                      {chairmanData.currentChairman.duration ? (
+                        <p className="text-sm text-slate-500">Duration {chairmanData.currentChairman.duration}</p>
+                      ) : null}
                       <p className="text-sm text-slate-500">
                         {chairmanData.currentChairman.addedBy ? `Added by ${chairmanData.currentChairman.addedBy}` : 'Added by N/A'}
                       </p>
@@ -1422,4 +1411,5 @@ export default function PartyProfilePage() {
     </div>
   )
 }
+
 
