@@ -16,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ArrowLeft, Edit, Loader2, AlertCircle, Trash2, Eye, MoreVertical } from 'lucide-react'
+import { ArrowLeft, Edit, Loader2, AlertCircle, Trash2, Eye, MoreVertical, RefreshCw } from 'lucide-react'
 import { electionService, Election } from '@/services/elections'
 import { candidateService, Candidate } from '@/services/candidates'
 import { useAuth } from '@/contexts/AuthContext'
@@ -66,11 +66,12 @@ export default function ElectionDetailPage() {
     if (!election || !id) return
     try {
       setChangingStatus(true)
-      const updated = await electionService.changeElectionStatus(
+      await electionService.changeElectionStatus(
         Number(id),
         newStatus as 'Upcoming' | 'Ongoing' | 'Completed'
       )
-      setElection(updated)
+      await loadData(Number(id))
+      sessionStorage.setItem('electionsRefresh', '1')
     } catch (err) {
       console.error('Failed to change status:', err)
       setError('Failed to change election status.')
@@ -168,7 +169,7 @@ export default function ElectionDetailPage() {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button 
             variant="outline"
             onClick={() => navigate(`/k8s9d7f3-elections-edit/${election.id}`)}
@@ -177,6 +178,38 @@ export default function ElectionDetailPage() {
             <Edit className="w-4 h-4" />
             Edit Election
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="rounded-xl px-5 flex items-center gap-2"
+                disabled={changingStatus}
+              >
+                <RefreshCw className="w-4 h-4" />
+                Update Status
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[180px]">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => handleStatusChange('Upcoming')}
+              >
+                Upcoming
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => handleStatusChange('Ongoing')}
+              >
+                On-going
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => handleStatusChange('Completed')}
+              >
+                Completed
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button 
             variant="outline"
             onClick={() => setShowDeleteConfirm(true)}
@@ -186,6 +219,7 @@ export default function ElectionDetailPage() {
             <Trash2 className="w-4 h-4" />
             Delete
           </Button>
+          {changingStatus && <Loader2 className="w-5 h-5 animate-spin text-gray-400" />}
         </div>
       </div>
 
@@ -222,50 +256,6 @@ export default function ElectionDetailPage() {
           </div>
         </div>
       )}
-
-      {/* Change Status Card */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Change Election Status</h2>
-        <div className="flex items-center gap-3 flex-wrap">
-          <Button
-            variant={election.status === 'Upcoming' ? 'default' : 'outline'}
-            onClick={() => handleStatusChange('Upcoming')}
-            disabled={changingStatus || election.status === 'Upcoming'}
-            className={`rounded-xl px-5 ${
-              election.status === 'Upcoming' 
-                ? 'bg-amber-500 hover:bg-amber-600 text-white border-transparent' 
-                : 'text-gray-600 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200'
-            }`}
-          >
-            Upcoming
-          </Button>
-          <Button
-            variant={election.status === 'Ongoing' ? 'default' : 'outline'}
-            onClick={() => handleStatusChange('Ongoing')}
-            disabled={changingStatus || election.status === 'Ongoing'}
-            className={`rounded-xl px-5 ${
-              election.status === 'Ongoing' 
-                ? 'bg-blue-500 hover:bg-blue-600 text-white border-transparent' 
-                : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200'
-            }`}
-          >
-            On-going
-          </Button>
-          <Button
-            variant={election.status === 'Completed' ? 'default' : 'outline'}
-            onClick={() => handleStatusChange('Completed')}
-            disabled={changingStatus || election.status === 'Completed'}
-            className={`rounded-xl px-5 ${
-              election.status === 'Completed' 
-                ? 'bg-emerald-500 hover:bg-emerald-600 text-white border-transparent' 
-                : 'text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200'
-            }`}
-          >
-            Completed
-          </Button>
-          {changingStatus && <Loader2 className="w-5 h-5 animate-spin text-gray-400 ml-2" />}
-        </div>
-      </div>
 
       {/* Candidates Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

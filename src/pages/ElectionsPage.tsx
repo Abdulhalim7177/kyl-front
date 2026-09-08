@@ -40,6 +40,27 @@ export default function ElectionsPage() {
     }
   }, [isAuthenticated, showOnlyActive])
 
+  useEffect(() => {
+    const refresh = sessionStorage.getItem('electionsRefresh')
+    if (refresh === '1') {
+      sessionStorage.removeItem('electionsRefresh')
+      if (isAuthenticated) {
+        loadData()
+      }
+    }
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'electionsRefresh' && event.newValue === '1') {
+        if (isAuthenticated) {
+          loadData()
+        }
+      }
+    }
+
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [isAuthenticated])
+
   const loadData = async () => {
     try {
       setLoading(true)
