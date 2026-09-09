@@ -22,6 +22,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Plus, User, Clock, Flag, RefreshCw, ChevronLeft, ChevronRight, MoreHorizontal, Trash2, Eye, MoreVertical, Edit } from 'lucide-react'
 import { electionService, Election, ElectionStats } from '@/services/elections'
+import { PaginationControls } from '@/components/PaginationControls'
+import { useClientPagination } from '@/components/useClientPagination'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function ElectionsPage() {
@@ -131,6 +133,16 @@ export default function ElectionsPage() {
         )
     }
   }
+
+  const {
+    currentPage,
+    totalPages,
+    totalItems,
+    itemsPerPage,
+    paginatedData,
+    handlePageChange,
+    handleItemsPerPageChange
+  } = useClientPagination(elections, 20)
 
   return (
     <div className="space-y-6">
@@ -244,7 +256,7 @@ export default function ElectionsPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                elections.map((election, index) => (
+                paginatedData.map((election, index) => (
                   <TableRow
                     key={`${election.id}-${index}`}
                     className="hover:bg-gray-50/50 transition-colors border-gray-50 cursor-pointer"
@@ -326,35 +338,14 @@ export default function ElectionsPage() {
           </Table>
         </div>
 
-        {/* Pagination */}
-        <div className="p-4 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
-          <div>
-            Showing {elections.length} election{elections.length !== 1 ? 's' : ''}
-          </div>
-          <div className="flex items-center gap-1">
-            <button className="w-8 h-8 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded bg-[#146c4f] text-white font-medium">
-              1
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-600 font-medium transition-colors">
-              2
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-600 font-medium transition-colors">
-              3
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded text-gray-400 cursor-default">
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-600 font-medium transition-colors">
-              125
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handleItemsPerPageChange}
+        />
       </div>
     </div>
   )

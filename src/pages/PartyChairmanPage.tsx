@@ -32,7 +32,7 @@ function formatDate(value?: string) {
   const trimmed = value.trim()
   if (!trimmed) return 'N/A'
 
-  const slashMatch = trimmed.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/)
+  const slashMatch = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/)
   const date = slashMatch
     ? new Date(Number(slashMatch[1]), Number(slashMatch[2]) - 1, Number(slashMatch[3]))
     : new Date(trimmed)

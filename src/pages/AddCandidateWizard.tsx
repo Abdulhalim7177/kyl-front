@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { candidateService, Candidate, CreateCandidateData, Party } from '@/services/candidates'
+import { candidateService, Candidate, CreateCandidateData, Party, LGADistrict } from '@/services/candidates'
 
 // Wizard steps configuration
 const WIZARD_STEPS = [
@@ -36,6 +36,7 @@ export default function AddCandidateWizard() {
   const [parties, setParties] = useState<Party[]>([])
   const [partySearch, setPartySearch] = useState('')
   const [districtSearch, setDistrictSearch] = useState('')
+  const [lgas, setLgas] = useState<LGADistrict[]>([])
   const [loadingSelectData, setLoadingSelectData] = useState(false)
   
   const [formData, setFormData] = useState<CreateCandidateData>({
@@ -58,10 +59,14 @@ export default function AddCandidateWizard() {
     const fetchSelectData = async () => {
       try {
         setLoadingSelectData(true)
-        const partiesData = await candidateService.getAllParties()
+        const [partiesData, lgasData] = await Promise.all([
+          candidateService.getAllParties(),
+          candidateService.getAllLGADistricts()
+        ])
         setParties(partiesData)
+        setLgas(lgasData)
       } catch (error) {
-        console.error('Failed to load parties:', error)
+        console.error('Failed to load select data:', error)
       } finally {
         setLoadingSelectData(false)
       }
@@ -336,19 +341,13 @@ export default function AddCandidateWizard() {
                   searchValue={districtSearch}
                   onSearchChange={setDistrictSearch}
                 >
-                  {[
-                    { id: 1, label: 'Aba North' },
-                    { id: 2, label: 'Aba South' },
-                    { id: 3, label: 'Arochukwu' },
-                    { id: 4, label: 'Bende' },
-                    { id: 5, label: 'Ikwuano' },
-                  ]
+                  {lgas
                     .filter((district) =>
-                      district.label.toLowerCase().includes(districtSearch.toLowerCase())
+                      district.name.toLowerCase().includes(districtSearch.toLowerCase())
                     )
                     .map((district) => (
                       <SelectItem key={district.id} value={district.id.toString()}>
-                        {district.label}
+                        {district.name}
                       </SelectItem>
                     ))}
                 </SelectContent>

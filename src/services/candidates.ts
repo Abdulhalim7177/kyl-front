@@ -179,6 +179,7 @@ class CandidateService {
     console.log('📨 Candidates API Response Status:', response.status, response.statusText)
 
     if (!response.ok) {
+      if (response.status === 404) return [];
       const errorText = await response.text()
       console.error('❌ API Error response:', errorText)
       throw new Error(`Failed to fetch candidates: ${response.status} ${response.statusText}`)
@@ -187,7 +188,9 @@ class CandidateService {
     const rawData: PaginatedResponse<any> = await response.json()
     console.log('📊 Candidates API Response Data:', rawData)
 
-     const rawCandidates = Array.isArray(rawData.data?.data) ? rawData.data.data : []
+     const rawCandidates = Array.isArray(rawData.data?.data) 
+       ? rawData.data.data 
+       : (Array.isArray(rawData.data) ? rawData.data : [])
      console.log('📊 Raw candidates length:', rawCandidates.length)
 
      const candidates = rawCandidates.map((candidate: any) => {
@@ -413,6 +416,7 @@ class CandidateService {
     })
 
     if (!response.ok) {
+      if (response.status === 404) return [];
       throw new Error('Failed to fetch president candidates')
     }
 
@@ -427,6 +431,7 @@ class CandidateService {
     })
 
     if (!response.ok) {
+      if (response.status === 404) return [];
       throw new Error('Failed to fetch governatorial candidates')
     }
 
@@ -441,6 +446,7 @@ class CandidateService {
     })
 
     if (!response.ok) {
+      if (response.status === 404) return [];
       throw new Error('Failed to fetch senatorial candidates')
     }
 
@@ -455,6 +461,7 @@ class CandidateService {
     })
 
     if (!response.ok) {
+      if (response.status === 404) return [];
       throw new Error('Failed to fetch reps candidates')
     }
 
@@ -469,6 +476,7 @@ class CandidateService {
     })
 
     if (!response.ok) {
+      if (response.status === 404) return [];
       throw new Error('Failed to fetch assembly candidates')
     }
 
@@ -484,6 +492,7 @@ class CandidateService {
     })
 
     if (!response.ok) {
+      if (response.status === 404) return [];
       throw new Error('Failed to fetch district candidates')
     }
 

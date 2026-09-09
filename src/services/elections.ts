@@ -282,6 +282,85 @@ class ElectionService {
 
     console.log('✅ Election deleted successfully')
   }
+
+  // GET /elections/get-election-timetables/{electionid}
+  async getElectionTimetables(electionId: number): Promise<any[]> {
+    console.log(`🔍 Fetching timetables for election #${electionId}...`)
+    const response = await fetch(`${API_BASE_URL}/elections/get-election-timetables/${electionId}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+    if (!response.ok) throw new Error('Failed to fetch election timetables')
+    const rawData = await response.json()
+    return rawData.data || rawData
+  }
+
+  // GET /elections/get-election-timetable/{id}
+  async getElectionTimetable(id: number): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/elections/get-election-timetable/${id}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+    if (!response.ok) throw new Error('Failed to fetch election timetable')
+    const rawData = await response.json()
+    return rawData.data || rawData
+  }
+
+  // GET /elections/get-election-types
+  async getElectionTypes(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/elections/get-election-types`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+    if (!response.ok) throw new Error('Failed to fetch election types')
+    const rawData = await response.json()
+    return rawData.data || rawData
+  }
+
+  // POST /elections/create-election-timetable
+  async createElectionTimetable(data: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/elections/create-election-timetable`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) throw new Error('Failed to create election timetable')
+    const rawData = await response.json()
+    return rawData.data || rawData
+  }
+
+  // PATCH /elections/update-election-timetable/{id}
+  async updateElectionTimetable(id: number, data: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/elections/update-election-timetable/${id}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) throw new Error('Failed to update election timetable')
+    const rawData = await response.json()
+    return rawData.data || rawData
+  }
+
+  // PATCH /elections/change-election-timetable-status/{id}
+  async changeElectionTimetableStatus(id: number, status: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/elections/change-election-timetable-status/${id}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ status })
+    })
+    if (!response.ok) throw new Error('Failed to change timetable status')
+    const rawData = await response.json()
+    return rawData.data || rawData
+  }
+
+  // DELETE /elections/delete-election-timetable/{id}
+  async deleteElectionTimetable(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/elections/delete-election-timetable/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    })
+    if (!response.ok) throw new Error('Failed to delete election timetable')
+  }
 }
 
 export const electionService = new ElectionService()

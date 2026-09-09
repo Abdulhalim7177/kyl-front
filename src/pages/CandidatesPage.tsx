@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { AnimatedConfirmDialog } from '@/components/AnimatedConfirmDialog'
+import { PaginationControls } from '@/components/PaginationControls'
+import { useClientPagination } from '@/components/useClientPagination'
 import {
   Table,
   TableBody,
@@ -115,13 +117,7 @@ export default function CandidatesPage() {
 
 
 
-  const toggleSelectAll = () => {
-    if (selectedIds.size === (candidates || []).length) {
-      setSelectedIds(new Set())
-    } else {
-      setSelectedIds(new Set((candidates || []).map(c => c.id)))
-    }
-  }
+
 
   const toggleSelect = (id: number) => {
     const next = new Set(selectedIds)
@@ -195,6 +191,24 @@ export default function CandidatesPage() {
     
     return matchesSearch && matchesState && matchesParty && matchesDistrict
   })
+
+  const {
+    currentPage,
+    totalPages,
+    totalItems,
+    itemsPerPage,
+    paginatedData,
+    handlePageChange,
+    handleItemsPerPageChange
+  } = useClientPagination(filteredCandidates, 20)
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === paginatedData.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(paginatedData.map(c => c.id)))
+    }
+  }
 
   const numSelected = selectedIds.size
   const isSelectionActive = numSelected > 0
@@ -403,7 +417,7 @@ export default function CandidatesPage() {
                    </TableCell>
                  </TableRow>
                ) : (
-                 filteredCandidates.map((item) => {
+                 paginatedData.map((item) => {
                    const isSelected = selectedIds.has(item.id)
                    return (
                      <TableRow 
@@ -497,6 +511,14 @@ export default function CandidatesPage() {
              </TableBody>
            </Table>
          </div>
+         <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleItemsPerPageChange}
+         />
       </div>
 
       {/* Delete Confirmation Dialog */}

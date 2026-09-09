@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Party, partyService } from '@/services/parties'
+import { PaginationControls } from '@/components/PaginationControls'
+import { useClientPagination } from '@/components/useClientPagination'
 import {
   Table,
   TableBody,
@@ -96,19 +98,7 @@ export default function PartiesPage() {
     setState((prev) => ({ ...prev, search: value }))
   }
 
-  const toggleSelectAll = () => {
-    const allVisibleSelected = filteredParties.length > 0 && filteredParties.every((party) => selectedIds.has(party.id))
-    const next = new Set(selectedIds)
 
-    if (allVisibleSelected) {
-      filteredParties.forEach((party) => next.delete(party.id))
-      setSelectedIds(next)
-      return
-    }
-
-    filteredParties.forEach((party) => next.add(party.id))
-    setSelectedIds(next)
-  }
 
   const toggleSelect = (id: number) => {
     const next = new Set(selectedIds)
@@ -166,6 +156,30 @@ export default function PartiesPage() {
 
   const total = state.parties.length
   const count = filteredParties.length
+
+  const {
+    currentPage,
+    totalPages,
+    totalItems,
+    itemsPerPage,
+    paginatedData,
+    handlePageChange,
+    handleItemsPerPageChange
+  } = useClientPagination(filteredParties, 20)
+
+  const toggleSelectAll = () => {
+    const allVisibleSelected = paginatedData.length > 0 && paginatedData.every((party) => selectedIds.has(party.id))
+    const next = new Set(selectedIds)
+
+    if (allVisibleSelected) {
+      paginatedData.forEach((party) => next.delete(party.id))
+      setSelectedIds(next)
+      return
+    }
+
+    paginatedData.forEach((party) => next.add(party.id))
+    setSelectedIds(next)
+  }
 
   // Render
   return (
@@ -227,7 +241,7 @@ export default function PartiesPage() {
               <TableRow className="border-gray-100 bg-gray-50/50">
                 <TableHead className="w-12 px-4 py-3">
                   <Checkbox
-                    checked={filteredParties.length > 0 && filteredParties.every((party) => selectedIds.has(party.id))}
+                    checked={paginatedData.length > 0 && paginatedData.every((party) => selectedIds.has(party.id))}
                     onCheckedChange={toggleSelectAll}
                     className="rounded-[4px] border-gray-300"
                   />
@@ -247,8 +261,8 @@ export default function PartiesPage() {
                     Loading parties...
                   </TableCell>
                 </TableRow>
-              ) : filteredParties.length > 0 ? (
-                filteredParties.map((party) => {
+              ) : paginatedData.length > 0 ? (
+                paginatedData.map((party) => {
                   const isSelected = selectedIds.has(party.id)
                   const abbreviation = party.name
                     .split(' ')
@@ -338,18 +352,14 @@ export default function PartiesPage() {
           </Table>
         </div>
 
-        <div className="bg-gray-50/50 px-4 py-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between text-xs gap-3">
-          <span className="text-gray-500">Showing {count} of {total} parties</span>
-          <div className="flex items-center gap-1">
-            <button className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-400 hover:bg-white bg-transparent transition-colors">
-              <ChevronLeft className="w-3.5 h-3.5" />
-            </button>
-            <button className="w-7 h-7 flex items-center justify-center rounded bg-green-700 text-white font-medium border border-green-700 text-xs">1</button>
-            <button className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-600 hover:bg-white bg-white transition-colors">
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handleItemsPerPageChange}
+        />
       </div>
     </div>
   )

@@ -25,6 +25,8 @@ import {
 import { FaLandmark } from "react-icons/fa";
 import { userService, ActivityLog } from "@/services/users";
 import { candidateService, Candidate } from "@/services/candidates";
+import { partyService } from "@/services/parties";
+import { electionService } from "@/services/elections";
 import { formatDistanceToNow } from "date-fns";
 import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
@@ -33,6 +35,8 @@ export default function DashboardPage() {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [userCount, setUserCount] = useState(0);
+  const [partyCount, setPartyCount] = useState(0);
+  const [electionCount, setElectionCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,14 +46,18 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [activityLogs, allCandidates, allUsers] = await Promise.all([
+      const [activityLogs, allCandidates, allUsers, allParties, allElections] = await Promise.all([
         userService.getActivityLogs(),
         candidateService.getAllCandidates(),
-        userService.getUsers()
+        userService.getUsers(),
+        partyService.getAllParties(),
+        electionService.getAllElections()
       ]);
       setLogs(activityLogs.slice(0, 5));
       setCandidates(allCandidates.slice(0, 5));
       setUserCount(allUsers.length);
+      setPartyCount(allParties.length);
+      setElectionCount(allElections.length);
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
     } finally {
@@ -59,8 +67,8 @@ export default function DashboardPage() {
 
   const stats = [
     { label: "Users", value: userCount.toString(), change: "+0%", icon: HiUsers, color: "text-teal-600", bgColor: "bg-teal-50" },
-    { label: "Political Parties", value: "12", change: "+0%", icon: FaLandmark, color: "text-blue-600", bgColor: "bg-blue-50" },
-    { label: "Elections", value: "7", change: "+0%", icon: MdHowToVote, color: "text-purple-600", bgColor: "bg-purple-50" },
+    { label: "Political Parties", value: partyCount.toString(), change: "+0%", icon: FaLandmark, color: "text-blue-600", bgColor: "bg-blue-50" },
+    { label: "Elections", value: electionCount.toString(), change: "+0%", icon: MdHowToVote, color: "text-purple-600", bgColor: "bg-purple-50" },
     { label: "Candidates", value: candidates.length.toString(), change: "+0%", icon: MdPeople, color: "text-green-600", bgColor: "bg-green-50" },
   ];
 

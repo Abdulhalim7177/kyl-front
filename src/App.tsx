@@ -62,6 +62,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { Menu } from 'lucide-react'
 import { useState } from 'react'
+import DistrictsPage from '@/pages/DistrictsPage'
 
 function Navigation() {
   const location = useLocation()
@@ -355,6 +356,66 @@ function App() {
             }
           />
           
+                    <Route
+            path="/k8s9d7f3-districts/states"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Districts / States">
+                  <DistrictsPage type="states" title="States" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/senatorial"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Districts / Senatorial">
+                  <DistrictsPage type="senatorial" title="Senatorial Districts" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/federal"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Districts / Federal Constituencies">
+                  <DistrictsPage type="federal" title="Federal Constituencies" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/state-house"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Districts / State Constituencies">
+                  <DistrictsPage type="state-house" title="State Constituencies" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/lgas"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Districts / LGAs">
+                  <DistrictsPage type="lgas" title="Local Government Areas" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/wards"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Districts / Wards">
+                  <DistrictsPage type="wards" title="Wards" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
         </Routes>
       </BrowserRouter>

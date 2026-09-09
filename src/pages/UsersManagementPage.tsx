@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { AnimatedConfirmDialog } from '@/components/AnimatedConfirmDialog'
+import { PaginationControls } from '@/components/PaginationControls'
+import { useClientPagination } from '@/components/useClientPagination'
 import { userService, Party } from '@/services/users'
 import { roleService, Role } from '@/services/roles'
 import { User } from '@/services/auth'
@@ -128,11 +130,21 @@ export default function UsersManagementPage() {
     return matchesRole && matchesStatus && matchesSearch
   })
 
+  const {
+    currentPage,
+    totalPages,
+    totalItems,
+    itemsPerPage,
+    paginatedData,
+    handlePageChange,
+    handleItemsPerPageChange
+  } = useClientPagination(filteredUsers, 20)
+
   const toggleSelectAll = () => {
-    if (selectedIds.size === filteredUsers.length) {
+    if (selectedIds.size === paginatedData.length) {
       setSelectedIds(new Set())
     } else {
-      setSelectedIds(new Set(filteredUsers.map(u => u.id)))
+      setSelectedIds(new Set(paginatedData.map(u => u.id)))
     }
   }
 
@@ -326,7 +338,7 @@ export default function UsersManagementPage() {
                </TableRow>
              </TableHeader>
              <TableBody>
-               {filteredUsers.map((item) => {
+               {paginatedData.map((item) => {
                  const isSelected = selectedIds.has(item.id)
                  const status = item.status === 1 ? 'Active' : 'Inactive'
                  const level = item.state_id ? 'State' : 'National'
@@ -411,15 +423,14 @@ export default function UsersManagementPage() {
            </Table>
          </div>
 
-         {/* Pagination Footer */}
-         <div className="bg-gray-50/50 p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between text-sm gap-4">
-            <span className="text-gray-500 font-medium ml-2">Showing {filteredUsers.length} users</span>
-            <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto justify-center">
-               <button className="w-8 h-8 shrink-0 flex items-center justify-center rounded border border-gray-200 text-gray-400 hover:bg-white bg-transparent"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg></button>
-               <button className="w-8 h-8 shrink-0 flex items-center justify-center rounded bg-[#146c4f] text-white font-medium border border-[#146c4f]">1</button>
-               <button className="w-8 h-8 shrink-0 flex items-center justify-center rounded border border-gray-200 text-gray-700 hover:bg-white bg-white shadow-sm"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg></button>
-            </div>
-         </div>
+         <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleItemsPerPageChange}
+         />
       </div>
 
       {/* --- Batch Actions Modals --- */}

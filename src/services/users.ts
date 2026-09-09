@@ -122,7 +122,12 @@ class UserService {
     })
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Failed to create user' }))
-      throw new Error(error.message || 'Failed to create user')
+      let errMsg = error.message || 'Failed to create user'
+      if (error.data && typeof error.data === 'object' && !Array.isArray(error.data)) {
+        const details = Object.values(error.data).flat().join(' | ')
+        if (details) errMsg += ': ' + details
+      }
+      throw new Error(errMsg)
     }
     const data: ApiResponse<User> = await response.json()
     return data.data
@@ -352,7 +357,7 @@ class UserService {
   }
 
   async getStates(): Promise<State[]> {
-    const response = await fetch(`${API_BASE_URL}/states`, {
+    const response = await fetch(`${API_BASE_URL}/districts/get-states`, {
       method: 'GET',
       headers: this.getAuthHeaders()
     })

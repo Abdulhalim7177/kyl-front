@@ -86,7 +86,7 @@ function formatChairmanDate(value?: string) {
   const trimmed = value.trim()
   if (!trimmed) return 'N/A'
 
-  const slashMatch = trimmed.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/)
+  const slashMatch = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/)
   const date = slashMatch
     ? new Date(Number(slashMatch[1]), Number(slashMatch[2]) - 1, Number(slashMatch[3]))
     : new Date(trimmed)
@@ -414,7 +414,7 @@ export default function PartyProfilePage() {
         const chairmanResult = await partyService.getPartyChairman(String(id))
         // DEBUG: log chairman result to verify dates and status coming from service
         // Remove this log after verification
-        // eslint-disable-next-line no-console
+         
         console.log('chairmanResult:', chairmanResult)
         setChairmanData(chairmanResult)
       } catch (err) {
@@ -641,7 +641,7 @@ export default function PartyProfilePage() {
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{party.name}</h1>
-              <Badge variant="secondary">{Boolean(party.status) ? 'Active' : 'Inactive'}</Badge>
+              <Badge variant="secondary">{party.status ? 'Active' : 'Inactive'}</Badge>
             </div>
             <p className="max-w-2xl text-sm text-slate-500">{party.description}</p>
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
