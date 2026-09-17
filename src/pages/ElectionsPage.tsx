@@ -20,7 +20,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu'
-import { Plus, User, Clock, Flag, RefreshCw, ChevronLeft, ChevronRight, MoreHorizontal, Trash2, Eye, MoreVertical, Edit } from 'lucide-react'
+import { Plus, User, Clock, Flag, RefreshCw, Trash2, Eye, MoreVertical, Edit } from 'lucide-react'
 import { electionService, Election, ElectionStats } from '@/services/elections'
 import { PaginationControls } from '@/components/PaginationControls'
 import { useClientPagination } from '@/components/useClientPagination'

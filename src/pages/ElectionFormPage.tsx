@@ -80,9 +80,9 @@ export default function ElectionFormPage() {
         await electionService.createElection({ year: yearNum, details: formData.details?.trim() || undefined })
       }
       navigate('/k8s9d7f3-elections')
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save election:', err)
-      setError('Failed to save election. Please try again.')
+      setError(err.message || 'Failed to save election. Please try again.')
       setSaving(false)
     }
   }

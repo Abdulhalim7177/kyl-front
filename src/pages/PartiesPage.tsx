@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Search, ChevronLeft, ChevronRight, ToggleRight } from 'lucide-react'
+import { Search, ToggleRight } from 'lucide-react'
 import AddPartyDialog from '@/components/AddPartyDialog'
 import { getLogoUrl, cn } from '@/lib/utils'
 
@@ -154,8 +154,6 @@ export default function PartiesPage() {
     )
   }, [state.parties, state.search])
 
-  const total = state.parties.length
-  const count = filteredParties.length
 
   const {
     currentPage,

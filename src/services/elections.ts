@@ -183,23 +183,27 @@ class ElectionService {
   // POST /elections/create-election?year={year}&details={details}
   async createElection(data: { year: number; details?: string }): Promise<Election> {
     console.log('🔍 Creating election...', data)
-    const params = new URLSearchParams()
-    params.append('year', data.year.toString())
-    if (data.details) {
-      params.append('details', data.details)
-    }
-
-    const response = await fetch(`${API_BASE_URL}/elections/create-election?${params.toString()}`, {
+    const response = await fetch(`${API_BASE_URL}/elections/create-election`, {
       method: 'POST',
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
     })
 
     console.log('📨 Create Election Response Status:', response.status, response.statusText)
 
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('❌ Create Election API Error:', errorText)
-      throw new Error(`Failed to create election: ${response.status} ${response.statusText}`)
+      let errorMsg = `Failed to create election: ${response.status} ${response.statusText}`
+      try {
+        const errJson = await response.json()
+        if (errJson.message) errorMsg = errJson.message
+        if (errJson.errors) {
+           const details = Object.values(errJson.errors).flat().join(' | ')
+           errorMsg += ': ' + details
+        }
+      } catch (e) {
+        // ignore
+      }
+      throw new Error(errorMsg)
     }
 
     const rawData = await response.json()
@@ -211,25 +215,27 @@ class ElectionService {
   // PATCH /elections/update-election/{id}
   async updateElection(id: number, data: { year?: number; details?: string }): Promise<Election> {
     console.log(`🔍 Updating election #${id}...`, data)
-    const params = new URLSearchParams()
-    if (data.year !== undefined) {
-      params.append('year', data.year.toString())
-    }
-    if (data.details !== undefined) {
-      params.append('details', data.details)
-    }
-
-    const response = await fetch(`${API_BASE_URL}/elections/update-election/${id}?${params.toString()}`, {
+    const response = await fetch(`${API_BASE_URL}/elections/update-election/${id}`, {
       method: 'PATCH',
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
     })
 
     console.log('📨 Update Election Response Status:', response.status, response.statusText)
 
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('❌ Update Election API Error:', errorText)
-      throw new Error(`Failed to update election: ${response.status} ${response.statusText}`)
+      let errorMsg = `Failed to update election: ${response.status} ${response.statusText}`
+      try {
+        const errJson = await response.json()
+        if (errJson.message) errorMsg = errJson.message
+        if (errJson.errors) {
+           const details = Object.values(errJson.errors).flat().join(' | ')
+           errorMsg += ': ' + details
+        }
+      } catch (e) {
+        // ignore
+      }
+      throw new Error(errorMsg)
     }
 
     const rawData = await response.json()
@@ -295,6 +301,17 @@ class ElectionService {
     return rawData.data || rawData
   }
 
+  // GET /elections/get-timetable-candidates/{timetableid}
+  async getTimetableCandidates(timetableId: number): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/elections/get-timetable-candidates/${timetableId}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+    if (!response.ok) throw new Error('Failed to fetch timetable candidates')
+    const rawData = await response.json()
+    return rawData.data || rawData
+  }
+
   // GET /elections/get-election-timetable/{id}
   async getElectionTimetable(id: number): Promise<any> {
     const response = await fetch(`${API_BASE_URL}/elections/get-election-timetable/${id}`, {
@@ -317,6 +334,26 @@ class ElectionService {
     return rawData.data || rawData
   }
 
+  // GET /offices/get-offices (Assuming it's /offices or /offices/get-offices)
+  async getOffices(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/offices/get-offices`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+    if (!response.ok) {
+       // fallback if route is different
+       const fallbackResponse = await fetch(`${API_BASE_URL}/offices`, {
+         method: 'GET',
+         headers: this.getAuthHeaders()
+       })
+       if (!fallbackResponse.ok) throw new Error('Failed to fetch offices')
+       const rawData = await fallbackResponse.json()
+       return rawData.data?.offices || rawData.data || rawData
+    }
+    const rawData = await response.json()
+    return rawData.data?.offices || rawData.data || rawData
+  }
+
   // POST /elections/create-election-timetable
   async createElectionTimetable(data: any): Promise<any> {
     const response = await fetch(`${API_BASE_URL}/elections/create-election-timetable`, {
@@ -324,7 +361,20 @@ class ElectionService {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data)
     })
-    if (!response.ok) throw new Error('Failed to create election timetable')
+    if (!response.ok) {
+      let errorMsg = `Failed to create timetable: ${response.status} ${response.statusText}`
+      try {
+        const errJson = await response.json()
+        if (errJson.message) errorMsg = errJson.message
+        if (errJson.errors) {
+           const details = Object.values(errJson.errors).flat().join(' | ')
+           errorMsg += ': ' + details
+        }
+      } catch (e) {
+        // ignore
+      }
+      throw new Error(errorMsg)
+    }
     const rawData = await response.json()
     return rawData.data || rawData
   }
