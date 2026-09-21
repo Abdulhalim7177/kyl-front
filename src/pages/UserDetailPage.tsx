@@ -59,7 +59,7 @@ export default function UserDetailPage() {
       } else {
         navigate('/k8s9d7f3-users')
       }
-    } catch {
+    } catch (err: any) {
       setError(err instanceof Error ? err.message : 'Failed to delete user.')
       setDeleting(false)
     }
