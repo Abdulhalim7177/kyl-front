@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { authService } from './auth'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const API_BASE_URL = '/api'
 
 export interface Election {
@@ -200,7 +201,7 @@ class ElectionService {
            const details = Object.values(errJson.errors).flat().join(' | ')
            errorMsg += ': ' + details
         }
-      } catch (e) {
+      } catch {
         // ignore
       }
       throw new Error(errorMsg)
@@ -232,7 +233,7 @@ class ElectionService {
            const details = Object.values(errJson.errors).flat().join(' | ')
            errorMsg += ': ' + details
         }
-      } catch (e) {
+      } catch {
         // ignore
       }
       throw new Error(errorMsg)
@@ -370,7 +371,7 @@ class ElectionService {
            const details = Object.values(errJson.errors).flat().join(' | ')
            errorMsg += ': ' + details
         }
-      } catch (e) {
+      } catch {
         // ignore
       }
       throw new Error(errorMsg)

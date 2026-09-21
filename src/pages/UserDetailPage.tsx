@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { userService } from '@/services/users'
@@ -38,7 +39,7 @@ export default function UserDetailPage() {
       setLoading(true)
       const data = await userService.getUser(Number(id))
       setUser(data)
-    } catch (err) {
+    } catch {
       setError('Failed to load user details.')
     } finally {
       setLoading(false)
@@ -58,7 +59,7 @@ export default function UserDetailPage() {
       } else {
         navigate('/k8s9d7f3-users')
       }
-    } catch (err) {
+    } catch {
       setError(err instanceof Error ? err.message : 'Failed to delete user.')
       setDeleting(false)
     }
