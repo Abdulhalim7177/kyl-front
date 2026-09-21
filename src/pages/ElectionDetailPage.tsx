@@ -59,8 +59,6 @@ export default function ElectionDetailPage() {
 
   // Candidates filtering by selected timetable
   const [selectedTimetableId, setSelectedTimetableId] = useState<string>('all')
-  const [displayedCandidates, setDisplayedCandidates] = useState<Candidate[]>([])
-  const [loadingCandidates, setLoadingCandidates] = useState(false)
 
   useEffect(() => {
     if (isAuthenticated && id) {
