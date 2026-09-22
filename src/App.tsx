@@ -63,6 +63,9 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import { Menu } from 'lucide-react'
 import { useState } from 'react'
 import DistrictsPage from '@/pages/DistrictsPage'
+import StateDetailPage from '@/pages/StateDetailPage'
+import WardDetailPage from '@/pages/WardDetailPage'
+import LgaDetailPage from '@/pages/LgaDetailPage'
 
 function Navigation() {
   const location = useLocation()
@@ -367,6 +370,16 @@ function App() {
             }
           />
           <Route
+            path="/k8s9d7f3-districts/states/:id"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Manage Governatorial">
+                  <StateDetailPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/k8s9d7f3-districts/senatorial"
             element={
               <ProtectedRoute>
@@ -407,11 +420,31 @@ function App() {
             }
           />
           <Route
+            path="/k8s9d7f3-districts/lgas/:id"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Districts / LGA Details">
+                  <LgaDetailPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/k8s9d7f3-districts/wards"
             element={
               <ProtectedRoute>
                 <AdminLayout title="Admin / Districts / Wards">
                   <DistrictsPage type="wards" title="Wards" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/wards/:id"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Districts / Ward Details">
+                  <WardDetailPage />
                 </AdminLayout>
               </ProtectedRoute>
             }

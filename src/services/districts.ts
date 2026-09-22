@@ -3,7 +3,9 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 export interface District {
   id: number
   name: string
+  status?: number
   state_id?: number
+  senetorial_district_id?: number
   lga_district_id?: number
   state?: {
     id: number
@@ -12,6 +14,7 @@ export interface District {
   lga_district?: {
     id: number
     name: string
+    state_id?: number
     state?: {
       id: number
       name: string
@@ -59,6 +62,40 @@ class DistrictsService {
   }
 
   async getStates() { return this.fetchDistricts('get-states') }
+  async getState(id: number): Promise<District> {
+    const response = await fetch(`${API_BASE_URL}/districts/find-state/${id}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch state')
+    }
+
+    const result = await response.json()
+    if (!result.success || !result.data) {
+      throw new Error(result.message || 'State not found')
+    }
+
+    return result.data
+  }
+  async getLgaDistrict(id: number): Promise<District> {
+    const response = await fetch(`${API_BASE_URL}/districts/find-lga-district/${id}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch ward')
+    }
+
+    const result = await response.json()
+    if (!result.success || !result.data) {
+      throw new Error(result.message || 'Ward not found')
+    }
+
+    return result.data
+  }
   async getSenatorialDistricts() { return this.fetchDistricts('get-senatorial-districts') }
   async getFederalHouseDistricts() { return this.fetchDistricts('get-federal-house-districts') }
   async getStateHouseDistricts() { return this.fetchDistricts('get-state-house-districts') }

@@ -355,6 +355,19 @@ class ElectionService {
     return rawData.data?.offices || rawData.data || rawData
   }
 
+  // GET /offices/get-state-offices
+  async getStateOffices(stateId?: number): Promise<any[]> {
+    const query = stateId ? `?state_id=${stateId}` : ''
+    const response = await fetch(`${API_BASE_URL}/offices/get-state-offices${query}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+    if (!response.ok) throw new Error('Failed to fetch state offices')
+    const rawData = await response.json()
+    const data = rawData.data ?? rawData
+    return data.offices || data
+  }
+
   // POST /elections/create-election-timetable
   async createElectionTimetable(data: any): Promise<any> {
     const response = await fetch(`${API_BASE_URL}/elections/create-election-timetable`, {
