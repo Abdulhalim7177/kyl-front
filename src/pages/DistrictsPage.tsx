@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   Table,
   TableBody,
@@ -8,10 +9,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { MapPin, Loader2, Map, TrendingUp } from 'lucide-react'
+import { MapPin, Loader2, Map } from 'lucide-react'
 import { districtsService, District } from '@/services/districts'
 import { useAuth } from '@/contexts/AuthContext'
 import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { PaginationControls } from '@/components/PaginationControls'
 import { useClientPagination } from '@/components/useClientPagination'
 
@@ -24,6 +26,8 @@ export default function DistrictsPage({ type, title }: DistrictsPageProps) {
   const { isAuthenticated } = useAuth()
   const [districts, setDistricts] = useState<District[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchParams] = useSearchParams()
+  const [stateNames, setStateNames] = useState<Record<number, string>>({})
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -41,7 +45,15 @@ export default function DistrictsPage({ type, title }: DistrictsPageProps) {
         case 'federal': data = await districtsService.getFederalHouseDistricts(); break;
         case 'state-house': data = await districtsService.getStateHouseDistricts(); break;
         case 'lgas': data = await districtsService.getLgaDistricts(); break;
-        case 'wards': data = await districtsService.getWards(); break;
+        case 'wards': {
+          const [wards, states] = await Promise.all([
+            districtsService.getWards(),
+            districtsService.getStates()
+          ])
+          data = wards
+          setStateNames(Object.fromEntries(states.map((state) => [state.id, state.name])))
+          break;
+        }
       }
       setDistricts(data)
     } catch (err) {
@@ -50,6 +62,10 @@ export default function DistrictsPage({ type, title }: DistrictsPageProps) {
       setLoading(false)
     }
   }
+  const filteredDistricts = type === 'states'
+    ? districts.filter((district) => district.name.toLowerCase().includes((searchParams.get('stateSearch') || '').toLowerCase()))
+    : districts
+
   const {
     currentPage,
     totalPages,
@@ -58,13 +74,13 @@ export default function DistrictsPage({ type, title }: DistrictsPageProps) {
     paginatedData,
     handlePageChange,
     handleItemsPerPageChange
-  } = useClientPagination(districts, 20)
+  } = useClientPagination(filteredDistricts, 20)
   return (
     <div className="space-y-4 md:space-y-6 p-4 md:p-0">
       {/* Banner matching Dashboard */}
       <Card className="shadow-md border border-gray-100 bg-gradient-to-r from-primary/5 to-transparent">
         <CardContent className="p-4 md:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
             <div>
               <h2 className="text-lg md:text-xl font-semibold text-gray-900 flex items-center gap-2">
                 <Map className="w-6 h-6 text-[#146c4f]" />
@@ -76,31 +92,7 @@ export default function DistrictsPage({ type, title }: DistrictsPageProps) {
         </CardContent>
       </Card>
 
-      {/* Stats Cards matching Dashboard */}
-      {!loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          <Card className="shadow-md hover:shadow-lg transition-shadow border border-gray-100">
-            <CardContent className="p-4 md:p-6">
-              <div className="flex items-start justify-between mb-3 md:mb-4">
-                <div>
-                  <p className="text-xs md:text-sm text-gray-600 mb-1">Total {title}</p>
-                  <p className="text-2xl md:text-3xl font-bold text-gray-900">{districts.length}</p>
-                </div>
-                <div className="bg-teal-50 p-2 md:p-3 rounded-lg">
-                  <MapPin className="h-5 w-5 md:h-6 md:w-6 text-teal-600" />
-                </div>
-              </div>
-              <div className="flex items-center gap-1 text-xs md:text-sm">
-                <TrendingUp className="text-green-600 h-4 w-4" />
-                <span className="text-green-600 font-medium">100%</span>
-                <span className="text-gray-500">coverage mapped</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Table Container exactly like UsersManagementPage */}
+      {/* Table and total count */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto relative min-h-[300px]">
         {loading && (
           <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
@@ -109,17 +101,21 @@ export default function DistrictsPage({ type, title }: DistrictsPageProps) {
         )}
         
         <div className="w-full">
+          <div className="flex items-center gap-3 border-b border-gray-100 px-4 py-3 md:px-6">
+            <p className="text-sm font-semibold text-gray-900">Total {title}</p>
+            <span className="rounded-full bg-teal-50 px-3 py-1 text-sm font-bold text-[#146c4f]">{districts.length}</span>
+          </div>
           <Table>
             <TableHeader className="bg-white border-b border-gray-100">
               <TableRow className="hover:bg-transparent">
-                <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider w-[120px]">DISTRICT ID</TableHead>
+                <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider w-[140px]">S/N</TableHead>
                 <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider">NAME</TableHead>
                 {type !== 'states' && <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider">PARENT REGION</TableHead>}
-                <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider text-right pr-6">TYPE</TableHead>
+                <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider text-right pr-6">{type === 'states' || type === 'wards' ? 'ACTION' : 'TYPE'}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {districts.length === 0 && !loading ? (
+              {filteredDistricts.length === 0 && !loading ? (
                 <TableRow>
                   <TableCell colSpan={type === 'states' ? 3 : 4} className="h-32 text-center text-gray-500 font-medium text-sm">
                     No {title.toLowerCase()} found.
@@ -132,7 +128,7 @@ export default function DistrictsPage({ type, title }: DistrictsPageProps) {
                     className="group transition-colors border-gray-50 hover:bg-gray-50/50"
                   >
                     <TableCell className="font-medium text-gray-400 text-xs tracking-wide py-5">
-                      #DST-{district.id.toString().padStart(4, '0')}
+                      S/N {district.id}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -145,15 +141,27 @@ export default function DistrictsPage({ type, title }: DistrictsPageProps) {
                     {type !== 'states' && (
                       <TableCell className="text-gray-500 font-medium whitespace-nowrap">
                         {type === 'wards' 
-                          ? (district.lga_district?.name ? `${district.lga_district.name} LGA, ${district.lga_district.state?.name || 'Unknown State'}` : 'N/A')
+                          ? (district.lga_district?.name
+                            ? `${district.lga_district.name} LGA, ${district.lga_district.state?.name || stateNames[district.lga_district.state_id ?? district.state_id ?? 0] || 'N/A'}`
+                            : 'N/A')
                           : (district.state?.name || 'N/A')}
                       </TableCell>
                     )}
                     <TableCell className="text-right pr-6">
-                      <span className="inline-flex items-center gap-1.5 font-semibold text-[0.8rem] whitespace-nowrap">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#146c4f]"></span>
-                        <span className="text-[#146c4f] uppercase tracking-wider">{type.replace('-', ' ')}</span>
-                      </span>
+                      {type === 'states' ? (
+                        <Button asChild size="sm" className="bg-[#146c4f] hover:bg-[#10563f]">
+                          <Link to={`/k8s9d7f3-districts/states/${district.id}`}>Manage State</Link>
+                        </Button>
+                      ) : type === 'wards' ? (
+                        <Button asChild size="sm" className="bg-[#146c4f] hover:bg-[#10563f]">
+                          <Link to={`/k8s9d7f3-districts/wards/${district.id}`}>View Ward</Link>
+                        </Button>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 font-semibold text-[0.8rem] whitespace-nowrap">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#146c4f]"></span>
+                          <span className="text-[#146c4f] uppercase tracking-wider">{type.replace('-', ' ')}</span>
+                        </span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

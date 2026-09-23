@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -16,8 +16,11 @@ import {
   FileText,
   Activity,
   Menu,
-  ChevronDown
+  ChevronDown,
+  Search
 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 const SIDEBAR_ITEMS = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/k8s9d7f3-admin-panel' },
@@ -50,6 +53,7 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children, title }: AdminLayoutProps) {
   const { user, logout } = useAuth()
   const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -185,6 +189,41 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
           </div>
           
           <div className="flex items-center gap-2 sm:gap-4 text-gray-500">
+             {title === 'Manage Governatorial' && (
+               <Button
+                 type="button"
+                 size="sm"
+                 className="bg-[#146c4f] text-white hover:bg-[#10563f]"
+                 onClick={() => {
+                   window.dispatchEvent(new CustomEvent('open-governatorial-form'))
+                   const nextParams = new URLSearchParams(searchParams)
+                   nextParams.set('addGovernatorial', 'true')
+                   setSearchParams(nextParams)
+                 }}
+               >
+                 Add Governatorial
+               </Button>
+             )}
+             {title === 'Admin / Districts / States' && (
+               <div className="relative w-36 sm:w-56">
+                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                 <Input
+                   value={searchParams.get('stateSearch') || ''}
+                   onChange={(event) => {
+                     const nextParams = new URLSearchParams(searchParams)
+                     if (event.target.value) {
+                       nextParams.set('stateSearch', event.target.value)
+                     } else {
+                       nextParams.delete('stateSearch')
+                     }
+                     setSearchParams(nextParams)
+                   }}
+                   placeholder="Search states"
+                   aria-label="Search states by name"
+                   className="h-9 bg-gray-50 pl-9"
+                 />
+               </div>
+             )}
              <button className="hover:text-primary transition-colors p-1.5"><Bell className="w-5 h-5" /></button>
              <button className="hover:text-primary transition-colors p-1.5 hidden sm:block"><HelpCircle className="w-5 h-5" /></button>
           </div>
