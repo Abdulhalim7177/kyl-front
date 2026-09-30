@@ -297,9 +297,25 @@ class ElectionService {
       method: 'GET',
       headers: this.getAuthHeaders()
     })
-    if (!response.ok) throw new Error('Failed to fetch election timetables')
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        return []
+      }
+      throw new Error('Failed to fetch election timetables')
+    }
+    
     const rawData = await response.json()
-    return rawData.data || rawData
+    
+    if (Array.isArray(rawData.data)) {
+      return rawData.data
+    } else if (rawData.data?.data && Array.isArray(rawData.data.data)) {
+      return rawData.data.data
+    } else if (Array.isArray(rawData)) {
+      return rawData
+    }
+    
+    return []
   }
 
   // GET /elections/get-timetable-candidates/{timetableid}

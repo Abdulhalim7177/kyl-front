@@ -71,7 +71,7 @@ class VisitorService {
   async getCandidateExperiences(id: number) { return this.fetchApi(`get-candidate-experiences/${id}`) }
   async getCandidateAchievements(id: number) { return this.fetchApi(`get-candidate-achievements/${id}`) }
   async getCandidateOffices(id: number) { return this.fetchApi(`get-candidate-offices/${id}`) }
-  async getCandidateLeadershipHistory(id: number) { return this.fetchApi(`get-candidate-leadership-history/${id}`) }
+  async getCandidateLeadershipHistory(id: number) { return this.fetchApi(`get-candidate-leadership/${id}`) }
 }
 
 export const visitorService = new VisitorService()

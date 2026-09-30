@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { visitorService } from '@/services/visitors';
 
+import { Mail, Phone, User } from 'lucide-react';
+
 export default function PublicProfilePage() {
   const { id } = useParams<{ id: string }>();
   const [profile, setProfile] = useState<any>(null);
@@ -70,8 +72,6 @@ export default function PublicProfilePage() {
     );
   }
 
-  const user = profile.user || {};
-
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
       {/* Profile Header Background Cover */}
@@ -83,21 +83,19 @@ export default function PublicProfilePage() {
         {/* Profile Card */}
         <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-white p-8 mb-12 flex flex-col md:flex-row items-center md:items-end gap-8 relative overflow-hidden">
           <div className="w-40 h-40 md:w-56 md:h-56 rounded-full bg-gray-100 border-8 border-white shadow-xl overflow-hidden flex-shrink-0 flex items-center justify-center -mt-20 md:mt-0 relative z-10">
-            {user.avatar ? (
-              <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+            {profile.image?.url ? (
+              <img src={profile.image.url} alt="Profile" className="w-full h-full object-cover" />
             ) : (
-              <span className="text-5xl text-gray-400 uppercase font-light">{user.first_name?.charAt(0)}{user.last_name?.charAt(0)}</span>
+              <span className="text-5xl text-gray-400 uppercase font-light">{profile.fullName?.charAt(0) || '?'}</span>
             )}
           </div>
           
           <div className="flex-1 text-center md:text-left mb-2">
-            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-2">{user.first_name} {user.last_name}</h1>
-            <p className="text-lg text-primary font-bold tracking-widest uppercase mb-6 bg-primary/10 inline-block px-4 py-1.5 rounded-full">{profile.party?.name || 'Independent Candidate'}</p>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight mb-2">{profile.fullName}</h1>
+            <p className="text-sm md:text-base text-primary font-bold tracking-widest uppercase mb-6 bg-primary/10 inline-block px-4 py-1.5 rounded-full">{profile.party?.name || 'Independent Candidate'}</p>
             
             <div className="flex flex-wrap justify-center md:justify-start gap-6 text-sm text-gray-600">
-              {user.email && <div className="flex items-center gap-2"><span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">??</span> {user.email}</div>}
-              {user.phone && <div className="flex items-center gap-2"><span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">??</span> {user.phone}</div>}
-              {user.gender && <div className="flex items-center gap-2"><span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">??</span> {user.gender}</div>}
+              {profile.gender && <div className="flex items-center gap-2"><span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"><User className="w-4 h-4" /></span> {profile.gender}</div>}
             </div>
           </div>
         </div>
