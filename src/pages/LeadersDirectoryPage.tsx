@@ -77,15 +77,15 @@ export default function LeadersDirectoryPage() {
                   <div className="p-8 pb-0 text-center relative z-10">
                      <div className="w-28 h-28 mx-auto rounded-full p-1 bg-gradient-to-tr from-gray-200 to-gray-300 group-hover:from-primary group-hover:to-emerald-400 mb-5 transition-all duration-500 shadow-sm">
                        <div className="w-full h-full rounded-full overflow-hidden border-2 border-white bg-gray-50 flex items-center justify-center">
-                         {leader.candidate?.user?.avatar ? (
-                           <img src={leader.candidate.user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                         {leader.candidate?.image?.url ? (
+                           <img src={leader.candidate?.image?.url} alt="Avatar" className="w-full h-full object-cover" />
                          ) : (
-                           <span className="text-3xl text-gray-400 uppercase font-light">{leader.candidate?.user?.first_name?.charAt(0)}{leader.candidate?.user?.last_name?.charAt(0)}</span>
+                           <span className="text-3xl text-gray-400 uppercase font-light">{leader.candidate?.fullName?.charAt(0) || "U"}</span>
                          )}
                        </div>
                      </div>
-                     <h3 className="text-xl font-bold text-gray-900 tracking-tight">{leader.candidate?.user?.first_name} {leader.candidate?.user?.last_name}</h3>
-                     <p className="text-xs font-bold text-primary uppercase tracking-widest mt-2 bg-primary/10 inline-block px-3 py-1 rounded-full">{leader.position || leader.office || activeCategory.label}</p>
+                     <h3 className="text-xl font-bold text-gray-900 tracking-tight">{leader.candidate?.fullName}</h3>
+                     <p className="text-xs font-bold text-primary uppercase tracking-widest mt-2 bg-primary/10 inline-block px-3 py-1 rounded-full">{leader.office?.title || leader.position || activeCategory.label}</p>
                   </div>
                   
                   <div className="mt-8 relative z-10 border-t border-gray-50 bg-gray-50/50">
@@ -107,3 +107,4 @@ export default function LeadersDirectoryPage() {
     </div>
   );
 }
+

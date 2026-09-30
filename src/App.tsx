@@ -5,6 +5,7 @@ import DistrictsExplorerPage from '@/pages/DistrictsExplorerPage'
 import CandidatesDirectoryPage from '@/pages/CandidatesDirectoryPage'
 import LeadersDirectoryPage from '@/pages/LeadersDirectoryPage'
 import PublicProfilePage from '@/pages/PublicProfilePage'
+import PublicElectionPage from '@/pages/PublicElectionPage'
 import LoginPage from '@/pages/LoginPage'
 import DashboardPage from '@/pages/DashboardPage'
 import PartiesPage from '@/pages/PartiesPage'
@@ -155,6 +156,7 @@ function App() {
           <Route path="/candidates" element={<PublicLayout><CandidatesDirectoryPage /></PublicLayout>} />
           <Route path="/leaders" element={<PublicLayout><LeadersDirectoryPage /></PublicLayout>} />
           <Route path="/profile/:id" element={<PublicLayout><PublicProfilePage /></PublicLayout>} />
+          <Route path="/election/:id" element={<PublicLayout><PublicElectionPage /></PublicLayout>} />
           
           <Route
             path="/k8s9d7f3-auth-login"

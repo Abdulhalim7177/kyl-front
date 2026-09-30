@@ -76,13 +76,13 @@ export default function CandidatesDirectoryPage() {
                   
                   <div className="mb-6 text-center">
                      <div className="w-24 h-24 mx-auto bg-gray-50 rounded-full mb-4 flex items-center justify-center overflow-hidden border border-gray-200 group-hover:border-primary/30 transition-colors shadow-sm">
-                       {candidate.user?.avatar ? (
-                         <img src={candidate.user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                       {(candidate.candidate?.image?.url || candidate.image?.url) ? (
+                         <img src={(candidate.candidate?.image?.url || candidate.image?.url)} alt="Avatar" className="w-full h-full object-cover" />
                        ) : (
-                         <span className="text-3xl text-gray-400 uppercase font-light">{candidate.user?.first_name?.charAt(0)}{candidate.user?.last_name?.charAt(0)}</span>
+                         <span className="text-3xl text-gray-400 uppercase font-light">{candidate.candidate?.fullName?.charAt(0) || candidate.fullName?.charAt(0) || "C"}</span>
                        )}
                      </div>
-                     <h3 className="text-xl font-bold text-gray-900 tracking-tight">{candidate.user?.first_name} {candidate.user?.last_name}</h3>
+                     <h3 className="text-xl font-bold text-gray-900 tracking-tight">{candidate.candidate?.fullName || candidate.fullName}</h3>
                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">{candidate.party?.name || 'Independent'}</p>
                   </div>
                   
@@ -105,3 +105,4 @@ export default function CandidatesDirectoryPage() {
     </div>
   );
 }
+
