@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Table,
   TableBody,
@@ -11,14 +12,24 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { ArrowLeft, Edit, Loader2, AlertCircle, Trash2, Eye, MoreVertical, RefreshCw } from 'lucide-react'
-import { electionService, Election } from '@/services/elections'
-import { candidateService, Candidate } from '@/services/candidates'
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { ArrowLeft, Edit, Loader2, AlertCircle, Trash2, Calendar, Clock3, Eye } from 'lucide-react'
+import { electionService, Election, ElectionTimetable, Office, ElectionType } from '@/services/elections'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function ElectionDetailPage() {
@@ -27,12 +38,41 @@ export default function ElectionDetailPage() {
   const { isAuthenticated } = useAuth()
 
   const [election, setElection] = useState<Election | null>(null)
-  const [candidates, setCandidates] = useState<Candidate[]>([])
+  const [electionTimetables, setElectionTimetables] = useState<ElectionTimetable[]>([])
+  const [offices, setOffices] = useState<Office[]>([])
+  const [electionTypes, setElectionTypes] = useState<ElectionType[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
+  const [timetableToDelete, setTimetableToDelete] = useState<number | null>(null)
   const [changingStatus, setChangingStatus] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showTimetableForm, setShowTimetableForm] = useState(false)
+  const [savingTimetable, setSavingTimetable] = useState(false)
+  const [editingTimetableId, setEditingTimetableId] = useState<number | null>(null)
+  const [viewingTimetable, setViewingTimetable] = useState<ElectionTimetable | null>(null)
+  const [loadingTimetableDetails, setLoadingTimetableDetails] = useState(false)
+  const [timetableForm, setTimetableForm] = useState({
+    office_id: '1',
+    election_type_id: '1',
+    description: '',
+    date: '',
+    starttime: '',
+    endtime: '',
+  })
+
+  const resetTimetableForm = () => {
+    setTimetableForm({
+      office_id: offices.length > 0 ? String(offices[0].id) : '1',
+      election_type_id: electionTypes.length > 0 ? String(electionTypes[0].id) : '1',
+      description: '',
+      date: '',
+      starttime: '',
+      endtime: '',
+    })
+  }
 
   useEffect(() => {
     if (isAuthenticated && id) {
@@ -43,14 +83,32 @@ export default function ElectionDetailPage() {
   const loadData = async (electionId: number) => {
     try {
       setLoading(true)
-      const [electionData, candidatesData] = await Promise.all([
+      setError(null)
+
+      const [electionData, timetablesData, officesResult, electionTypesData] = await Promise.allSettled([
         electionService.getElectionById(electionId),
-        candidateService.getAllCandidates()
+        electionService.getElectionTimetables(electionId),
+        electionService.getAllOffices(),
+        electionService.getAllElectionTypes()
       ])
-      
-      if (electionData) {
-        setElection(electionData)
-        setCandidates(candidatesData.slice(0, 5))
+
+      const resolvedElection = electionData.status === 'fulfilled' ? electionData.value : null
+      const resolvedTimetables = timetablesData.status === 'fulfilled' ? timetablesData.value : []
+      const resolvedOffices = officesResult.status === 'fulfilled' ? officesResult.value : []
+      const resolvedElectionTypes = electionTypesData.status === 'fulfilled' ? electionTypesData.value : []
+
+      if (resolvedElection) {
+        setElection(resolvedElection)
+        setElectionTimetables(resolvedTimetables)
+        setOffices(resolvedOffices)
+        setElectionTypes(resolvedElectionTypes)
+
+        if (resolvedOffices.length > 0 && !timetableForm.office_id) {
+          setTimetableForm((prev) => ({ ...prev, office_id: String(resolvedOffices[0].id) }))
+        }
+        if (resolvedElectionTypes.length > 0 && !timetableForm.election_type_id) {
+          setTimetableForm((prev) => ({ ...prev, election_type_id: String(resolvedElectionTypes[0].id) }))
+        }
       } else {
         setError('Election not found')
       }
@@ -61,6 +119,151 @@ export default function ElectionDetailPage() {
       setLoading(false)
     }
   }
+
+  const handleAddTimetable = async () => {
+    if (!election || !id) return
+
+    if (!timetableForm.date || !timetableForm.starttime || !timetableForm.endtime || !timetableForm.description.trim()) {
+      setError('Please complete all timetable fields before saving.')
+      return
+    }
+
+    try {
+      setSavingTimetable(true)
+      setError(null)
+      setSuccessMessage(null)
+
+      const payload = {
+        office_id: Number(timetableForm.office_id || 1),
+        election_type_id: Number(timetableForm.election_type_id || 1),
+        description: timetableForm.description.trim(),
+        date: timetableForm.date,
+        starttime: timetableForm.starttime,
+        endtime: timetableForm.endtime,
+      }
+
+      const savedTimetable = editingTimetableId
+        ? await electionService.updateElectionTimetable(editingTimetableId, payload)
+        : await electionService.createElectionTimetable({
+          election_id: Number(id),
+          ...payload,
+        })
+
+      setElectionTimetables((prev) => {
+        if (editingTimetableId) {
+          return prev.map((item) => item.id === editingTimetableId ? savedTimetable : item)
+        }
+        return [savedTimetable, ...prev]
+      })
+
+      const successText = editingTimetableId ? 'Timetable Updated Successfully' : 'Timetable created successfully'
+      setEditingTimetableId(null)
+      resetTimetableForm()
+      setShowTimetableForm(false)
+      setSuccessMessage(successText)
+      setShowSuccessDialog(true)
+    } catch (err) {
+      console.error('Failed to save election timetable:', err)
+      setError(editingTimetableId ? 'Failed to update the election timetable.' : 'Failed to add the election timetable.')
+    } finally {
+      setSavingTimetable(false)
+    }
+  }
+
+  const handleEditTimetable = (item: ElectionTimetable) => {
+    setEditingTimetableId(item.id ?? null)
+    setTimetableForm({
+      office_id: item.office_id ? String(item.office_id) : (offices[0]?.id ? String(offices[0].id) : '1'),
+      election_type_id: item.election_type_id ? String(item.election_type_id) : (electionTypes[0]?.id ? String(electionTypes[0].id) : '1'),
+      description: item.description || '',
+      date: item.date || '',
+      starttime: item.starttime || '',
+      endtime: item.endtime || '',
+    })
+    setShowTimetableForm(true)
+  }
+
+  const handleViewTimetable = async (id: number) => {
+    if (!id) return
+
+    try {
+      setLoadingTimetableDetails(true)
+      const timetable = await electionService.getElectionTimetableById(id)
+      setViewingTimetable(timetable)
+    } catch (err) {
+      console.error('Failed to fetch timetable details:', err)
+      setError('Failed to load timetable details.')
+    } finally {
+      setLoadingTimetableDetails(false)
+    }
+  }
+
+  const handleDeleteTimetable = async (id: number) => {
+    setTimetableToDelete(id)
+  }
+
+  const confirmDeleteTimetable = async () => {
+    if (!timetableToDelete) return
+
+    try {
+      await electionService.deleteElectionTimetable(timetableToDelete)
+      setElectionTimetables((prev) => prev.filter((item) => item.id !== timetableToDelete))
+      setSuccessMessage('Timetable Deleted Successfully')
+      setShowSuccessDialog(true)
+      setTimetableToDelete(null)
+    } catch (err) {
+      console.error('Failed to delete timetable:', err)
+      setError('Failed to delete timetable.')
+      setTimetableToDelete(null)
+    }
+  }
+
+  const handleTimetableStatusChange = async (id: number, status: 'Upcoming' | 'Ongoing' | 'Completed') => {
+    try {
+      const updated = await electionService.changeElectionTimetableStatus(id, status)
+      setElectionTimetables((prev) => prev.map((item) => item.id === id ? { ...item, ...updated, status: updated.status || status } : item))
+    } catch (err) {
+      console.error('Failed to change timetable status:', err)
+      setError('Failed to update timetable status.')
+    }
+  }
+
+  const formatDate = (date?: string) => {
+    if (!date) return 'N/A'
+    const parsed = new Date(date)
+    if (Number.isNaN(parsed.getTime())) return date
+    return parsed.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    })
+  }
+
+  const formatDisplayTime = (timeValue?: string) => {
+    if (!timeValue) return 'N/A'
+
+    const normalized = timeValue.trim()
+    const match = normalized.match(/^([0-9]{1,2}):([0-9]{2})(?::[0-9]{2})?$/)
+    if (!match) return normalized
+
+    const hours = Number(match[1])
+    const minutes = match[2]
+    const suffix = hours >= 12 ? 'PM' : 'AM'
+    const displayHour = hours % 12 === 0 ? 12 : hours % 12
+
+    return `${displayHour}:${minutes} ${suffix}`
+  }
+
+  const timeSelectOptions = Array.from({ length: 48 }, (_, index) => {
+    const totalMinutes = index * 30
+    const hours24 = Math.floor(totalMinutes / 60)
+    const minutes = totalMinutes % 60
+    const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12
+    const suffix = hours24 >= 12 ? 'PM' : 'AM'
+    const value = `${String(hours24).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+    const label = `${hours12}:${String(minutes).padStart(2, '0')} ${suffix}`
+    return { value, label }
+  })
 
   const handleStatusChange = async (newStatus: string) => {
     if (!election || !id) return
@@ -178,38 +381,21 @@ export default function ElectionDetailPage() {
             <Edit className="w-4 h-4" />
             Edit Election
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="rounded-xl px-5 flex items-center gap-2"
-                disabled={changingStatus}
-              >
-                <RefreshCw className="w-4 h-4" />
-                Update Status
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[180px]">
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => handleStatusChange('Upcoming')}
-              >
-                Upcoming
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => handleStatusChange('Ongoing')}
-              >
-                On-going
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => handleStatusChange('Completed')}
-              >
-                Completed
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white shadow-sm">
+            <select
+              value={election.status || 'Upcoming'}
+              onChange={(e) => handleStatusChange(e.target.value)}
+              disabled={changingStatus}
+              className="h-10 rounded-xl border-0 bg-transparent px-3 text-sm font-medium text-gray-700 outline-none"
+              aria-label="Change election status"
+            >
+              {(['Upcoming', 'Ongoing', 'Completed'] as const).map((statusOption) => (
+                <option key={statusOption} value={statusOption}>
+                  {statusOption}
+                </option>
+              ))}
+            </select>
+          </div>
           <Button 
             variant="outline"
             onClick={() => setShowDeleteConfirm(true)}
@@ -257,81 +443,222 @@ export default function ElectionDetailPage() {
         </div>
       )}
 
-      {/* Candidates Table */}
+      {/* Election Timetable */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900">Participating Candidates</h2>
+        <div className="p-6 border-b border-gray-100 flex items-center justify-between gap-3">
+          <h2 className="text-lg font-bold text-gray-900">Election Timetable</h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setEditingTimetableId(null)
+              resetTimetableForm()
+              setShowTimetableForm((prev) => !prev)
+            }}
+            className="rounded-xl flex items-center gap-2"
+          >
+            <Calendar className="w-4 h-4" />
+            {showTimetableForm ? 'Close' : 'Add Election Timetable'}
+          </Button>
         </div>
+
+        {showTimetableForm && (
+          <div className="p-6 border-b border-gray-100 bg-gray-50/40">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium text-gray-700">Description</label>
+                <Textarea
+                  value={timetableForm.description}
+                  onChange={(e) => setTimetableForm((prev) => ({ ...prev, description: e.target.value }))}
+                  placeholder="e.g. Presidential election voting window"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Date</label>
+                <Input
+                  type="date"
+                  value={timetableForm.date}
+                  onChange={(e) => setTimetableForm((prev) => ({ ...prev, date: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Office</label>
+                <select
+                  value={timetableForm.office_id}
+                  onChange={(e) => setTimetableForm((prev) => ({ ...prev, office_id: e.target.value }))}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  {offices.length === 0 ? (
+                    <option value="">Loading offices...</option>
+                  ) : (
+                    offices.map((office) => (
+                      <option key={office.id} value={String(office.id)}>
+                        {office.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Election Type</label>
+                <select
+                  value={timetableForm.election_type_id}
+                  onChange={(e) => setTimetableForm((prev) => ({ ...prev, election_type_id: e.target.value }))}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  {electionTypes.length === 0 ? (
+                    <option value="">Loading election types...</option>
+                  ) : (
+                    electionTypes.map((type) => (
+                      <option key={type.id} value={String(type.id)}>
+                        {type.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Start Time</label>
+                <select
+                  value={timetableForm.starttime}
+                  onChange={(e) => setTimetableForm((prev) => ({ ...prev, starttime: e.target.value }))}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="">Select start time</option>
+                  {timeSelectOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">End Time</label>
+                <select
+                  value={timetableForm.endtime}
+                  onChange={(e) => setTimetableForm((prev) => ({ ...prev, endtime: e.target.value }))}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="">Select end time</option>
+                  {timeSelectOptions.map((option) => (
+                    <option key={`${option.value}-end`} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-5">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setEditingTimetableId(null)
+                  resetTimetableForm()
+                  setShowTimetableForm(false)
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleAddTimetable} disabled={savingTimetable} className="bg-[#146c4f] hover:bg-[#115a42] text-white">
+                {savingTimetable ? 'Saving...' : editingTimetableId ? 'Update Timetable' : 'Save Timetable'}
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent border-gray-100 bg-gray-50/50">
-                <TableHead className="text-xs font-semibold text-gray-500 tracking-wider h-11 px-6">CANDIDATE</TableHead>
-                <TableHead className="text-xs font-semibold text-gray-500 tracking-wider h-11">PARTY</TableHead>
-                <TableHead className="text-xs font-semibold text-gray-500 tracking-wider h-11">POSITION</TableHead>
-                <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider">ACTIONS</TableHead>
+                <TableHead className="text-xs font-semibold text-gray-500 tracking-wider h-11 px-6">DATE</TableHead>
+                <TableHead className="text-xs font-semibold text-gray-500 tracking-wider h-11">OFFICE</TableHead>
+                <TableHead className="text-xs font-semibold text-gray-500 tracking-wider h-11">DESCRIPTION</TableHead>
+                <TableHead className="text-xs font-semibold text-gray-500 tracking-wider h-11">START</TableHead>
+                <TableHead className="text-xs font-semibold text-gray-500 tracking-wider h-11">END</TableHead>
+                <TableHead className="text-xs font-semibold text-gray-500 tracking-wider h-11 text-right">ACTION</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {candidates.length === 0 ? (
+              {electionTimetables.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                    No candidates registered for this election yet.
+                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    No election timetable created for this election yet.
                   </TableCell>
                 </TableRow>
               ) : (
-                candidates.map((candidate) => (
-                  <TableRow key={candidate.id} className="hover:bg-gray-50/50 transition-colors border-gray-50">
-                    <TableCell className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#146c4f]/10 flex items-center justify-center text-[#146c4f] font-semibold text-xs">
-                          {candidate.full_name.charAt(0)}
-                        </div>
-                        <span className="font-medium text-gray-800">{candidate.full_name}</span>
+                electionTimetables.map((item) => (
+                  <TableRow key={item.id ?? `${item.date}-${item.starttime}-${item.endtime}`} className="hover:bg-gray-50/50 transition-colors border-gray-50">
+                    <TableCell className="px-6 py-4 text-sm font-medium text-gray-800">
+                      {formatDate(item.date)}
+                    </TableCell>
+                    <TableCell className="py-4 text-sm text-gray-700 min-w-[140px]">
+                      {offices.find((office) => String(office.id) === String(item.office_id))?.name || item.office_id || 'N/A'}
+                    </TableCell>
+                    <TableCell className="py-4 text-sm text-gray-700 max-w-[260px] align-top break-words whitespace-normal">
+                      {item.description || 'Election timetable'}
+                    </TableCell>
+                    <TableCell className="py-4 text-sm text-gray-700">
+                      <div className="flex items-center gap-2">
+                        <Clock3 className="w-4 h-4 text-gray-400" />
+                        {formatDisplayTime(item.starttime)}
                       </div>
                     </TableCell>
-                    <TableCell className="py-4">
-                      <Badge variant="outline" className="border-[#146c4f]/30 text-[#146c4f] bg-[#146c4f]/5 font-medium">
-                        {candidate.political_party}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-4 text-sm text-gray-500">
-                      {candidate.senatorial_district || candidate.state || 'N/A'}
-                    </TableCell>
-                    <TableCell>
+                    <TableCell className="py-4 text-sm text-gray-700">
                       <div className="flex items-center gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-[#146c4f] hover:text-[#115a42] hover:bg-[#146c4f]/10"
-                          onClick={() => navigate(`/k8s9d7f3-candidates-view/${candidate.id}`)}
+                        <Clock3 className="w-4 h-4 text-gray-400" />
+                        {formatDisplayTime(item.endtime)}
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white shadow-sm">
+                          <select
+                            value={item.status || 'Upcoming'}
+                            onChange={(e) => item.id && handleTimetableStatusChange(item.id, e.target.value as 'Upcoming' | 'Ongoing' | 'Completed')}
+                            className="h-8 rounded-md border-0 bg-transparent px-2 text-xs font-medium text-gray-700 outline-none"
+                            aria-label="Change timetable status"
+                          >
+                            {(['Upcoming', 'Ongoing', 'Completed'] as const).map((statusOption) => (
+                              <option key={statusOption} value={statusOption}>
+                                {statusOption}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => item.id && handleViewTimetable(item.id)}
+                          className="h-8 w-8 text-blue-600 hover:text-blue-800"
+                          aria-label="View timetable"
+                          disabled={loadingTimetableDetails}
                         >
-                          <Eye className="w-4 h-4 mr-1" />
-                          View
+                          <Eye className="w-4 h-4" />
                         </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="p-1 rounded hover:bg-gray-100">
-                              <MoreVertical className="w-4 h-4 text-gray-400" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-[140px]">
-                            <DropdownMenuItem className="cursor-pointer" onClick={() => navigate(`/k8s9d7f3-candidates-edit/${candidate.id}`)}>
-                              <Edit className="w-4 h-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="cursor-pointer text-red-600 focus:text-red-600"
-                              onClick={() => {
-                                // Add delete handler if needed later
-                                console.log('Delete candidate', candidate.id)
-                              }}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditTimetable(item)}
+                          className="h-8 w-8 text-gray-600 hover:text-gray-900"
+                          aria-label="Edit timetable"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => item.id && handleDeleteTimetable(item.id)}
+                          className="h-8 w-8 text-red-500 hover:text-red-700"
+                          aria-label="Delete timetable"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -341,6 +668,108 @@ export default function ElectionDetailPage() {
           </Table>
         </div>
       </div>
+
+      <Dialog open={Boolean(viewingTimetable)} onOpenChange={(open) => !open && setViewingTimetable(null)}>
+        <DialogContent className="sm:max-w-lg rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Timetable Details</DialogTitle>
+            <DialogDescription className="text-sm text-gray-600">
+              View the selected election timetable information.
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingTimetableDetails ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="w-6 h-6 animate-spin text-[#146c4f]" />
+            </div>
+          ) : viewingTimetable ? (
+            <div className="space-y-4 text-sm text-gray-700">
+              <div className="rounded-xl bg-gray-50 p-4 space-y-3">
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">Description</p>
+                  <p className="whitespace-pre-wrap break-words">{viewingTimetable.description || '—'}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">Date</p>
+                    <p>{formatDate(viewingTimetable.date)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">Status</p>
+                    <p>{viewingTimetable.status || 'Upcoming'}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">Start</p>
+                    <p>{viewingTimetable.starttime || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">End</p>
+                    <p>{viewingTimetable.endtime || '—'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">Office</p>
+                  <p>{offices.find((office) => String(office.id) === String(viewingTimetable.office_id))?.name || viewingTimetable.office_id || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">Election Type</p>
+                  <p>{electionTypes.find((type) => String(type.id) === String(viewingTimetable.election_type_id))?.name || viewingTimetable.election_type_id || '—'}</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="mt-4 flex justify-end">
+            <Button onClick={() => setViewingTimetable(null)} className="bg-[#146c4f] hover:bg-[#115a42] text-white px-6">
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-md rounded-xl">
+          <DialogHeader className="text-center">
+            <div className="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+              <Calendar className="h-5 w-5" />
+            </div>
+            <DialogTitle className="text-xl">Success</DialogTitle>
+            <DialogDescription className="text-center text-sm text-gray-600">
+              {successMessage || 'Operation completed successfully.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 flex justify-center">
+            <Button onClick={() => setShowSuccessDialog(false)} className="bg-[#146c4f] hover:bg-[#115a42] text-white px-6">
+              OK
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={timetableToDelete !== null} onOpenChange={(open) => !open && setTimetableToDelete(null)}>
+        <AlertDialogContent className="sm:max-w-md rounded-xl">
+          <AlertDialogHeader>
+            <div className="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-red-100 text-red-600">
+              <Trash2 className="h-5 w-5" />
+            </div>
+            <AlertDialogTitle className="text-center">Delete Timetable?</AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-sm text-gray-600">
+              This action cannot be undone. The timetable will be removed permanently.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-center gap-2">
+            <AlertDialogCancel onClick={() => setTimetableToDelete(null)} className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteTimetable} className="rounded-xl bg-red-600 text-white hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

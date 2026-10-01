@@ -268,56 +268,15 @@ export default function ElectionsPage() {
                       {renderStatusBadge(election.status)}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-[#146c4f] hover:text-[#115a42] hover:bg-[#146c4f]/10"
-                          onClick={() => navigate(`/k8s9d7f3-elections-view/${election.id}`)}
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          View
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="p-1 rounded hover:bg-gray-100">
-                              <MoreVertical className="w-4 h-4 text-gray-400" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-[140px]">
-                            <DropdownMenuItem className="cursor-pointer" onClick={() => navigate(`/k8s9d7f3-elections-edit/${election.id}`)}>
-                              <Edit className="w-4 h-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuSub>
-                              <DropdownMenuSubTrigger className="cursor-pointer">
-                                <RefreshCw className="w-4 h-4 mr-2" />
-                                Update Status
-                              </DropdownMenuSubTrigger>
-                              <DropdownMenuPortal>
-                                <DropdownMenuSubContent>
-                                  <DropdownMenuItem className="cursor-pointer" onClick={() => handleStatusChange(election.id, 'Upcoming')}>
-                                    Upcoming
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem className="cursor-pointer" onClick={() => handleStatusChange(election.id, 'Ongoing')}>
-                                    On-going
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem className="cursor-pointer" onClick={() => handleStatusChange(election.id, 'Completed')}>
-                                    Completed
-                                  </DropdownMenuItem>
-                                </DropdownMenuSubContent>
-                              </DropdownMenuPortal>
-                            </DropdownMenuSub>
-                            <DropdownMenuItem
-                              className="cursor-pointer text-red-600 focus:text-red-600"
-                              onClick={() => handleDelete(election.id)}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-[#146c4f] hover:text-[#115a42] hover:bg-[#146c4f]/10"
+                        onClick={() => navigate(`/k8s9d7f3-elections-view/${election.id}`)}
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        View
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
