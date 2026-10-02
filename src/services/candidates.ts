@@ -162,6 +162,41 @@ export interface CandidateDetail {
   image?: string | null
 }
 
+export interface CandidateEducation {
+  id?: number
+  candidate_id: number
+  education_level: string
+  field_of_study: string
+  institution: string
+  country: string
+  start_year: number
+  graduation_year: number
+  education_certificate: string
+  description: string
+}
+
+export interface CandidateAchievement {
+  id?: number
+  candidate_id: number
+  title: string
+  description: string
+  issuer: string
+  achievement_date: string
+}
+
+export interface CandidateExperience {
+  id?: number
+  candidate_id: number
+  job_title: string
+  organization: string
+  industry_type: string
+  start_date: string
+  end_date: string | null
+  is_current: boolean
+  description: string
+  responsibilities: string
+}
+
 export interface PaginatedResponse<T> {
   success: boolean
   data: {
@@ -196,6 +231,157 @@ class CandidateService {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     }
+  }
+
+  private async getCandidateRecords<T>(endpoint: string): Promise<T[]> {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '')
+      throw new Error(`Failed to load candidate records: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+    }
+
+    return unwrapApiArray(await response.json()) as T[]
+  }
+
+  private async createCandidateRecord<T>(endpoint: string, payload: unknown): Promise<T> {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload)
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '')
+      throw new Error(`Failed to create candidate record: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+    }
+
+    const result = await response.json()
+    return (result?.data ?? result) as T
+  }
+
+  private async updateCandidateRecord<T>(endpoint: string, payload: unknown): Promise<T> {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload)
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '')
+      throw new Error(`Failed to update candidate record: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+    }
+
+    const result = await response.json()
+    return (result?.data ?? result) as T
+  }
+
+  private async deleteCandidateRecord(endpoint: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '')
+      throw new Error(`Failed to delete candidate record: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+    }
+  }
+
+  async getCandidateEducation(candidateId: number): Promise<CandidateEducation[]> {
+    return this.getCandidateRecords<CandidateEducation>(`/candidates/manage-candidate-education/${candidateId}`)
+  }
+
+  async getCandidateEducationById(educationId: number): Promise<CandidateEducation> {
+    const response = await fetch(`${API_BASE_URL}/candidates/get-candidate-education/${educationId}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '')
+      throw new Error(`Failed to load education: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+    }
+
+    const result = await response.json()
+    return (result?.data?.education ?? result?.data ?? result?.education ?? result) as CandidateEducation
+  }
+
+  async createCandidateEducation(data: CandidateEducation): Promise<CandidateEducation> {
+    return this.createCandidateRecord<CandidateEducation>('/candidates/create-candidate-education', data)
+  }
+
+  async updateCandidateEducation(id: number, data: Omit<CandidateEducation, 'id'>): Promise<CandidateEducation> {
+    return this.updateCandidateRecord<CandidateEducation>(`/candidates/update-candidate-education/${id}`, data)
+  }
+
+  async deleteCandidateEducation(id: number): Promise<void> {
+    return this.deleteCandidateRecord(`/candidates/delete-candidate-education/${id}`)
+  }
+
+  async getCandidateAchievements(candidateId: number): Promise<CandidateAchievement[]> {
+    return this.getCandidateRecords<CandidateAchievement>(`/candidates/manage-candidate-achievements/${candidateId}`)
+  }
+
+  async getCandidateAchievement(achievementId: number): Promise<CandidateAchievement> {
+    const response = await fetch(`${API_BASE_URL}/candidates/get-candidate-achievement/${achievementId}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '')
+      throw new Error(`Failed to load achievement: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+    }
+
+    const result = await response.json()
+    return (result?.data?.achievement ?? result?.data ?? result?.achievement ?? result) as CandidateAchievement
+  }
+
+  async createCandidateAchievement(data: CandidateAchievement): Promise<CandidateAchievement> {
+    return this.createCandidateRecord<CandidateAchievement>('/candidates/create-candidate-achievement', data)
+  }
+
+  async updateCandidateAchievement(id: number, data: Omit<CandidateAchievement, 'id'>): Promise<CandidateAchievement> {
+    return this.updateCandidateRecord<CandidateAchievement>(`/candidates/update-candidate-achievement/${id}`, data)
+  }
+
+  async deleteCandidateAchievement(id: number): Promise<void> {
+    return this.deleteCandidateRecord(`/candidates/delete-candidate-achievement/${id}`)
+  }
+
+  async getCandidateExperiences(candidateId: number): Promise<CandidateExperience[]> {
+    return this.getCandidateRecords<CandidateExperience>(`/candidates/manage-candidate-experiences/${candidateId}`)
+  }
+
+  async getCandidateExperienceById(experienceId: number): Promise<CandidateExperience> {
+    const response = await fetch(`${API_BASE_URL}/candidates/get-candidate-experience/${experienceId}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '')
+      throw new Error(`Failed to load experience: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+    }
+
+    const result = await response.json()
+    return (result?.data?.experience ?? result?.data ?? result?.experience ?? result) as CandidateExperience
+  }
+
+  async createCandidateExperience(data: CandidateExperience): Promise<CandidateExperience> {
+    return this.createCandidateRecord<CandidateExperience>('/candidates/create-candidate-experience', data)
+  }
+
+  async updateCandidateExperience(id: number, data: Omit<CandidateExperience, 'id'>): Promise<CandidateExperience> {
+    return this.updateCandidateRecord<CandidateExperience>(`/candidates/update-candidate-experience/${id}`, data)
+  }
+
+  async deleteCandidateExperience(id: number): Promise<void> {
+    return this.deleteCandidateRecord(`/candidates/delete-candidate-experience/${id}`)
   }
 
   async getAllCandidates(): Promise<Candidate[]> {
@@ -605,17 +791,15 @@ class CandidateService {
   async uploadCandidatePhoto(id: number, file: File): Promise<CandidateDetail> {
     const url = `${API_BASE_URL}/candidates/upload-photo/${id}`;
     console.log('📤 Sending photo upload request to:', url);
-    console.log('📤 HTTP Method used: POST (spoofing PATCH via X-HTTP-Method-Override header)');
+    console.log('📤 HTTP Method used: POST');
     const formData = new FormData();
     formData.append('photo', file);
-    formData.append('_method', 'PATCH'); // Laravel method spoofing in body
     
     const response = await fetch(url, {
-      method: 'POST', // Send as POST to avoid Apache stripping Authorization header and PHP PATCH issues
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         'Accept': 'application/json',
-        'X-HTTP-Method-Override': 'PATCH', // Spoof PATCH via Symfony/Laravel header
       },
       body: formData,
     });
@@ -632,7 +816,7 @@ class CandidateService {
     console.log('📥 Upload success data (JSON string):', JSON.stringify(data));
     
     // Normalize in case response wraps the candidate under a 'candidate' key
-    const candidateObj = (data.data && data.data.candidate) ? data.data.candidate : data.data;
+    const candidateObj = data?.data?.candidate ?? data?.data ?? data?.candidate ?? data;
     return candidateObj;
   }
 
