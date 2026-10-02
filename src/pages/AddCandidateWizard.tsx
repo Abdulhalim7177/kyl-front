@@ -34,6 +34,7 @@ export default function AddCandidateWizard() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [submittedCandidate, setSubmittedCandidate] = useState<Candidate | null>(null)
   const [parties, setParties] = useState<Party[]>([])
+  const [districts, setDistricts] = useState<LGADistrict[]>([])
   const [partySearch, setPartySearch] = useState('')
   const [districtSearch, setDistrictSearch] = useState('')
   const [lgas, setLgas] = useState<LGADistrict[]>([])
@@ -59,12 +60,12 @@ export default function AddCandidateWizard() {
     const fetchSelectData = async () => {
       try {
         setLoadingSelectData(true)
-        const [partiesData, lgasData] = await Promise.all([
+        const [partiesData, districtsData] = await Promise.all([
           candidateService.getAllParties(),
           candidateService.getAllLGADistricts()
         ])
         setParties(partiesData)
-        setLgas(lgasData)
+        setDistricts(districtsData)
       } catch (error) {
         console.error('Failed to load select data:', error)
       } finally {
@@ -304,23 +305,43 @@ export default function AddCandidateWizard() {
                 onValueChange={(value) => setFormData({ ...formData, party_id: parseInt(value) })}
                 disabled={loadingSelectData}
               >
-                <SelectTrigger className="h-12">
+                <SelectTrigger className="h-12 rounded-xl border border-gray-200 bg-white shadow-sm hover:border-[#146c4f]/40 focus:ring-2 focus:ring-[#146c4f]/20 focus:border-[#146c4f]">
                   <SelectValue placeholder={loadingSelectData ? "Loading parties..." : "Select Political Party"} />
                 </SelectTrigger>
                 <SelectContent
                   searchable
                   searchValue={partySearch}
                   onSearchChange={setPartySearch}
+                  className="rounded-xl border border-gray-200 bg-white p-1 shadow-xl"
                 >
-                  {parties
-                    .filter((party) =>
-                      party.name.toLowerCase().includes(partySearch.toLowerCase())
-                    )
-                    .map((party) => (
-                      <SelectItem key={party.id} value={party.id.toString()}>
-                        {party.name}
+                  {(() => {
+                    const partyOptions = [...parties]
+                      .sort((a, b) => a.name.localeCompare(b.name))
+                      .filter((party) =>
+                        party.name.toLowerCase().includes(partySearch.toLowerCase())
+                      )
+
+                    if (partyOptions.length === 0) {
+                      return (
+                        <div className="px-3 py-4 text-sm text-gray-500">
+                          No parties available
+                        </div>
+                      )
+                    }
+
+                    return partyOptions.map((party) => (
+                      <SelectItem
+                        key={party.id}
+                        value={party.id.toString()}
+                        className="rounded-lg px-3 py-2.5 text-sm text-gray-700 data-[highlighted]:bg-[#146c4f]/5 data-[state=checked]:bg-[#146c4f]/10"
+                      >
+                        <span className="flex items-center justify-between w-full gap-3">
+                          <span className="font-medium">{party.name}</span>
+                          <span className="text-[10px] uppercase tracking-[0.18em] text-gray-400">Party</span>
+                        </span>
                       </SelectItem>
-                    ))}
+                    ))
+                  })()}
                 </SelectContent>
               </Select>
             </div>
@@ -333,23 +354,38 @@ export default function AddCandidateWizard() {
                 onValueChange={(value) => setFormData({ ...formData, lga_district_id: parseInt(value) })}
                 disabled={loadingSelectData}
               >
-                <SelectTrigger className="h-12">
+                <SelectTrigger className="h-12 rounded-xl border border-gray-200 bg-white shadow-sm hover:border-[#146c4f]/40 focus:ring-2 focus:ring-[#146c4f]/20 focus:border-[#146c4f]">
                   <SelectValue placeholder="Select LGA District" />
                 </SelectTrigger>
                 <SelectContent
                   searchable
                   searchValue={districtSearch}
                   onSearchChange={setDistrictSearch}
+                  className="rounded-xl border border-gray-200 bg-white p-1 shadow-xl"
                 >
-                  {lgas
-                    .filter((district) =>
+                  {(() => {
+                    const districtOptions = districts.filter((district) =>
                       district.name.toLowerCase().includes(districtSearch.toLowerCase())
                     )
-                    .map((district) => (
-                      <SelectItem key={district.id} value={district.id.toString()}>
+
+                    if (districtOptions.length === 0) {
+                      return (
+                        <div className="px-3 py-4 text-sm text-gray-500">
+                          No districts found
+                        </div>
+                      )
+                    }
+
+                    return districtOptions.map((district) => (
+                      <SelectItem
+                        key={district.id}
+                        value={district.id.toString()}
+                        className="rounded-lg px-3 py-2.5 text-sm text-gray-700 data-[highlighted]:bg-[#146c4f]/5 data-[state=checked]:bg-[#146c4f]/10"
+                      >
                         {district.name}
                       </SelectItem>
-                    ))}
+                    ))
+                  })()}
                 </SelectContent>
               </Select>
             </div>

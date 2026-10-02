@@ -94,10 +94,25 @@ export interface LGADistrictResponse {
 
 const unwrapApiArray = (payload: any): any[] => {
   if (Array.isArray(payload)) return payload
-  if (payload && typeof payload === 'object') {
-    if (Array.isArray(payload.data)) return payload.data
-    if (payload.data) return unwrapApiArray(payload.data)
+
+  if (!payload || typeof payload !== 'object') return []
+
+  const nestedCandidates =
+    payload.data?.data ??
+    payload.data?.candidates ??
+    payload.data?.items ??
+    payload.data?.results ??
+    payload.candidates ??
+    payload.items ??
+    payload.results ??
+    payload.data
+
+  if (Array.isArray(nestedCandidates)) return nestedCandidates
+
+  if (payload.data && typeof payload.data === 'object') {
+    return unwrapApiArray(payload.data)
   }
+
   return []
 }
 
@@ -199,34 +214,65 @@ class CandidateService {
       throw new Error(`Failed to fetch candidates: ${response.status} ${response.statusText}`)
     }
 
-    const rawData: PaginatedResponse<any> = await response.json()
+    const rawData: any = await response.json()
     console.log('📊 Candidates API Response Data:', rawData)
 
-     const rawCandidates = Array.isArray(rawData.data?.data) 
-       ? rawData.data.data 
-       : (Array.isArray(rawData.data) ? rawData.data : [])
-     console.log('📊 Raw candidates length:', rawCandidates.length)
+    const rawCandidates = unwrapApiArray(rawData)
+    console.log('📊 Raw candidates length:', rawCandidates.length)
 
-     const candidates = rawCandidates.map((candidate: any) => {
-       const rawStatus = candidate.status
-       const isActive =
-         rawStatus === 1 ||
-         rawStatus === true ||
-         String(rawStatus) === '1' ||
-         String(rawStatus).toLowerCase() === 'active'
-       const normalizedStatus = isActive ? 'Active' : 'Inactive'
+    const candidates = rawCandidates.map((candidate: any) => {
+      const fullName =
+        candidate.fullName ??
+        candidate.full_name ??
+        candidate.name ??
+        candidate.user?.fullName ??
+        candidate.user?.full_name ??
+        ''
 
-       return {
-         id: candidate.id,
-         user_id: String(candidate.id),
-         full_name: candidate.fullName ?? '',
-         political_party: candidate.party?.name ?? '',
-         senatorial_district: candidate.lga_district?.name ?? '',
-         state: candidate.state && typeof candidate.state === 'object' ? candidate.state.name : String(candidate.state ?? ''),
-         status: normalizedStatus,
-         created_at: candidate.created_at ?? ''
-       }
-     })
+      const partyName =
+        candidate.party?.name ??
+        candidate.political_party ??
+        candidate.party_name ??
+        candidate.partyName ??
+        candidate.user?.party?.name ??
+        ''
+
+      const districtName =
+        candidate.lga_district?.name ??
+        candidate.senatorial_district?.name ??
+        candidate.district?.name ??
+        candidate.senatorialDistrict?.name ??
+        candidate.senatorial_district_name ??
+        candidate.district_name ??
+        candidate.user?.lga_district?.name ??
+        ''
+
+      const stateName =
+        (candidate.state && typeof candidate.state === 'object' ? candidate.state.name : candidate.state) ??
+        candidate.state_name ??
+        candidate.stateName ??
+        candidate.user?.state?.name ??
+        ''
+
+      const rawStatus = candidate.status
+      const isActive =
+        rawStatus === 1 ||
+        rawStatus === true ||
+        String(rawStatus) === '1' ||
+        String(rawStatus).toLowerCase() === 'active'
+      const normalizedStatus = isActive ? 'Active' : 'Inactive'
+
+      return {
+        id: candidate.id,
+        user_id: String(candidate.user_id ?? candidate.user?.id ?? candidate.id ?? ''),
+        full_name: String(fullName ?? ''),
+        political_party: String(partyName ?? ''),
+        senatorial_district: String(districtName ?? ''),
+        state: String(stateName ?? ''),
+        status: normalizedStatus,
+        created_at: candidate.created_at ?? ''
+      }
+    })
 
     console.log('✅ Returning normalized candidates:', candidates.length, 'items')
     return candidates
@@ -592,26 +638,39 @@ class CandidateService {
 
   async getAllParties(): Promise<Party[]> {
     try {
-      console.log('🔍 Fetching all parties from /parties')
-      const response = await fetch(`${API_BASE_URL}/parties`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
-      })
+      const partyEndpoints = [
+        `${API_BASE_URL.replace(/\/+$/, '')}/parties`,
+        `${API_BASE_URL.replace(/\/api\/v1$/, '')}/api/v1/parties`,
+      ]
 
-      console.log('📨 Parties API Response Status:', response.status, response.statusText)
+      for (const endpoint of partyEndpoints) {
+        try {
+          console.log('🔍 Fetching all parties from:', endpoint)
+          const response = await fetch(endpoint, {
+            method: 'GET',
+            headers: this.getAuthHeaders(),
+          })
 
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => '')
-        console.error('❌ Failed to fetch parties:', response.status, response.statusText, errorText)
-        return []
+          console.log('📨 Parties API Response Status:', response.status, response.statusText, 'URL:', endpoint)
+
+          if (!response.ok) {
+            const errorText = await response.text().catch(() => '')
+            console.warn('⚠️ Parties endpoint failed:', endpoint, response.status, errorText)
+            continue
+          }
+
+          const data = await response.json()
+          console.log('📊 Parties API Response Data:', data)
+
+          const partyList = unwrapApiArray(data)
+          console.log('✅ Returning parties:', partyList.length, 'items')
+          return partyList
+        } catch (error) {
+          console.warn('⚠️ Error fetching parties from:', endpoint, error)
+        }
       }
 
-      const data = await response.json()
-      console.log('📊 Parties API Response Data:', data)
-
-      const partyList = unwrapApiArray(data)
-      console.log('✅ Returning parties:', partyList.length, 'items')
-      return partyList
+      return []
     } catch (error) {
       console.error('❌ Error fetching parties:', error)
       return []
