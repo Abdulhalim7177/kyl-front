@@ -85,19 +85,7 @@ export default function ElectionDetailPage() {
     })
   }
 
-  // Timetable Form State
-  const [offices, setOffices] = useState<any[]>([])
-  const [electionTypes, setElectionTypes] = useState<any[]>([])
-  const [showTimetableModal, setShowTimetableModal] = useState(false)
-  const [savingTimetable, setSavingTimetable] = useState(false)
-  const [timetableForm, setTimetableForm] = useState({
-    office_id: '',
-    election_type_id: '',
-    description: '',
-    date: '',
-    starttime: '',
-    endtime: ''
-  })
+
 
   // Candidates filtering by selected timetable
   const [selectedTimetableId, setSelectedTimetableId] = useState<string>('all')
