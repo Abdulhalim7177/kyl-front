@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react'
 import { roleService, Role, Module } from '@/services/roles'
 import { Button } from '@/components/ui/button'

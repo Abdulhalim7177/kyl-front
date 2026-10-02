@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -11,13 +11,16 @@ import {
   Users,
   Flag,
   Vote,
-  Building2,
   MapPin,
   UserCheck,
   FileText,
   Activity,
-  Menu
+  Menu,
+  ChevronDown,
+  Search
 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 const SIDEBAR_ITEMS = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/k8s9d7f3-admin-panel' },
@@ -25,9 +28,19 @@ const SIDEBAR_ITEMS = [
   { name: 'Candidates', icon: UserCheck, path: '/k8s9d7f3-candidates' },
   { name: 'Political Parties', icon: Flag, path: '/k8s9d7f3-parties' },
   { name: 'Elections', icon: Vote, path: '/k8s9d7f3-elections' },
-  { name: 'Offices', icon: Building2, path: '#' },
-  { name: 'Districts', icon: MapPin, path: '#' },
-  { name: 'Elected Officials', icon: UserCheck, path: '#' },
+  { 
+    name: 'Districts', 
+    icon: MapPin, 
+    path: '#',
+    subItems: [
+      { name: 'States', path: '/k8s9d7f3-districts/states' },
+      { name: 'Senatorial Districts', path: '/k8s9d7f3-districts/senatorial' },
+      { name: 'Federal Constituencies', path: '/k8s9d7f3-districts/federal' },
+      { name: 'State Constituencies', path: '/k8s9d7f3-districts/state-house' },
+      { name: 'LGAs', path: '/k8s9d7f3-districts/lgas' },
+      { name: 'Wards', path: '/k8s9d7f3-districts/wards' },
+    ]
+  },
   { name: 'Blogs', icon: FileText, path: '#' },
   { name: 'Activity Logs', icon: Activity, path: '/k8s9d7f3-activity-logs' },
 ]
@@ -40,6 +53,7 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children, title }: AdminLayoutProps) {
   const { user, logout } = useAuth()
   const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -53,7 +67,12 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
     window.location.href = '/k8s9d7f3-auth-login'
   }
 
-  const SidebarContent = () => (
+  const SidebarContent = () => {
+    const [openMenus, setOpenMenus] = useState<string[]>([])
+    const toggleMenu = (name: string) => {
+      setOpenMenus(prev => prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name])
+    }
+    return (
     <div className="flex flex-col h-full bg-white">
       <div className="mb-6 pt-6 flex justify-center">
         <Link to="/">
@@ -64,17 +83,55 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       <nav className="w-full flex-1 px-4 space-y-1 overflow-y-auto">
         {SIDEBAR_ITEMS.map((item, index) => {
           const IconComponent = item.icon
-          const isActive = location.pathname === item.path
+          const hasSubItems = item.subItems && item.subItems.length > 0
+          const isMenuOpen = openMenus.includes(item.name)
+          const isSubActive = hasSubItems && item.subItems?.some(sub => location.pathname.startsWith(sub.path))
+          const isActive = location.pathname === item.path || isSubActive
+
           return (
-            <Link 
-              key={index} 
-              to={item.path} 
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center px-4 py-3 rounded-xl font-medium transition-colors ${isActive ? 'bg-[#dcfce7]/50 text-[#146c4f]' : 'text-gray-600 hover:bg-gray-50'}`}
-            >
-              <IconComponent className={`w-5 h-5 mr-3 ${isActive ? 'text-[#146c4f]' : 'text-gray-400'}`} />
-              {item.name}
-            </Link>
+            <div key={index} className="flex flex-col">
+              {hasSubItems ? (
+                <button 
+                  onClick={() => toggleMenu(item.name)}
+                  className={`flex items-center justify-between px-4 py-3 rounded-xl font-medium transition-colors ${isActive || isMenuOpen ? 'bg-[#dcfce7]/20 text-[#146c4f]' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                  <div className="flex items-center">
+                    <IconComponent className={`w-5 h-5 mr-3 ${isActive || isMenuOpen ? 'text-[#146c4f]' : 'text-gray-400'}`} />
+                    {item.name}
+                  </div>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+              ) : (
+                <Link 
+                  to={item.path} 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center px-4 py-3 rounded-xl font-medium transition-colors ${isActive ? 'bg-[#dcfce7]/50 text-[#146c4f]' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                  <IconComponent className={`w-5 h-5 mr-3 ${isActive ? 'text-[#146c4f]' : 'text-gray-400'}`} />
+                  {item.name}
+                </Link>
+              )}
+              
+              {hasSubItems && (
+                <div 
+                  className={`flex flex-col ml-4 pl-4 border-l border-gray-200 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${isMenuOpen ? 'max-h-[500px] mt-1 opacity-100' : 'max-h-0 mt-0 opacity-0 pointer-events-none'}`}
+                >
+                  {item.subItems?.map((subItem, subIndex) => {
+                    const isSubItemActive = location.pathname === subItem.path
+                    return (
+                      <Link
+                        key={subIndex}
+                        to={subItem.path}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`px-4 py-2 rounded-lg text-sm transition-colors ${isSubItemActive ? 'text-[#146c4f] font-medium bg-[#dcfce7]/30' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
+                      >
+                        {subItem.name}
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           )
         })}
       </nav>
@@ -101,6 +158,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       </div>
     </div>
   )
+  }
 
   return (
     <div className="flex h-[100dvh] bg-[#f8fafc] font-sans text-sm overflow-hidden">
@@ -131,6 +189,41 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
           </div>
           
           <div className="flex items-center gap-2 sm:gap-4 text-gray-500">
+             {title === 'Manage Governatorial' && (
+               <Button
+                 type="button"
+                 size="sm"
+                 className="bg-[#146c4f] text-white hover:bg-[#10563f]"
+                 onClick={() => {
+                   window.dispatchEvent(new CustomEvent('open-governatorial-form'))
+                   const nextParams = new URLSearchParams(searchParams)
+                   nextParams.set('addGovernatorial', 'true')
+                   setSearchParams(nextParams)
+                 }}
+               >
+                 Add Governatorial
+               </Button>
+             )}
+             {title === 'Admin / Districts / States' && (
+               <div className="relative w-36 sm:w-56">
+                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                 <Input
+                   value={searchParams.get('stateSearch') || ''}
+                   onChange={(event) => {
+                     const nextParams = new URLSearchParams(searchParams)
+                     if (event.target.value) {
+                       nextParams.set('stateSearch', event.target.value)
+                     } else {
+                       nextParams.delete('stateSearch')
+                     }
+                     setSearchParams(nextParams)
+                   }}
+                   placeholder="Search states"
+                   aria-label="Search states by name"
+                   className="h-9 bg-gray-50 pl-9"
+                 />
+               </div>
+             )}
              <button className="hover:text-primary transition-colors p-1.5"><Bell className="w-5 h-5" /></button>
              <button className="hover:text-primary transition-colors p-1.5 hidden sm:block"><HelpCircle className="w-5 h-5" /></button>
           </div>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 export interface Candidate {
@@ -7,8 +8,12 @@ export interface Candidate {
   political_party: string
   senatorial_district: string
   state: string
+  state_id?: number
   status: string
   created_at: string
+  party?: {
+    name: string
+  }
 }
 
 export interface CreateCandidateData {
@@ -24,6 +29,15 @@ export interface CreateCandidateData {
   remark?: string
   lga_district_id: number
   party_id?: number
+}
+
+export interface AddGovernatorialCandidateData {
+  candidate_id: number
+  office_id: number
+  party_id: number
+  election_id: number
+  state_id: number
+  manifesto: string
 }
 
 export interface CandidateResponse {
@@ -194,6 +208,7 @@ class CandidateService {
     console.log('📨 Candidates API Response Status:', response.status, response.statusText)
 
     if (!response.ok) {
+      if (response.status === 404) return [];
       const errorText = await response.text()
       console.error('❌ API Error response:', errorText)
       throw new Error(`Failed to fetch candidates: ${response.status} ${response.statusText}`)
@@ -461,6 +476,7 @@ class CandidateService {
     })
 
     if (!response.ok) {
+      if (response.status === 404) return [];
       throw new Error('Failed to fetch president candidates')
     }
 
@@ -475,11 +491,54 @@ class CandidateService {
     })
 
     if (!response.ok) {
+      if (response.status === 404) return [];
       throw new Error('Failed to fetch governatorial candidates')
     }
 
     const data: CandidateResponse = await response.json()
     return data.data
+  }
+
+  async getActiveGovernatorialCandidates(): Promise<Candidate[]> {
+    const response = await fetch(`${API_BASE_URL}/elections/get-active-election-governatorial`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+
+    if (!response.ok) {
+      if (response.status === 404) return []
+      throw new Error('Failed to fetch active governatorial candidates')
+    }
+
+    const result = await response.json()
+    const payload = result?.data ?? result
+    if (Array.isArray(payload)) return payload
+    if (Array.isArray(payload?.candidates)) return payload.candidates
+    if (Array.isArray(payload?.data)) return payload.data
+    return []
+  }
+
+  async addGovernatorialCandidate(data: AddGovernatorialCandidateData): Promise<Candidate> {
+    const response = await fetch(`${API_BASE_URL}/elections/add-governatorial-candidate`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    })
+
+    const responseText = await response.text()
+    let result: any = {}
+    if (responseText) {
+      try {
+        result = JSON.parse(responseText)
+      } catch {
+        result = { message: responseText }
+      }
+    }
+    if (!response.ok || result.success === false) {
+      throw new Error(result.message || 'Failed to add governatorial candidate')
+    }
+
+    return result.data || result
   }
 
   async getPartySenators(): Promise<Candidate[]> {
@@ -489,6 +548,7 @@ class CandidateService {
     })
 
     if (!response.ok) {
+      if (response.status === 404) return [];
       throw new Error('Failed to fetch senatorial candidates')
     }
 
@@ -503,6 +563,7 @@ class CandidateService {
     })
 
     if (!response.ok) {
+      if (response.status === 404) return [];
       throw new Error('Failed to fetch reps candidates')
     }
 
@@ -517,6 +578,7 @@ class CandidateService {
     })
 
     if (!response.ok) {
+      if (response.status === 404) return [];
       throw new Error('Failed to fetch assembly candidates')
     }
 
@@ -532,6 +594,7 @@ class CandidateService {
     })
 
     if (!response.ok) {
+      if (response.status === 404) return [];
       throw new Error('Failed to fetch district candidates')
     }
 

@@ -37,6 +37,7 @@ export default function AddCandidateWizard() {
   const [districts, setDistricts] = useState<LGADistrict[]>([])
   const [partySearch, setPartySearch] = useState('')
   const [districtSearch, setDistrictSearch] = useState('')
+  const [lgas, setLgas] = useState<LGADistrict[]>([])
   const [loadingSelectData, setLoadingSelectData] = useState(false)
   
   const [formData, setFormData] = useState<CreateCandidateData>({

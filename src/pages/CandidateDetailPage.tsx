@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -234,10 +236,6 @@ export default function CandidateDetailPage() {
                 <div>
                   <label className="text-sm font-medium text-gray-500">State</label>
                   <p className="text-gray-900">{candidate.state?.name || 'Not provided'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Senatorial District</label>
-                  <p className="text-gray-900">{candidate.lga_district?.name || 'Not provided'}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">LGA District</label>

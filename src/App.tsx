@@ -1,9 +1,11 @@
 import { BrowserRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
-import LandingPage from '@/pages/LandingPage'
-import AboutPage from '@/pages/AboutPage'
-import PoliticiansPage from '@/pages/PoliticiansPage'
-import PositionsPage from '@/pages/PositionsPage'
+import PublicHomePage from '@/pages/PublicHomePage'
+import DistrictsExplorerPage from '@/pages/DistrictsExplorerPage'
+import CandidatesDirectoryPage from '@/pages/CandidatesDirectoryPage'
+import LeadersDirectoryPage from '@/pages/LeadersDirectoryPage'
+import PublicProfilePage from '@/pages/PublicProfilePage'
+import PublicElectionPage from '@/pages/PublicElectionPage'
 import LoginPage from '@/pages/LoginPage'
 import DashboardPage from '@/pages/DashboardPage'
 import PartiesPage from '@/pages/PartiesPage'
@@ -21,6 +23,11 @@ import ElectionFormPage from '@/pages/ElectionFormPage'
 import ElectionDetailPage from '@/pages/ElectionDetailPage'
 import RolesManagementPage from '@/pages/RolesManagementPage'
 import AdminLayout from '@/components/AdminLayout'
+import PublicPollsPage from '@/pages/PublicPollsPage'
+import PublicElectionsPage from '@/pages/PublicElectionsPage'
+import PublicPartiesPage from '@/pages/PublicPartiesPage'
+import PublicBlogsPage from '@/pages/PublicBlogsPage'
+import PublicAboutPage from '@/pages/PublicAboutPage'
 import './App.css'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -62,6 +69,10 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { Menu } from 'lucide-react'
 import { useState } from 'react'
+import DistrictsPage from '@/pages/DistrictsPage'
+import StateDetailPage from '@/pages/StateDetailPage'
+import WardDetailPage from '@/pages/WardDetailPage'
+import LgaDetailPage from '@/pages/LgaDetailPage'
 
 function Navigation() {
   const location = useLocation()
@@ -71,8 +82,13 @@ function Navigation() {
   const NavLinks = () => (
     <>
       <Link to="/" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Home</Link>
-      <Link to="/politicians" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/politicians') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Politicians</Link>
-      <Link to="/positions" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/positions') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Positions</Link>
+      <Link to="/districts" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/districts') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Districts</Link>
+      <Link to="/candidates" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/candidates') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Candidates</Link>
+      <Link to="/leaders" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/leaders') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Elected Leaders</Link>
+      <Link to="/polls" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/polls') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Polls</Link>
+      <Link to="/elections" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/elections') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Elections</Link>
+      <Link to="/parties" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/parties') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Parties</Link>
+      <Link to="/blogs" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/blogs') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Blogs</Link>
       <Link to="/about" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/about') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>About</Link>
     </>
   )
@@ -145,10 +161,17 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<PublicLayout><LandingPage /></PublicLayout>} />
-          <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
-          <Route path="/politicians" element={<PublicLayout><PoliticiansPage /></PublicLayout>} />
-          <Route path="/positions" element={<PublicLayout><PositionsPage /></PublicLayout>} />
+          <Route path="/" element={<PublicLayout><PublicHomePage /></PublicLayout>} />
+          <Route path="/districts" element={<PublicLayout><DistrictsExplorerPage /></PublicLayout>} />
+          <Route path="/candidates" element={<PublicLayout><CandidatesDirectoryPage /></PublicLayout>} />
+          <Route path="/leaders" element={<PublicLayout><LeadersDirectoryPage /></PublicLayout>} />
+          <Route path="/profile/:id" element={<PublicLayout><PublicProfilePage /></PublicLayout>} />
+          <Route path="/election/:id" element={<PublicLayout><PublicElectionPage /></PublicLayout>} />
+          <Route path="/polls" element={<PublicLayout><PublicPollsPage /></PublicLayout>} />
+          <Route path="/elections" element={<PublicLayout><PublicElectionsPage /></PublicLayout>} />
+          <Route path="/parties" element={<PublicLayout><PublicPartiesPage /></PublicLayout>} />
+          <Route path="/blogs" element={<PublicLayout><PublicBlogsPage /></PublicLayout>} />
+          <Route path="/about" element={<PublicLayout><PublicAboutPage /></PublicLayout>} />
           
           <Route
             path="/k8s9d7f3-auth-login"
@@ -355,6 +378,96 @@ function App() {
             }
           />
           
+                    <Route
+            path="/k8s9d7f3-districts/states"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Districts / States">
+                  <DistrictsPage type="states" title="States" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/states/:id"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Manage Governatorial">
+                  <StateDetailPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/senatorial"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Districts / Senatorial">
+                  <DistrictsPage type="senatorial" title="Senatorial Districts" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/federal"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Districts / Federal Constituencies">
+                  <DistrictsPage type="federal" title="Federal Constituencies" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/state-house"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Districts / State Constituencies">
+                  <DistrictsPage type="state-house" title="State Constituencies" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/lgas"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Districts / LGAs">
+                  <DistrictsPage type="lgas" title="Local Government Areas" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/lgas/:id"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Districts / LGA Details">
+                  <LgaDetailPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/wards"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Districts / Wards">
+                  <DistrictsPage type="wards" title="Wards" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/wards/:id"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Admin / Districts / Ward Details">
+                  <WardDetailPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
         </Routes>
       </BrowserRouter>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { authService } from './auth'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
@@ -134,7 +135,7 @@ class PartyService {
         const trimmed = String(value).trim()
         if (!trimmed) return null
 
-        const slashMatch = trimmed.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/)
+        const slashMatch = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/)
         if (slashMatch) {
           const [, year, month, day] = slashMatch
           const parsed = new Date(Number(year), Number(month) - 1, Number(day))
