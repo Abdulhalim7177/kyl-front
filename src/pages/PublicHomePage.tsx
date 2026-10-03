@@ -1,12 +1,14 @@
 import { useEffect, useState, useRef } from 'react';
 import { visitorService } from '@/services/visitors';
 import { electionService, Election } from '@/services/elections';
+import { pollService, Poll } from '@/services/polls';
 import { Link } from 'react-router-dom';
-import { ChevronRight, ChevronLeft, Calendar } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Calendar, BarChart2 } from 'lucide-react';
 
 export default function PublicHomePage() {
   const [presidency, setPresidency] = useState<any[]>([]);
   const [elections, setElections] = useState<Election[]>([]);
+  const [activePolls, setActivePolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(true);
   
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -19,6 +21,9 @@ export default function PublicHomePage() {
         
         const elecs = await electionService.getAllElections();
         setElections(elecs);
+
+        const polls = await pollService.getPolls();
+        setActivePolls(polls.filter(p => p.status === 'active').slice(0, 3));
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
@@ -149,8 +154,45 @@ export default function PublicHomePage() {
         </div>
       </section>
 
+      {/* Active Polls Section */}
+      {activePolls.length > 0 && (
+        <section className="py-24 px-4 container mx-auto flex-1 relative z-10">
+          <div className="flex justify-between items-end mb-12">
+            <div>
+              <h2 className="text-sm font-bold text-primary tracking-[0.2em] uppercase mb-3">Public Opinion</h2>
+              <h3 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Active Polls</h3>
+            </div>
+            <Link to="/polls" className="hidden md:flex items-center text-primary font-bold hover:text-emerald-700 transition-colors">
+              View All Polls <ChevronRight className="w-5 h-5 ml-1" />
+            </Link>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {activePolls.map(poll => (
+              <div key={poll.id} className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col h-full hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-300">
+                <div className="flex items-center gap-2 mb-6">
+                  <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
+                  <span className="text-sm font-bold text-green-600 uppercase tracking-wider">Active</span>
+                </div>
+                <h4 className="text-2xl font-bold text-gray-900 mb-4">{poll.title || poll.question}</h4>
+                <p className="text-gray-500 mb-8 line-clamp-3 flex-grow">{poll.description}</p>
+                
+                <Link to={`/poll/${poll.id}`} className="mt-auto w-full inline-flex items-center justify-center gap-2 bg-primary text-white font-bold py-3.5 px-6 rounded-xl hover:bg-emerald-600 transition-colors">
+                  <BarChart2 className="w-5 h-5" /> Participate
+                </Link>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 text-center md:hidden">
+            <Link to="/polls" className="inline-flex items-center text-primary font-bold hover:text-emerald-700 transition-colors">
+              View All Polls <ChevronRight className="w-5 h-5 ml-1" />
+            </Link>
+          </div>
+        </section>
+      )}
+
       {/* Featured Section */}
-      <section className="py-24 px-4 container mx-auto flex-1 relative z-10">
+      <section className="py-24 px-4 container mx-auto flex-1 relative z-10 border-t border-gray-100">
         <div className="text-center mb-16">
           <h2 className="text-sm font-bold text-primary tracking-[0.2em] uppercase mb-3">Executive Office</h2>
           <h3 className="text-4xl font-bold text-gray-900 tracking-tight">Current Presidency</h3>

@@ -24,6 +24,7 @@ import ElectionDetailPage from '@/pages/ElectionDetailPage'
 import RolesManagementPage from '@/pages/RolesManagementPage'
 import AdminLayout from '@/components/AdminLayout'
 import PublicPollsPage from '@/pages/PublicPollsPage'
+import PublicPollDetailPage from '@/pages/PublicPollDetailPage'
 import PublicElectionsPage from '@/pages/PublicElectionsPage'
 import PublicPartiesPage from '@/pages/PublicPartiesPage'
 import PublicBlogsPage from '@/pages/PublicBlogsPage'
@@ -168,6 +169,7 @@ function App() {
           <Route path="/profile/:id" element={<PublicLayout><PublicProfilePage /></PublicLayout>} />
           <Route path="/election/:id" element={<PublicLayout><PublicElectionPage /></PublicLayout>} />
           <Route path="/polls" element={<PublicLayout><PublicPollsPage /></PublicLayout>} />
+          <Route path="/poll/:id" element={<PublicLayout><PublicPollDetailPage /></PublicLayout>} />
           <Route path="/elections" element={<PublicLayout><PublicElectionsPage /></PublicLayout>} />
           <Route path="/parties" element={<PublicLayout><PublicPartiesPage /></PublicLayout>} />
           <Route path="/blogs" element={<PublicLayout><PublicBlogsPage /></PublicLayout>} />
