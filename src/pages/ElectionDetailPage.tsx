@@ -23,23 +23,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog'
-import { ArrowLeft, Edit, Loader2, AlertCircle, Trash2, Calendar, Clock3, Eye, MoreVertical, RefreshCw, Plus } from 'lucide-react'
+import { ArrowLeft, Edit, Loader2, AlertCircle, Trash2, Calendar, Clock3, Eye } from 'lucide-react'
 import { electionService, Election, ElectionTimetable, Office, ElectionType } from '@/services/elections'
-import { candidateService, Candidate } from '@/services/candidates'
-import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function ElectionDetailPage() {
@@ -51,7 +42,6 @@ export default function ElectionDetailPage() {
   const [electionTimetables, setElectionTimetables] = useState<ElectionTimetable[]>([])
   const [offices, setOffices] = useState<Office[]>([])
   const [electionTypes, setElectionTypes] = useState<ElectionType[]>([])
-  const [candidates, setCandidates] = useState<Candidate[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -84,12 +74,6 @@ export default function ElectionDetailPage() {
       endtime: '',
     })
   }
-
-
-
-  // Candidates filtering by selected timetable
-  const [selectedTimetableId, setSelectedTimetableId] = useState<string>('all')
-
   useEffect(() => {
     if (isAuthenticated && id) {
       loadData(Number(id))
@@ -101,27 +85,22 @@ export default function ElectionDetailPage() {
       setLoading(true)
       setError(null)
 
-      const [electionData, timetablesData, officesResult, electionTypesData, candidatesResult] = await Promise.allSettled([
+      const [electionData, timetablesData, officesResult, electionTypesData] = await Promise.allSettled([
         electionService.getElectionById(electionId),
         electionService.getElectionTimetables(electionId),
         electionService.getAllOffices(),
-        electionService.getAllElectionTypes(),
-        candidateService.getAllCandidates()
+        electionService.getAllElectionTypes()
       ])
 
       const resolvedElection = electionData.status === 'fulfilled' ? electionData.value : null
       const resolvedTimetables = timetablesData.status === 'fulfilled' ? timetablesData.value : []
       const resolvedOffices = officesResult.status === 'fulfilled' ? officesResult.value : []
       const resolvedElectionTypes = electionTypesData.status === 'fulfilled' ? electionTypesData.value : []
-      const resolvedCandidates = candidatesResult.status === 'fulfilled' ? candidatesResult.value : []
-
       if (resolvedElection) {
         setElection(resolvedElection)
         setElectionTimetables(resolvedTimetables)
         setOffices(resolvedOffices)
         setElectionTypes(resolvedElectionTypes)
-        setCandidates(resolvedCandidates)
-
         if (resolvedOffices.length > 0 && !timetableForm.office_id) {
           setTimetableForm((prev) => ({ ...prev, office_id: String(resolvedOffices[0].id) }))
         }
@@ -344,56 +323,6 @@ export default function ElectionDetailPage() {
         )
     }
   }
-
-  const handleTimetableSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!election) return
-    try {
-      setSavingTimetable(true)
-      await electionService.createElectionTimetable({
-        election_id: election.id,
-        office_id: timetableForm.office_id,
-        election_type_id: timetableForm.election_type_id,
-        description: timetableForm.description,
-        date: timetableForm.date,
-        starttime: timetableForm.starttime,
-        endtime: timetableForm.endtime
-      })
-      // Refresh timetables
-      const newTimetables: any = await electionService.getElectionTimetables(election.id)
-      setTimetables(Array.isArray(newTimetables) ? newTimetables : (newTimetables?.data || []))
-      setShowTimetableModal(false)
-      setTimetableForm({ office_id: '', election_type_id: '', description: '', date: '', starttime: '', endtime: '' })
-    } catch (err: any) {
-      alert(err.message || 'Failed to save timetable')
-    } finally {
-      setSavingTimetable(false)
-    }
-  }
-
-  const displayedCandidates = candidates.filter(candidate => {
-    if (selectedTimetableId === 'all') return true
-    const selectedTimetable = electionTimetables.find(t => String(t.id) === selectedTimetableId)
-    if (!selectedTimetable) return true
-    
-    const officeName = (offices.find(o => String(o.id) === String(selectedTimetable.office_id))?.name || '').toLowerCase()
-    const candState = (candidate.state || '').toLowerCase()
-    const candDistrict = (candidate.senatorial_district || '').toLowerCase()
-
-    if (officeName.includes('president')) {
-      // Presidential candidates don't have specific state/district usually, or show all
-      return true
-    }
-    if (officeName.includes('governor') || officeName.includes('state')) {
-      // Must have state
-      return !!candState
-    }
-    if (officeName.includes('senate') || officeName.includes('senatorial')) {
-      // Must have district
-      return !!candDistrict
-    }
-    return true
-  })
 
   if (loading) {
     return (
@@ -787,7 +716,7 @@ export default function ElectionDetailPage() {
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">Election Type</p>
-                  <p>{electionTypes.find((type) => String(type.id) === String(viewingTimetable.election_type_id))?.name || viewingTimetable.election_type_id || '—'}</p>
+                  <p>{viewingTimetable.election_type_name || electionTypes.find((type) => String(type.id) === String(viewingTimetable.election_type_id))?.name || viewingTimetable.election_type_id || '—'}</p>
                 </div>
               </div>
             </div>
@@ -840,63 +769,6 @@ export default function ElectionDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Candidates Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-6">
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900">Participating Candidates</h2>
-          <select 
-            value={selectedTimetableId}
-            onChange={(e) => setSelectedTimetableId(e.target.value)}
-            className="text-sm border-gray-200 rounded-md shadow-sm focus:border-[#146c4f] focus:ring-[#146c4f]"
-          >
-            <option value="all">All Timetables / Offices</option>
-            {electionTimetables.map(t => (
-              <option key={t.id} value={t.id}>{t.description} ({offices.find(o => String(o.id) === String(t.office_id))?.name})</option>
-            ))}
-          </select>
-        </div>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent border-gray-100 bg-gray-50/50">
-                <TableHead className="text-xs font-semibold text-gray-500 tracking-wider h-11 px-6">CANDIDATE</TableHead>
-                <TableHead className="text-xs font-semibold text-gray-500 tracking-wider h-11">PARTY</TableHead>
-                <TableHead className="text-xs font-semibold text-gray-500 tracking-wider h-11">DISTRICT/STATE</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {displayedCandidates.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center py-8 text-gray-500">
-                    No candidates found for this selection.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                displayedCandidates.map((candidate) => (
-                  <TableRow key={candidate.id} className="hover:bg-gray-50/50 transition-colors border-gray-50">
-                    <TableCell className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#146c4f]/10 flex items-center justify-center text-[#146c4f] font-semibold text-xs">
-                          {candidate.full_name.charAt(0)}
-                        </div>
-                        <span className="font-medium text-gray-800">{candidate.full_name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-4">
-                      <Badge variant="outline" className="border-[#146c4f]/30 text-[#146c4f] bg-[#146c4f]/5 font-medium">
-                        {candidate.political_party}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-4 text-sm text-gray-500">
-                      {candidate.senatorial_district || candidate.state || 'N/A'}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
     </div>
   )
 }

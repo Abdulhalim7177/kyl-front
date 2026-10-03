@@ -3,12 +3,39 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, User, MapPin, Calendar, FileText, Building, Upload } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { AlertTriangle, ArrowLeft, Award, BriefcaseBusiness, CheckCircle2, Eye, GraduationCap, Loader2, Pencil, Plus, Trash2, Upload } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
-import { candidateService, CandidateDetail } from '@/services/candidates'
+import {
+  candidateService,
+  CandidateAchievement,
+  CandidateDetail,
+  CandidateEducation,
+  CandidateExperience,
+} from '@/services/candidates'
 import { useAuth } from '@/contexts/AuthContext'
+
+type CandidateRecordTab = 'education' | 'achievements' | 'experience'
+type CandidateRecord = CandidateEducation | CandidateAchievement | CandidateExperience
+
+const recordTypeLabel = (tab: CandidateRecordTab) => tab === 'achievements' ? 'Achievement' : tab === 'education' ? 'Education' : 'Experience'
 
 const BACKEND_ORIGIN = 'https://kyl.aitshub.com.ng'
 
@@ -20,6 +47,50 @@ export default function CandidateDetailPage() {
   const [candidate, setCandidate] = useState<CandidateDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [photoUploadError, setPhotoUploadError] = useState<string | null>(null)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [activeTab, setActiveTab] = useState<CandidateRecordTab>('education')
+  const [educationRecords, setEducationRecords] = useState<CandidateEducation[]>([])
+  const [achievementRecords, setAchievementRecords] = useState<CandidateAchievement[]>([])
+  const [experienceRecords, setExperienceRecords] = useState<CandidateExperience[]>([])
+  const [recordsLoading, setRecordsLoading] = useState(false)
+  const [recordsError, setRecordsError] = useState<string | null>(null)
+  const [createDialog, setCreateDialog] = useState<CandidateRecordTab | null>(null)
+  const [editingRecordId, setEditingRecordId] = useState<number | null>(null)
+  const [updatedRecordType, setUpdatedRecordType] = useState<CandidateRecordTab | null>(null)
+  const [viewingRecord, setViewingRecord] = useState<{ tab: CandidateRecordTab; record: CandidateRecord } | null>(null)
+  const [loadingViewedRecord, setLoadingViewedRecord] = useState(false)
+  const [viewRecordError, setViewRecordError] = useState<string | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<{ tab: CandidateRecordTab; record: CandidateRecord } | null>(null)
+  const [deletingRecord, setDeletingRecord] = useState(false)
+  const [savingRecord, setSavingRecord] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
+  const [educationForm, setEducationForm] = useState({
+    education_level: '',
+    field_of_study: '',
+    institution: '',
+    country: 'Nigeria',
+    start_year: '',
+    graduation_year: '',
+    education_certificate: '',
+    description: '',
+  })
+  const [achievementForm, setAchievementForm] = useState({
+    title: '',
+    description: '',
+    issuer: '',
+    achievement_date: '',
+  })
+  const [experienceForm, setExperienceForm] = useState({
+    job_title: '',
+    organization: '',
+    industry_type: '',
+    start_date: '',
+    end_date: '',
+    is_current: false,
+    description: '',
+    responsibilities: '',
+  })
 
   useEffect(() => {
     if (isAuthenticated && id) {
@@ -60,12 +131,12 @@ export default function CandidateDetailPage() {
     }
     const file = e.target.files[0];
     console.log('📸 Photo upload triggered. File:', file.name, 'Size:', file.size);
-    
-    // Show a temporary preview while the upload is in progress
-    setCandidate(prev => prev ? { ...prev, image: URL.createObjectURL(file) } : prev);
+    const previewUrl = URL.createObjectURL(file)
+    setCandidate(prev => prev ? { ...prev, image: previewUrl } : prev)
     
     try {
-      setError(null);
+      setPhotoUploadError(null)
+      setUploadingPhoto(true)
       console.log('🚀 Calling candidateService.uploadCandidatePhoto...');
       const updated = await candidateService.uploadCandidatePhoto(candidate.id, file);
       console.log('✅ Photo uploaded successfully. Server response candidate:', updated);
@@ -78,8 +149,11 @@ export default function CandidateDetailPage() {
       await loadCandidate();
     } catch (err) {
       console.error('❌ Failed to upload photo:', err);
-      setError(err instanceof Error ? err.message : 'Failed to upload photo.');
+      setCandidate(prev => prev ? { ...prev, image: candidate.image } : prev)
+      setPhotoUploadError(err instanceof Error ? err.message : 'Failed to upload photo.')
     } finally {
+      URL.revokeObjectURL(previewUrl)
+      setUploadingPhoto(false)
       // Reset input value so selecting the same file will trigger onChange again
       if (e.target) {
         e.target.value = '';
@@ -100,6 +174,179 @@ export default function CandidateDetailPage() {
       setLoading(false);
     }
   };
+
+  async function loadCandidateRecords(tab: CandidateRecordTab, candidateId: number) {
+    setRecordsLoading(true)
+    setRecordsError(null)
+    try {
+      if (tab === 'education') {
+        setEducationRecords(await candidateService.getCandidateEducation(candidateId))
+      } else if (tab === 'achievements') {
+        setAchievementRecords(await candidateService.getCandidateAchievements(candidateId))
+      } else {
+        setExperienceRecords(await candidateService.getCandidateExperiences(candidateId))
+      }
+    } catch (err) {
+      setRecordsError(err instanceof Error ? err.message : `Failed to load candidate ${tab}.`)
+    } finally {
+      setRecordsLoading(false)
+    }
+  }
+
+  const handleViewRecord = async (tab: CandidateRecordTab, record: CandidateRecord) => {
+    setViewingRecord({ tab, record })
+    setViewRecordError(null)
+    if (!record.id) return
+
+    setLoadingViewedRecord(true)
+    try {
+      const detail = tab === 'achievements'
+        ? await candidateService.getCandidateAchievement(record.id)
+        : tab === 'education'
+          ? await candidateService.getCandidateEducationById(record.id)
+          : await candidateService.getCandidateExperienceById(record.id)
+      setViewingRecord({ tab, record: detail })
+    } catch (err) {
+      setViewRecordError(err instanceof Error ? err.message : `Failed to load ${tab} details.`)
+    } finally {
+      setLoadingViewedRecord(false)
+    }
+  }
+
+  useEffect(() => {
+    if (candidate) void loadCandidateRecords(activeTab, candidate.id)
+  }, [candidate?.id, activeTab])
+
+  const openCreateDialog = (tab: CandidateRecordTab) => {
+    setEditingRecordId(null)
+    setCreateError(null)
+    setCreateDialog(tab)
+  }
+
+  const openEditDialog = (tab: CandidateRecordTab, record: CandidateRecord) => {
+    if (!record.id) return
+    setEditingRecordId(record.id)
+    setCreateError(null)
+    if (tab === 'education') {
+      const education = record as CandidateEducation
+      setEducationForm({
+        education_level: education.education_level ?? '',
+        field_of_study: education.field_of_study ?? '',
+        institution: education.institution ?? '',
+        country: education.country ?? 'Nigeria',
+        start_year: String(education.start_year ?? ''),
+        graduation_year: String(education.graduation_year ?? ''),
+        education_certificate: education.education_certificate ?? '',
+        description: education.description ?? '',
+      })
+    } else if (tab === 'achievements') {
+      const achievement = record as CandidateAchievement
+      setAchievementForm({
+        title: achievement.title ?? '',
+        description: achievement.description ?? '',
+        issuer: achievement.issuer ?? '',
+        achievement_date: achievement.achievement_date ?? '',
+      })
+    } else {
+      const experience = record as CandidateExperience
+      setExperienceForm({
+        job_title: experience.job_title ?? '',
+        organization: experience.organization ?? '',
+        industry_type: experience.industry_type ?? '',
+        start_date: experience.start_date ?? '',
+        end_date: experience.end_date ?? '',
+        is_current: experience.is_current ?? false,
+        description: experience.description ?? '',
+        responsibilities: experience.responsibilities ?? '',
+      })
+    }
+    setCreateDialog(tab)
+  }
+
+  const handleCreateRecord = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!candidate || !createDialog) return
+
+    setSavingRecord(true)
+    setCreateError(null)
+    const wasEditing = editingRecordId !== null
+    try {
+      if (createDialog === 'education') {
+        const payload = {
+          ...educationForm,
+          candidate_id: candidate.id,
+          start_year: Number(educationForm.start_year),
+          graduation_year: Number(educationForm.graduation_year),
+        }
+        if (editingRecordId) await candidateService.updateCandidateEducation(editingRecordId, payload)
+        else await candidateService.createCandidateEducation(payload)
+      } else if (createDialog === 'achievements') {
+        const payload = {
+          ...achievementForm,
+          candidate_id: candidate.id,
+        }
+        if (editingRecordId) await candidateService.updateCandidateAchievement(editingRecordId, payload)
+        else await candidateService.createCandidateAchievement(payload)
+      } else {
+        const payload = {
+          ...experienceForm,
+          candidate_id: candidate.id,
+          end_date: experienceForm.is_current ? null : experienceForm.end_date,
+        }
+        if (editingRecordId) await candidateService.updateCandidateExperience(editingRecordId, payload)
+        else await candidateService.createCandidateExperience(payload)
+      }
+
+      await loadCandidateRecords(createDialog, candidate.id)
+      if (wasEditing) setUpdatedRecordType(createDialog)
+      setActiveTab(createDialog)
+      setCreateDialog(null)
+      setEditingRecordId(null)
+      setEducationForm({
+        education_level: '',
+        field_of_study: '',
+        institution: '',
+        country: 'Nigeria',
+        start_year: '',
+        graduation_year: '',
+        education_certificate: '',
+        description: '',
+      })
+      setAchievementForm({ title: '', description: '', issuer: '', achievement_date: '' })
+      setExperienceForm({
+        job_title: '',
+        organization: '',
+        industry_type: '',
+        start_date: '',
+        end_date: '',
+        is_current: false,
+        description: '',
+        responsibilities: '',
+      })
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : 'Failed to create candidate record.')
+    } finally {
+      setSavingRecord(false)
+    }
+  }
+
+  const handleDeleteRecord = async () => {
+    if (!candidate || !pendingDelete?.record.id) return
+    setDeletingRecord(true)
+    setRecordsError(null)
+    try {
+      const { tab, record } = pendingDelete
+      if (tab === 'education') await candidateService.deleteCandidateEducation(record.id)
+      else if (tab === 'achievements') await candidateService.deleteCandidateAchievement(record.id)
+      else await candidateService.deleteCandidateExperience(record.id)
+      setPendingDelete(null)
+      await loadCandidateRecords(tab, candidate.id)
+    } catch (err) {
+      setRecordsError(err instanceof Error ? err.message : 'Failed to delete candidate record.')
+    } finally {
+      setDeletingRecord(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -130,37 +377,32 @@ export default function CandidateDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between w-full gap-4">
-        {/* Back button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/k8s9d7f3-candidates')}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Candidates
-        </Button>
-        {/* Title centered */}
-        <div className="flex-1 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">{candidate?.fullName}</h1>
-          <p className="text-gray-600">Candidate Details</p>
+      <div className="flex flex-col gap-4 border-b border-gray-200 pb-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/k8s9d7f3-candidates')}
+            className="h-8 w-8 shrink-0"
+            aria-label="Back to candidates"
+            title="Back to candidates"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <Avatar className="h-20 w-20 shrink-0">
+            {getImageUrl(candidate.image) ? (
+              <AvatarImage src={getImageUrl(candidate.image)} alt={candidate.fullName} />
+            ) : (
+              <AvatarFallback>{candidate.fullName.charAt(0).toUpperCase()}</AvatarFallback>
+            )}
+          </Avatar>
+          <div>
+            <h1 className="text-lg font-bold text-gray-900">{candidate.fullName}</h1>
+            <p className="text-sm text-gray-600">Candidate Details</p>
+          </div>
         </div>
-        {/* Avatar and actions on the right */}
-        <div className="flex items-center gap-4 ml-auto">
-          {candidate && (
-            <Avatar className="w-48 h-48">
-              {getImageUrl(candidate.image) ? (
-                <AvatarImage
-                  src={getImageUrl(candidate.image)}
-                  alt={candidate.fullName}
-                />
-              ) : (
-                <AvatarFallback>{candidate.fullName.charAt(0).toUpperCase()}</AvatarFallback>
-              )}
-            </Avatar>
-          )}
+
+        <div className="flex flex-wrap items-center gap-2">
           <input
             type="file"
             accept="image/*"
@@ -169,175 +411,295 @@ export default function CandidateDetailPage() {
             ref={fileInputRef}
             onChange={handlePhotoUpload}
           />
-          <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-            <Upload className="w-4 h-4 mr-1" />
-            Upload Photo
-          </Button>
-          <Button variant="outline" onClick={() => navigate(`/k8s9f3-candidates-edit/${candidate?.id}`)}>
+          <Button variant="outline" size="sm" onClick={() => navigate(`/k8s9f3-candidates-edit/${candidate.id}`)}>
             Edit Candidate
           </Button>
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto}>
+            <Upload className="mr-2 h-4 w-4" />
+            {uploadingPhoto ? 'Uploading...' : 'Upload Photo'}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => openCreateDialog('education')}>
+            <Plus className="mr-1 h-4 w-4" /> Education
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => openCreateDialog('achievements')}>
+            <Plus className="mr-1 h-4 w-4" /> Achievement
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => openCreateDialog('experience')}>
+            <Plus className="mr-1 h-4 w-4" /> Experience
+          </Button>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Basic Info */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Basic Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Full Name</label>
-                  <p className="text-gray-900">{candidate.fullName}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Phone Number</label>
-                  <p className="text-gray-900">{candidate.phoneNo}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Email</label>
-                  <p className="text-gray-900">{candidate.email || 'Not provided'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Gender</label>
-                  <p className="text-gray-900">{candidate.gender}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Date of Birth</label>
-                  <p className="text-gray-900">{candidate.dob || 'Not provided'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">NIN</label>
-                  <p className="text-gray-900">{candidate.nin}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {photoUploadError && <p role="alert" className="text-sm text-red-600">{photoUploadError}</p>}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="w-5 h-5" />
-                Location Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Address</label>
-                  <p className="text-gray-900">{candidate.address || 'Not provided'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">State</label>
-                  <p className="text-gray-900">{candidate.state?.name || 'Not provided'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">LGA District</label>
-                  <p className="text-gray-900">{candidate.lga_district?.name || 'Not provided'}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Additional Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Religion</label>
-                <p className="text-gray-900">{candidate.religion || 'Not provided'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Bio</label>
-                <p className="text-gray-900">{candidate.bio || 'Not provided'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Remark</label>
-                <p className="text-gray-900">{candidate.remark || 'Not provided'}</p>
-              </div>
-            </CardContent>
-          </Card>
+      <section className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <div role="tablist" aria-label="Candidate background" className="flex overflow-x-auto border-b border-gray-200 px-3 pt-2">
+          {([
+            { id: 'education', label: 'Education', icon: GraduationCap },
+            { id: 'achievements', label: 'Achievements', icon: Award },
+            { id: 'experience', label: 'Experience', icon: BriefcaseBusiness },
+          ] as const).map(({ id: tab, label, icon: Icon }) => (
+            <button
+              key={tab}
+              type="button"
+              role="tab"
+              id={`candidate-tab-${tab}`}
+              aria-controls="candidate-record-panel"
+              aria-selected={activeTab === tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${activeTab === tab ? 'border-[#146c4f] text-[#146c4f]' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </button>
+          ))}
         </div>
 
-        {/* Right Column - Status & Party */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Badge
-                variant={candidate.status === 1 ? 'default' : 'secondary'}
-                className={candidate.status === 1 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}
-              >
-                {candidate.status === 1 ? 'Active' : 'Inactive'}
-              </Badge>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="w-5 h-5" />
-                Political Party
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {candidate.party ? (
-                <div className="space-y-2">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Party Name</label>
-                    <p className="text-gray-900 font-medium">{candidate.party.name}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Slogan</label>
-                    <p className="text-gray-900">{candidate.party.slogan || 'Not provided'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Philosophy</label>
-                    <p className="text-gray-900">{candidate.party.philosophy || 'Not provided'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Registration Year</label>
-                    <p className="text-gray-900">{candidate.party.registrationYear || 'Not provided'}</p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-gray-500">No party information available</p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Timestamps
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Created At</label>
-                <p className="text-gray-900">{new Date(candidate.created_at).toLocaleString()}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Updated At</label>
-                <p className="text-gray-900">{new Date(candidate.updated_at).toLocaleString()}</p>
-              </div>
-            </CardContent>
-          </Card>
+        <div id="candidate-record-panel" role="tabpanel" aria-labelledby={`candidate-tab-${activeTab}`} className="p-4 sm:p-6">
+          {recordsLoading ? (
+            <div className="flex items-center justify-center py-12 text-gray-500">
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading {activeTab}...
+            </div>
+          ) : recordsError ? (
+            <div className="py-8 text-center text-sm text-red-600">{recordsError}</div>
+          ) : activeTab === 'education' ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Education</TableHead>
+                  <TableHead>Field of study</TableHead>
+                  <TableHead>Institution</TableHead>
+                  <TableHead>Years</TableHead>
+                  <TableHead>Certificate</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {educationRecords.length ? educationRecords.map((record, index) => (
+                  <TableRow key={record.id ?? `${record.institution}-${index}`}>
+                    <TableCell className="font-medium">{record.education_level || '—'}</TableCell>
+                    <TableCell>{record.field_of_study || '—'}</TableCell>
+                    <TableCell>{record.institution || '—'}<span className="block text-xs text-gray-500">{record.country}</span></TableCell>
+                    <TableCell>{record.start_year} – {record.graduation_year}</TableCell>
+                    <TableCell>{record.education_certificate || '—'}</TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-1">
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="View education" title="View" onClick={() => void handleViewRecord('education', record)}><Eye className="h-4 w-4" /></Button>
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="Edit education" title="Edit" disabled={!record.id} onClick={() => openEditDialog('education', record)}><Pencil className="h-4 w-4" /></Button>
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700" aria-label="Delete education" title="Delete" disabled={!record.id} onClick={() => setPendingDelete({ tab: 'education', record })}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )) : <TableRow><TableCell colSpan={6} className="py-10 text-center text-gray-500">No education records yet.</TableCell></TableRow>}
+              </TableBody>
+            </Table>
+          ) : activeTab === 'achievements' ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Issuer</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {achievementRecords.length ? achievementRecords.map((record, index) => (
+                  <TableRow key={record.id ?? `${record.title}-${index}`}>
+                    <TableCell className="font-medium">{record.title || '—'}</TableCell>
+                    <TableCell>{record.issuer || '—'}</TableCell>
+                    <TableCell>{record.achievement_date || '—'}</TableCell>
+                    <TableCell className="max-w-xs truncate">{record.description || '—'}</TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-1">
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="View achievement" title="View" onClick={() => void handleViewRecord('achievements', record)}><Eye className="h-4 w-4" /></Button>
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="Edit achievement" title="Edit" disabled={!record.id} onClick={() => openEditDialog('achievements', record)}><Pencil className="h-4 w-4" /></Button>
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700" aria-label="Delete achievement" title="Delete" disabled={!record.id} onClick={() => setPendingDelete({ tab: 'achievements', record })}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )) : <TableRow><TableCell colSpan={5} className="py-10 text-center text-gray-500">No achievements yet.</TableCell></TableRow>}
+              </TableBody>
+            </Table>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Job title</TableHead>
+                  <TableHead>Organization</TableHead>
+                  <TableHead>Industry</TableHead>
+                  <TableHead>Period</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {experienceRecords.length ? experienceRecords.map((record, index) => (
+                  <TableRow key={record.id ?? `${record.organization}-${record.job_title}-${index}`}>
+                    <TableCell className="font-medium">{record.job_title || '—'}</TableCell>
+                    <TableCell>{record.organization || '—'}</TableCell>
+                    <TableCell>{record.industry_type || '—'}</TableCell>
+                    <TableCell>{record.start_date || '—'} – {record.is_current ? 'Present' : record.end_date || '—'}</TableCell>
+                    <TableCell>{record.is_current ? 'Current' : 'Past'}</TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-1">
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="View experience" title="View" onClick={() => void handleViewRecord('experience', record)}><Eye className="h-4 w-4" /></Button>
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="Edit experience" title="Edit" disabled={!record.id} onClick={() => openEditDialog('experience', record)}><Pencil className="h-4 w-4" /></Button>
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700" aria-label="Delete experience" title="Delete" disabled={!record.id} onClick={() => setPendingDelete({ tab: 'experience', record })}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )) : <TableRow><TableCell colSpan={6} className="py-10 text-center text-gray-500">No experience records yet.</TableCell></TableRow>}
+              </TableBody>
+            </Table>
+          )}
         </div>
-      </div>
+      </section>
+
+      <Dialog open={createDialog !== null} onOpenChange={(open) => {
+        if (!open && !savingRecord) {
+          setCreateDialog(null)
+          setCreateError(null)
+          setEditingRecordId(null)
+        }
+      }}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingRecordId ? 'Edit' : 'Add'} {createDialog === 'education' ? 'Education' : createDialog === 'achievements' ? 'Achievement' : 'Experience'}
+            </DialogTitle>
+            <DialogDescription>{editingRecordId ? 'Update the candidate record details below.' : 'Enter the candidate record details below.'}</DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCreateRecord} className="space-y-4">
+            {createDialog === 'education' && (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="space-y-1 text-sm font-medium">Education level<Input required value={educationForm.education_level} onChange={(e) => setEducationForm((form) => ({ ...form, education_level: e.target.value }))} /></label>
+                  <label className="space-y-1 text-sm font-medium">Field of study<Input required value={educationForm.field_of_study} onChange={(e) => setEducationForm((form) => ({ ...form, field_of_study: e.target.value }))} /></label>
+                  <label className="space-y-1 text-sm font-medium">Institution<Input required value={educationForm.institution} onChange={(e) => setEducationForm((form) => ({ ...form, institution: e.target.value }))} /></label>
+                  <label className="space-y-1 text-sm font-medium">Country<Input required value={educationForm.country} onChange={(e) => setEducationForm((form) => ({ ...form, country: e.target.value }))} /></label>
+                  <label className="space-y-1 text-sm font-medium">Start year<Input required type="number" min="1900" max="2100" value={educationForm.start_year} onChange={(e) => setEducationForm((form) => ({ ...form, start_year: e.target.value }))} /></label>
+                  <label className="space-y-1 text-sm font-medium">Graduation year<Input required type="number" min="1900" max="2100" value={educationForm.graduation_year} onChange={(e) => setEducationForm((form) => ({ ...form, graduation_year: e.target.value }))} /></label>
+                </div>
+                <label className="block space-y-1 text-sm font-medium">Certificate<Input value={educationForm.education_certificate} onChange={(e) => setEducationForm((form) => ({ ...form, education_certificate: e.target.value }))} /></label>
+                <label className="block space-y-1 text-sm font-medium">Description<Textarea value={educationForm.description} onChange={(e) => setEducationForm((form) => ({ ...form, description: e.target.value }))} /></label>
+              </>
+            )}
+
+            {createDialog === 'achievements' && (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="space-y-1 text-sm font-medium">Title<Input required value={achievementForm.title} onChange={(e) => setAchievementForm((form) => ({ ...form, title: e.target.value }))} /></label>
+                  <label className="space-y-1 text-sm font-medium">Issuer<Input required value={achievementForm.issuer} onChange={(e) => setAchievementForm((form) => ({ ...form, issuer: e.target.value }))} /></label>
+                  <label className="space-y-1 text-sm font-medium sm:col-span-2">Date<Input required type="date" value={achievementForm.achievement_date} onChange={(e) => setAchievementForm((form) => ({ ...form, achievement_date: e.target.value }))} /></label>
+                </div>
+                <label className="block space-y-1 text-sm font-medium">Description<Textarea value={achievementForm.description} onChange={(e) => setAchievementForm((form) => ({ ...form, description: e.target.value }))} /></label>
+              </>
+            )}
+
+            {createDialog === 'experience' && (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="space-y-1 text-sm font-medium">Job title<Input required value={experienceForm.job_title} onChange={(e) => setExperienceForm((form) => ({ ...form, job_title: e.target.value }))} /></label>
+                  <label className="space-y-1 text-sm font-medium">Organization<Input required value={experienceForm.organization} onChange={(e) => setExperienceForm((form) => ({ ...form, organization: e.target.value }))} /></label>
+                  <label className="space-y-1 text-sm font-medium sm:col-span-2">Industry type<Input required value={experienceForm.industry_type} onChange={(e) => setExperienceForm((form) => ({ ...form, industry_type: e.target.value }))} /></label>
+                  <label className="space-y-1 text-sm font-medium">Start date<Input required type="date" value={experienceForm.start_date} onChange={(e) => setExperienceForm((form) => ({ ...form, start_date: e.target.value }))} /></label>
+                  <label className="space-y-1 text-sm font-medium">End date<Input type="date" disabled={experienceForm.is_current} required={!experienceForm.is_current} value={experienceForm.end_date} onChange={(e) => setExperienceForm((form) => ({ ...form, end_date: e.target.value }))} /></label>
+                </div>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input type="checkbox" checked={experienceForm.is_current} onChange={(e) => setExperienceForm((form) => ({ ...form, is_current: e.target.checked, end_date: e.target.checked ? '' : form.end_date }))} />
+                  This is my current role
+                </label>
+                <label className="block space-y-1 text-sm font-medium">Description<Textarea value={experienceForm.description} onChange={(e) => setExperienceForm((form) => ({ ...form, description: e.target.value }))} /></label>
+                <label className="block space-y-1 text-sm font-medium">Responsibilities<Textarea value={experienceForm.responsibilities} onChange={(e) => setExperienceForm((form) => ({ ...form, responsibilities: e.target.value }))} /></label>
+              </>
+            )}
+
+            {createError && <p role="alert" className="text-sm text-red-600">{createError}</p>}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => { setCreateDialog(null); setEditingRecordId(null) }} disabled={savingRecord}>Cancel</Button>
+              <Button type="submit" disabled={savingRecord} className="bg-[#146c4f] text-white hover:bg-[#115a42]">
+                {savingRecord && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {savingRecord ? 'Saving...' : editingRecordId ? 'Save changes' : 'Save record'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={viewingRecord !== null} onOpenChange={(open) => {
+        if (!open) {
+          setViewingRecord(null)
+          setViewRecordError(null)
+        }
+      }}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {viewingRecord?.tab === 'education' ? 'Education details' : viewingRecord?.tab === 'achievements' ? 'Achievement details' : 'Experience details'}
+            </DialogTitle>
+          </DialogHeader>
+          {loadingViewedRecord ? (
+            <div className="flex items-center justify-center py-8 text-sm text-gray-500">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading details...
+            </div>
+          ) : viewRecordError ? (
+            <p role="alert" className="text-sm text-red-600">{viewRecordError}</p>
+          ) : viewingRecord && (
+            <dl className="grid gap-4 sm:grid-cols-2">
+              {Object.entries(viewingRecord.record)
+                .filter(([key]) => !['id', 'candidate_id', 'created_at', 'updated_at', 'createdAt', 'updatedAt'].includes(key))
+                .map(([key, value]) => (
+                  <div key={key} className="min-w-0">
+                    <dt className="text-xs font-medium uppercase text-gray-500">{key.replaceAll('_', ' ')}</dt>
+                    <dd className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-900">
+                      {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value ?? '—')}
+                    </dd>
+                  </div>
+                ))}
+            </dl>
+          )}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => { setViewingRecord(null); setViewRecordError(null) }}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={updatedRecordType !== null} onOpenChange={(open) => !open && setUpdatedRecordType(null)}>
+        <DialogContent className="sm:max-w-sm rounded-md">
+          <DialogHeader className="items-center text-center">
+            <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-md bg-emerald-100 text-emerald-700">
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
+            <DialogTitle>{updatedRecordType ? `${recordTypeLabel(updatedRecordType)} updated successfully` : 'Update successful'}</DialogTitle>
+            <DialogDescription>The candidate record has been saved.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center">
+            <Button type="button" onClick={() => setUpdatedRecordType(null)} className="bg-[#146c4f] text-white hover:bg-[#115a42]">Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={pendingDelete !== null} onOpenChange={(open) => !open && !deletingRecord && setPendingDelete(null)}>
+        <DialogContent className="sm:max-w-md rounded-md">
+          <DialogHeader>
+            <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-md bg-amber-100 text-amber-700">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <DialogTitle>Warning: delete {pendingDelete ? recordTypeLabel(pendingDelete.tab).toLowerCase() : 'record'}?</DialogTitle>
+            <DialogDescription>This will permanently delete this candidate record. This action cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setPendingDelete(null)} disabled={deletingRecord}>Cancel</Button>
+            <Button type="button" variant="destructive" onClick={handleDeleteRecord} disabled={deletingRecord}>
+              {deletingRecord && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {deletingRecord ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
