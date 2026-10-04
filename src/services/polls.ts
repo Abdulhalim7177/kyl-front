@@ -8,6 +8,8 @@ export interface Poll {
   election_id?: number
   office_id?: number
   status: 'active' | 'closed'
+  state_id?: number
+  results_visibility?: string
   starts_at?: string
   ends_at?: string
   created_at: string
@@ -24,16 +26,10 @@ export interface PollCandidate {
     id: number
     name: string
   }
-  candidateOffice?: {
+  party?: {
     id: number
-    party?: {
-      name: string
-      acronym: string
-    }
-    candidate?: {
-      id: number
-      fullName: string
-    }
+    name: string
+    acronym: string
   }
 }
 
@@ -107,10 +103,13 @@ class PollService {
     })
     if (!response.ok) throw new Error('Failed to fetch poll results')
     const data = await response.json()
-    return data.data
+    return {
+      results: data.data?.candidates || [],
+      total_votes: data.data?.total_votes || 0
+    }
   }
 
-  async vote(pollId: number, payload: { poll_candidate_id: number, voter_key: string, email?: string, phone?: string }): Promise<any> {
+  async vote(pollId: number, payload: { poll_candidate_id: number, voter_key: string, email?: string, phone?: string, device_id?: string }): Promise<any> {
     const response = await fetch(`${API_BASE_URL}/polls/${pollId}/vote`, {
       method: 'POST',
       headers: this.getHeaders(),
@@ -126,3 +125,7 @@ class PollService {
 }
 
 export const pollService = new PollService()
+
+
+
+

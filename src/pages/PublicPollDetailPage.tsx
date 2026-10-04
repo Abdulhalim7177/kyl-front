@@ -44,6 +44,14 @@ export default function PublicPollDetailPage() {
         if (pollData.status === 'active') {
           const cands = await pollService.getPollCandidates(pollId)
           setCandidates(cands)
+          
+          if (localStorage.getItem(`voted_poll_${pollId}`)) {
+            try {
+              const res = await pollService.getPollResults(pollId)
+              setResults(res.results || [])
+              setTotalVotes(res.total_votes || 0)
+            } catch (e) {}
+          }
         } else {
           // If closed, fetch results
           const res = await pollService.getPollResults(pollId)
@@ -83,14 +91,7 @@ export default function PublicPollDetailPage() {
       setResults(res.results || [])
       setTotalVotes(res.total_votes || 0)
       
-    } catch (err: any) {
-      // If backend throws 409 because they already voted (duplicate voter_key)
-      if (err.message && err.message.toLowerCase().includes('voted')) {
-         setHasVoted(true)
-         fetchResultsManual()
-      }
-      setError(err.message || 'Failed to submit vote. You may have already voted.')
-    } finally {
+    } catch (err: any) { if (err.message && (err.message.toLowerCase().includes('already been recorded') || err.message.toLowerCase().includes('24 hours'))) { setHasVoted(true); fetchResultsManual(); } setError(err.message || 'Failed to submit vote.'); } finally {
       setIsVoting(false)
     }
   }
@@ -169,8 +170,8 @@ export default function PublicPollDetailPage() {
             ) : (
               <div className="space-y-4 mb-8">
                 {candidates.map((c) => {
-                  const name = c.candidateOffice?.candidate?.fullName || `Candidate #${c.id}`
-                  const party = c.candidateOffice?.party?.acronym
+                  const name = c.candidate?.name || `Candidate #${c.id}`
+                  const party = c.party?.acronym || c.party?.name
                   return (
                     <label 
                       key={c.id} 
@@ -236,7 +237,7 @@ export default function PublicPollDetailPage() {
                         <span className="font-bold text-gray-900">{r.candidate?.name || `Candidate #${r.poll_candidate_id}`}</span>
                         {r.party && (
                           <span className="ml-2 text-xs font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded uppercase tracking-wider">
-                            {r.party.acronym}
+                            {r.party.acronym || r.party.name}
                           </span>
                         )}
                       </div>
@@ -256,9 +257,17 @@ export default function PublicPollDetailPage() {
             )}
             
             {poll.status === 'active' && hasVoted && (
-              <div className="mt-8 pt-6 border-t border-gray-200 flex items-center gap-2 text-green-700 font-medium">
-                <CheckCircle2 className="w-5 h-5" />
-                Your vote has been recorded or you have already voted from this device.
+              <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-2 text-green-700 font-medium">
+                  <CheckCircle2 className="w-5 h-5" />
+                  Your vote has been recorded.
+                </div>
+                <button
+                  onClick={() => setHasVoted(false)}
+                  className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-semibold transition-colors"
+                >
+                  Change my vote
+                </button>
               </div>
             )}
           </div>
@@ -267,3 +276,4 @@ export default function PublicPollDetailPage() {
     </div>
   )
 }
+

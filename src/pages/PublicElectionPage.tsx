@@ -33,10 +33,10 @@ export default function PublicElectionPage() {
         const cMap: Record<number, any[]> = {};
         for (const tb of timetablesData) {
           try {
-            const candidates = await electionService.getTimetableCandidates(tb.id);
-            cMap[tb.id] = candidates;
+            const candidates = tb.id ? await electionService.getTimetableCandidates(tb.id) : [];
+            if (tb.id) cMap[tb.id] = candidates;
           } catch (e) {
-             cMap[tb.id] = [];
+             if (tb.id) cMap[tb.id] = [];
           }
         }
         setCandidatesMap(cMap);
@@ -265,3 +265,4 @@ export default function PublicElectionPage() {
     </div>
   );
 }
+

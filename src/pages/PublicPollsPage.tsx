@@ -69,9 +69,11 @@ export default function PublicPollsPage() {
                 {poll.title || poll.question}
               </h2>
               
-              <p className="text-sm text-gray-500 mb-4 flex-grow line-clamp-3">
-                {poll.description || 'No additional details provided for this poll.'}
-              </p>
+              {poll.description && (
+                <p className="text-sm text-gray-500 mb-4 flex-grow line-clamp-3">
+                  {poll.description}
+                </p>
+              )}
 
               {poll.candidates && poll.candidates.length > 0 && (
                 <div className="mb-6 bg-gray-50 p-3 rounded-lg border border-gray-100">
@@ -79,7 +81,7 @@ export default function PublicPollsPage() {
                   <div className="flex flex-wrap gap-2">
                     {poll.candidates.slice(0, 3).map(c => (
                       <span key={c.id} className="inline-flex items-center px-2 py-1 bg-white border border-gray-200 text-xs font-medium text-gray-700 rounded shadow-sm">
-                        {c.candidateOffice?.candidate?.fullName || `Candidate #${c.id}`}
+                        {c.candidate?.name || `Candidate #${c.id}`}
                       </span>
                     ))}
                     {poll.candidates.length > 3 && (

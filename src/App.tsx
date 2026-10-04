@@ -23,11 +23,16 @@ import ElectionFormPage from '@/pages/ElectionFormPage'
 import ElectionDetailPage from '@/pages/ElectionDetailPage'
 import RolesManagementPage from '@/pages/RolesManagementPage'
 import AdminLayout from '@/components/AdminLayout'
+import AdminPollsPage from '@/pages/AdminPollsPage'
+import AdminPollFormPage from '@/pages/AdminPollFormPage'
+import AdminBlogsPage from '@/pages/AdminBlogsPage'
+import AdminBlogFormPage from '@/pages/AdminBlogFormPage'
 import PublicPollsPage from '@/pages/PublicPollsPage'
+import PublicBlogsPage from '@/pages/PublicBlogsPage'
+import PublicBlogDetailPage from '@/pages/PublicBlogDetailPage'
 import PublicPollDetailPage from '@/pages/PublicPollDetailPage'
 import PublicElectionsPage from '@/pages/PublicElectionsPage'
 import PublicPartiesPage from '@/pages/PublicPartiesPage'
-import PublicBlogsPage from '@/pages/PublicBlogsPage'
 import PublicAboutPage from '@/pages/PublicAboutPage'
 import './App.css'
 
@@ -169,10 +174,11 @@ function App() {
           <Route path="/profile/:id" element={<PublicLayout><PublicProfilePage /></PublicLayout>} />
           <Route path="/election/:id" element={<PublicLayout><PublicElectionPage /></PublicLayout>} />
           <Route path="/polls" element={<PublicLayout><PublicPollsPage /></PublicLayout>} />
+          <Route path="/blogs" element={<PublicLayout><PublicBlogsPage /></PublicLayout>} />
+          <Route path="/blog/:id" element={<PublicLayout><PublicBlogDetailPage /></PublicLayout>} />
           <Route path="/poll/:id" element={<PublicLayout><PublicPollDetailPage /></PublicLayout>} />
           <Route path="/elections" element={<PublicLayout><PublicElectionsPage /></PublicLayout>} />
           <Route path="/parties" element={<PublicLayout><PublicPartiesPage /></PublicLayout>} />
-          <Route path="/blogs" element={<PublicLayout><PublicBlogsPage /></PublicLayout>} />
           <Route path="/about" element={<PublicLayout><PublicAboutPage /></PublicLayout>} />
           
           <Route
@@ -470,7 +476,15 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
+                      <Route path="/k8s9d7f3-polls" element={<ProtectedRoute><AdminLayout title="Admin / Polls"><AdminPollsPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/k8s9d7f3-polls-add" element={<ProtectedRoute><AdminLayout title="Admin / Polls / Add"><AdminPollFormPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/k8s9d7f3-polls-edit/:id" element={<ProtectedRoute><AdminLayout title="Admin / Polls / Edit"><AdminPollFormPage /></AdminLayout></ProtectedRoute>} />
+            
+            <Route path="/k8s9d7f3-blogs" element={<ProtectedRoute><AdminLayout title="Admin / Blogs"><AdminBlogsPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/k8s9d7f3-blogs-add" element={<ProtectedRoute><AdminLayout title="Admin / Blogs / Add"><AdminBlogFormPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/k8s9d7f3-blogs-edit/:id" element={<ProtectedRoute><AdminLayout title="Admin / Blogs / Edit"><AdminBlogFormPage /></AdminLayout></ProtectedRoute>} />
+            
+            <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
@@ -478,3 +492,5 @@ function App() {
 }
 
 export default App
+
+

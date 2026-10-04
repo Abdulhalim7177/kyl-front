@@ -1,3 +1,4 @@
+// force vite reload
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const API_BASE_URL = '/api'
 
@@ -611,156 +612,21 @@ class ElectionService {
   }
 
   // GET /elections/get-election-timetables/{electionid}
-  async getElectionTimetables(electionId: number): Promise<any[]> {
-    console.log(`🔍 Fetching timetables for election #${electionId}...`)
-    const response = await fetch(`${API_BASE_URL}/elections/get-election-timetables/${electionId}`, {
-      method: 'GET',
-      headers: this.getAuthHeaders()
-    })
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        return []
-      }
-      throw new Error('Failed to fetch election timetables')
-    }
-    
-    const rawData = await response.json()
-    
-    if (Array.isArray(rawData.data)) {
-      return rawData.data
-    } else if (rawData.data?.data && Array.isArray(rawData.data.data)) {
-      return rawData.data.data
-    } else if (Array.isArray(rawData)) {
-      return rawData
-    }
-    
-    return []
-  }
-
-  // GET /elections/get-timetable-candidates/{timetableid}
   async getTimetableCandidates(timetableId: number): Promise<any[]> {
-    const response = await fetch(`${API_BASE_URL}/elections/get-timetable-candidates/${timetableId}`, {
-      method: 'GET',
-      headers: this.getAuthHeaders()
-    })
-    if (!response.ok) throw new Error('Failed to fetch timetable candidates')
-    const rawData = await response.json()
-    return rawData.data || rawData
+    const response = await fetch(`${API_BASE_URL}/elections/get-timetable-candidates/${timetableId}`, { headers: this.getAuthHeaders() });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.data || [];
   }
 
-  // GET /elections/get-election-timetable/{id}
-  async getElectionTimetable(id: number): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/elections/get-election-timetable/${id}`, {
-      method: 'GET',
-      headers: this.getAuthHeaders()
-    })
-    if (!response.ok) throw new Error('Failed to fetch election timetable')
-    const rawData = await response.json()
-    return rawData.data || rawData
-  }
-
-  // GET /elections/get-election-types
-  async getElectionTypes(): Promise<any[]> {
-    const response = await fetch(`${API_BASE_URL}/elections/get-election-types`, {
-      method: 'GET',
-      headers: this.getAuthHeaders()
-    })
-    if (!response.ok) throw new Error('Failed to fetch election types')
-    const rawData = await response.json()
-    return rawData.data || rawData
-  }
-
-  // GET /offices/get-offices (Assuming it's /offices or /offices/get-offices)
-  async getOffices(): Promise<any[]> {
-    const response = await fetch(`${API_BASE_URL}/offices/get-offices`, {
-      method: 'GET',
-      headers: this.getAuthHeaders()
-    })
-    if (!response.ok) {
-       // fallback if route is different
-       const fallbackResponse = await fetch(`${API_BASE_URL}/offices`, {
-         method: 'GET',
-         headers: this.getAuthHeaders()
-       })
-       if (!fallbackResponse.ok) throw new Error('Failed to fetch offices')
-       const rawData = await fallbackResponse.json()
-       return rawData.data?.offices || rawData.data || rawData
-    }
-    const rawData = await response.json()
-    return rawData.data?.offices || rawData.data || rawData
-  }
-
-  // GET /offices/get-state-offices
   async getStateOffices(stateId?: number): Promise<any[]> {
-    const query = stateId ? `?state_id=${stateId}` : ''
-    const response = await fetch(`${API_BASE_URL}/offices/get-state-offices${query}`, {
-      method: 'GET',
-      headers: this.getAuthHeaders()
-    })
-    if (!response.ok) throw new Error('Failed to fetch state offices')
-    const rawData = await response.json()
-    const data = rawData.data ?? rawData
-    return data.offices || data
-  }
-
-  // POST /elections/create-election-timetable
-  async createElectionTimetable(data: any): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/elections/create-election-timetable`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) {
-      let errorMsg = `Failed to create timetable: ${response.status} ${response.statusText}`
-      try {
-        const errJson = await response.json()
-        if (errJson.message) errorMsg = errJson.message
-        if (errJson.errors) {
-           const details = Object.values(errJson.errors).flat().join(' | ')
-           errorMsg += ': ' + details
-        }
-      } catch {
-        // ignore
-      }
-      throw new Error(errorMsg)
-    }
-    const rawData = await response.json()
-    return rawData.data || rawData
-  }
-
-  // PATCH /elections/update-election-timetable/{id}
-  async updateElectionTimetable(id: number, data: any): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/elections/update-election-timetable/${id}`, {
-      method: 'PATCH',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to update election timetable')
-    const rawData = await response.json()
-    return rawData.data || rawData
-  }
-
-  // PATCH /elections/change-election-timetable-status/{id}
-  async changeElectionTimetableStatus(id: number, status: string): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/elections/change-election-timetable-status/${id}`, {
-      method: 'PATCH',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ status })
-    })
-    if (!response.ok) throw new Error('Failed to change timetable status')
-    const rawData = await response.json()
-    return rawData.data || rawData
-  }
-
-  // DELETE /elections/delete-election-timetable/{id}
-  async deleteElectionTimetable(id: number): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/elections/delete-election-timetable/${id}`, {
-      method: 'DELETE',
-      headers: this.getAuthHeaders()
-    })
-    if (!response.ok) throw new Error('Failed to delete election timetable')
+    const url = stateId ? `${API_BASE_URL}/elections/get-state-offices/${stateId}` : `${API_BASE_URL}/elections/get-offices`;
+    const response = await fetch(url, { headers: this.getAuthHeaders() });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.data || [];
   }
 }
 
-export const electionService = new ElectionService()
+export const electionService = new ElectionService();
+

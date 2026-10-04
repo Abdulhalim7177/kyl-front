@@ -175,7 +175,11 @@ export default function PublicHomePage() {
                   <span className="text-sm font-bold text-green-600 uppercase tracking-wider">Active</span>
                 </div>
                 <h4 className="text-2xl font-bold text-gray-900 mb-4">{poll.title || poll.question}</h4>
-                <p className="text-gray-500 mb-8 line-clamp-3 flex-grow">{poll.description}</p>
+                {poll.description ? (
+                  <p className="text-gray-500 mb-8 line-clamp-3 flex-grow">{poll.description}</p>
+                ) : (
+                  <div className="mb-8 flex-grow"></div>
+                )}
                 
                 <Link to={`/poll/${poll.id}`} className="mt-auto w-full inline-flex items-center justify-center gap-2 bg-primary text-white font-bold py-3.5 px-6 rounded-xl hover:bg-emerald-600 transition-colors">
                   <BarChart2 className="w-5 h-5" /> Participate

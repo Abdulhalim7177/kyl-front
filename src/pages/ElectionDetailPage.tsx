@@ -352,8 +352,8 @@ export default function ElectionDetailPage() {
       setSavingTimetable(true)
       await electionService.createElectionTimetable({
         election_id: election.id,
-        office_id: timetableForm.office_id,
-        election_type_id: timetableForm.election_type_id,
+        office_id: Number(timetableForm.office_id),
+        election_type_id: Number(timetableForm.election_type_id),
         description: timetableForm.description,
         date: timetableForm.date,
         starttime: timetableForm.starttime,
@@ -361,8 +361,8 @@ export default function ElectionDetailPage() {
       })
       // Refresh timetables
       const newTimetables: any = await electionService.getElectionTimetables(election.id)
-      setTimetables(Array.isArray(newTimetables) ? newTimetables : (newTimetables?.data || []))
-      setShowTimetableModal(false)
+      // setTimetables(Array.isArray(newTimetables) ? newTimetables : (newTimetables?.data || []))
+      // setShowTimetableModal(false)
       setTimetableForm({ office_id: '', election_type_id: '', description: '', date: '', starttime: '', endtime: '' })
     } catch (err: any) {
       alert(err.message || 'Failed to save timetable')
@@ -851,7 +851,7 @@ export default function ElectionDetailPage() {
           >
             <option value="all">All Timetables / Offices</option>
             {electionTimetables.map(t => (
-              <option key={t.id} value={t.id}>{t.description} ({offices.find(o => String(o.id) === String(t.office_id))?.name})</option>
+              <option key={t.id} value={t.id || ''}>{t.description} ({offices.find(o => String(o.id) === String(t.office_id))?.name})</option>
             ))}
           </select>
         </div>
@@ -900,3 +900,6 @@ export default function ElectionDetailPage() {
     </div>
   )
 }
+
+
+
