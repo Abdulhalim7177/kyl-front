@@ -14,12 +14,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import {
   Select,
@@ -35,7 +29,6 @@ import {
   Download, 
   List as ListIcon, 
   LayoutGrid, 
-  MoreVertical, 
   X, 
   Plus,
   Check,
@@ -472,36 +465,40 @@ export default function CandidatesPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-[#146c4f] hover:text-[#115a42] hover:bg-[#146c4f]/10"
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-[#146c4f] hover:bg-[#146c4f]/10 hover:text-[#115a42]"
                               onClick={() => navigate(`/k8s9d7f3-candidates-view/${item.id}`)}
+                              aria-label={`View ${item.full_name}`}
+                              title="View candidate"
                             >
-                              <Eye className="w-4 h-4 mr-1" />
-                              View
+                              <Eye className="h-4 w-4" />
                             </Button>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button className="p-1 rounded hover:bg-gray-100">
-                                  <MoreVertical className="w-4 h-4 text-gray-400" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-[140px]">
-                                <DropdownMenuItem className="cursor-pointer" onClick={() => navigate(`/k8s9d7f3-candidates-edit/${item.id}`)}>
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  className="cursor-pointer text-red-600 focus:text-red-600"
-                                  onClick={() => handleDelete(item.id)}
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                              onClick={() => navigate(`/k8s9d7f3-candidates-edit/${item.id}`)}
+                              aria-label={`Edit ${item.full_name}`}
+                              title="Edit candidate"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700"
+                              onClick={() => handleDelete(item.id)}
+                              aria-label={`Delete ${item.full_name}`}
+                              title="Delete candidate"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                      </TableRow>

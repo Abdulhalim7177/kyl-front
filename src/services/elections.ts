@@ -11,6 +11,9 @@ export interface Election {
   [key: string]: any // allow extra fields from API
 }
 
+export const isElectionCompleted = (election: Pick<Election, 'status'>) =>
+  String(election.status ?? '').trim().toLowerCase() === 'completed'
+
 export interface ElectionStats {
   total: number
   upcoming: number
@@ -31,7 +34,7 @@ export interface SingleElectionResponse {
 }
 
 export interface Office {
-  id: number
+  id: number | string
   name: string
   description?: string
   [key: string]: any
@@ -48,6 +51,7 @@ export interface ElectionTimetable {
   id?: number | null
   election_id?: number | string | null
   office_id?: number | string | null
+  office_name?: string | null
   election_type_id?: number | string | null
   election_type_name?: string | null
   description?: string
@@ -112,8 +116,8 @@ class ElectionService {
         if (offices.length > 0) {
           return offices.map((office) => ({
             ...office,
-            id: office.id,
-            name: office.title || office.name || office.office_name || 'Unnamed Office',
+            id: office.id ?? office.office_id ?? office.officeId,
+            name: office.title || office.name || office.office_name || office.office_title || office.officeTitle || 'Unnamed Office',
           }))
         }
 
@@ -334,10 +338,18 @@ class ElectionService {
 
   private normalizeTimetable(record: any): ElectionTimetable {
     const electionType = record?.election_type ?? record?.electionType
+    const officeRelation = record?.office ?? record?.office_details ?? record?.officeDetails
+    const officeIdentifier = record?.office_id ?? record?.officeId
+    const officeObject = typeof officeIdentifier === 'object'
+      ? officeIdentifier
+      : typeof officeRelation === 'object' ? officeRelation : null
     return {
       id: record?.id ?? null,
       election_id: record?.election_id ?? record?.electionId ?? null,
-      office_id: record?.office_id ?? record?.officeId ?? null,
+      office_id: (typeof officeIdentifier === 'object' ? officeIdentifier?.id : officeIdentifier) ?? officeObject?.id ?? null,
+      office_name: record?.office_name ?? record?.officeName ?? record?.office_title ?? record?.officeTitle
+        ?? officeObject?.name ?? officeObject?.title ?? officeObject?.office_name
+        ?? (typeof officeRelation === 'string' ? officeRelation : null),
       election_type_id: record?.election_type_id ?? record?.electionTypeId ?? electionType?.id ?? null,
       election_type_name: record?.election_type_name ?? record?.electionTypeName ?? (typeof electionType === 'string' ? electionType : electionType?.name ?? electionType?.election_type_name ?? electionType?.type_name ?? electionType?.title) ?? null,
       description: record?.description ?? '',
