@@ -34,6 +34,7 @@ import PublicBlogDetailPage from '@/pages/PublicBlogDetailPage'
 import PublicPollDetailPage from '@/pages/PublicPollDetailPage'
 import PublicElectionsPage from '@/pages/PublicElectionsPage'
 import PublicPartiesPage from '@/pages/PublicPartiesPage'
+import PublicPartyProfilePage from '@/pages/PublicPartyProfilePage'
 import PublicAboutPage from '@/pages/PublicAboutPage'
 import PublicContactPage from '@/pages/PublicContactPage'
 import './App.css'
@@ -198,6 +199,7 @@ function App() {
           <Route path="/poll/:id" element={<PublicLayout><PublicPollDetailPage /></PublicLayout>} />
           <Route path="/elections" element={<PublicLayout><PublicElectionsPage /></PublicLayout>} />
           <Route path="/parties" element={<PublicLayout><PublicPartiesPage /></PublicLayout>} />
+          <Route path="/party/:id" element={<PublicLayout><PublicPartyProfilePage /></PublicLayout>} />
           <Route path="/about" element={<PublicLayout><PublicAboutPage /></PublicLayout>} />
           <Route path="/contact" element={<PublicLayout><PublicContactPage /></PublicLayout>} />
           

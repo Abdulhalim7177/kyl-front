@@ -93,7 +93,36 @@ export default function PublicProfilePage() {
           
           <div className="flex-1 text-center md:text-left mb-2">
             <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight mb-2">{profile.fullName}</h1>
-            <p className="text-sm md:text-base text-primary font-bold tracking-widest uppercase mb-6 bg-primary/10 inline-block px-4 py-1.5 rounded-full">{profile.party?.name || 'Independent Candidate'}</p>
+            {(() => {
+              const activeOffice = profile?.offices?.[0];
+              let officeTitle = '';
+              if (activeOffice) {
+                const oName = activeOffice.office?.title || '';
+                let oArea = '';
+                if (activeOffice.state) oArea = activeOffice.state.name + ' State';
+                else if (activeOffice.senetorialDistrict) oArea = activeOffice.senetorialDistrict.name;
+                else if (activeOffice.federalHouseDistrict) oArea = activeOffice.federalHouseDistrict.name;
+                else if (activeOffice.stateHouseDistrict) oArea = activeOffice.stateHouseDistrict.name;
+                else if (activeOffice.lgaDistrict) oArea = activeOffice.lgaDistrict.name;
+                else if (activeOffice.ward) oArea = activeOffice.ward.name;
+                else if (profile?.lgaDistrict?.state && !oName.toLowerCase().includes('president')) oArea = profile.lgaDistrict.state.name + ' State';
+                
+                officeTitle = oArea && !oName.toLowerCase().includes('president') ? `${oName} (${oArea})` : oName;
+              }
+              
+              return (
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-6">
+                  {officeTitle && (
+                    <span className="text-sm md:text-base text-gray-800 font-bold tracking-wide uppercase bg-gray-100 border border-gray-200 inline-block px-4 py-1.5 rounded-full shadow-sm">
+                      {officeTitle}
+                    </span>
+                  )}
+                  <span className="text-sm md:text-base text-primary font-bold tracking-widest uppercase bg-primary/10 inline-block px-4 py-1.5 rounded-full">
+                    {profile.party?.name || 'Independent Candidate'}
+                  </span>
+                </div>
+              );
+            })()}
             
             <div className="flex flex-wrap justify-center md:justify-start gap-6 text-sm text-gray-600">
               {profile.gender && <div className="flex items-center gap-2"><span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"><User className="w-4 h-4" /></span> {profile.gender}</div>}

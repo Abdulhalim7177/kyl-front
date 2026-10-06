@@ -71,7 +71,7 @@ export default function DirectoryPage() {
   const getLink = (item: any) => {
     switch(item.type) {
       case 'candidate': return `/profile/${item.id}`
-      case 'party': return `/parties` // Adjust based on your routing
+      case 'party': return `/party/${item.id}`
       case 'election': return `/election/${item.id}`
       default: return '#'
     }
@@ -218,19 +218,24 @@ export default function DirectoryPage() {
               )}
 
               {/* Other entities column */}
-              <div className="col-span-1 md:col-span-2 lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="col-span-1 md:col-span-2 lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 items-start content-start">
                   {results.states?.length > 0 && (
-                    <div>
-                      <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><MapPin className="w-5 h-5 text-red-500" /> States</h2>
+                    <div className="space-y-4">
+                      <h2 className="text-lg font-bold flex items-center gap-2 text-gray-800 border-b pb-2"><MapPin className="w-5 h-5 text-red-500" /> States</h2>
                       <div className="space-y-3">
                         {results.states.map((s: any) => (
                            <button 
                              key={`s-${s.id}`} 
                              onClick={() => { setQuery(s.details.name); handleSearch(undefined, s.details.name); }} 
-                             className="w-full text-left block p-3 border rounded-lg hover:border-primary transition-colors bg-white cursor-pointer"
+                             className="w-full text-left group block p-4 border border-gray-200 rounded-xl hover:border-red-400 hover:shadow-md transition-all bg-white cursor-pointer flex items-center justify-between"
                            >
-                             <h3 className="font-bold text-sm truncate">{s.title}</h3>
-                             <p className="text-xs text-gray-500 truncate mt-1">Explore candidates in this state</p>
+                             <div className="flex-1 min-w-0 pr-4">
+                               <h3 className="font-bold text-gray-900 text-sm truncate">{s.title}</h3>
+                               <p className="text-xs text-gray-500 truncate mt-1">Explore candidates in this state</p>
+                             </div>
+                             <div className="w-8 h-8 rounded-full bg-gray-50 group-hover:bg-red-50 flex items-center justify-center transition-colors shrink-0">
+                               <Search className="w-4 h-4 text-gray-400 group-hover:text-red-500" />
+                             </div>
                            </button>
                         ))}
                       </div>
@@ -238,17 +243,22 @@ export default function DirectoryPage() {
                   )}
 
                   {results.districts?.length > 0 && (
-                    <div>
-                      <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><MapPin className="w-5 h-5 text-orange-500" /> Districts</h2>
+                    <div className="space-y-4">
+                      <h2 className="text-lg font-bold flex items-center gap-2 text-gray-800 border-b pb-2"><MapPin className="w-5 h-5 text-orange-500" /> Districts</h2>
                       <div className="space-y-3">
                         {results.districts.map((d: any) => (
                            <button 
                              key={`d-${d.type}-${d.id}`} 
                              onClick={() => { setQuery(d.search_query); handleSearch(undefined, d.search_query); }} 
-                             className="w-full text-left block p-3 border rounded-lg hover:border-primary transition-colors bg-white cursor-pointer"
+                             className="w-full text-left group block p-4 border border-gray-200 rounded-xl hover:border-orange-400 hover:shadow-md transition-all bg-white cursor-pointer flex items-center justify-between"
                            >
-                             <h3 className="font-bold text-sm truncate">{d.title}</h3>
-                             <p className="text-xs text-gray-500 truncate mt-1">{d.subtitle}</p>
+                             <div className="flex-1 min-w-0 pr-4">
+                               <h3 className="font-bold text-gray-900 text-sm truncate">{d.title}</h3>
+                               <p className="text-xs text-gray-500 truncate mt-1">{d.subtitle}</p>
+                             </div>
+                             <div className="w-8 h-8 rounded-full bg-gray-50 group-hover:bg-orange-50 flex items-center justify-center transition-colors shrink-0">
+                               <Search className="w-4 h-4 text-gray-400 group-hover:text-orange-500" />
+                             </div>
                            </button>
                         ))}
                       </div>
@@ -256,13 +266,18 @@ export default function DirectoryPage() {
                   )}
 
                   {results.parties?.length > 0 && (
-                    <div>
-                      <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Flag className="w-5 h-5 text-green-600" /> Parties</h2>
+                    <div className="space-y-4">
+                      <h2 className="text-lg font-bold flex items-center gap-2 text-gray-800 border-b pb-2"><Flag className="w-5 h-5 text-green-600" /> Parties</h2>
                       <div className="space-y-3">
                         {results.parties.map((p: any) => (
-                           <Link to={getLink(p)} key={`p-${p.id}`} className="block p-3 border rounded-lg hover:border-primary transition-colors bg-white">
-                             <h3 className="font-bold text-sm truncate">{p.title}</h3>
-                             {p.subtitle && <p className="text-xs text-gray-500 truncate mt-1">{p.subtitle}</p>}
+                           <Link to={getLink(p)} key={`p-${p.id}`} className="block p-4 border border-gray-200 rounded-xl hover:border-green-500 hover:shadow-md transition-all bg-white flex items-center gap-3">
+                             <div className="w-10 h-10 rounded-md bg-gray-50 border flex items-center justify-center overflow-hidden shrink-0">
+                                {p.image ? <img src={p.image} alt={p.title} className="w-full h-full object-contain p-1" /> : <Flag className="w-5 h-5 text-gray-400" />}
+                             </div>
+                             <div className="flex-1 min-w-0">
+                               <h3 className="font-bold text-gray-900 text-sm truncate">{p.title}</h3>
+                               {p.subtitle && <p className="text-xs text-gray-500 truncate mt-1">{p.subtitle}</p>}
+                             </div>
                            </Link>
                         ))}
                       </div>
@@ -270,13 +285,19 @@ export default function DirectoryPage() {
                   )}
 
                   {results.elections?.length > 0 && (
-                    <div>
-                      <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Landmark className="w-5 h-5 text-blue-600" /> Elections</h2>
+                    <div className="space-y-4">
+                      <h2 className="text-lg font-bold flex items-center gap-2 text-gray-800 border-b pb-2"><Landmark className="w-5 h-5 text-blue-600" /> Elections</h2>
                       <div className="space-y-3">
                         {results.elections.map((e: any) => (
-                           <Link to={getLink(e)} key={`e-${e.id}`} className="block p-3 border rounded-lg hover:border-primary transition-colors bg-white">
-                             <h3 className="font-bold text-sm">{e.title}</h3>
-                             <p className="text-xs text-gray-500 mt-1 capitalize">{e.subtitle}</p>
+                           <Link to={getLink(e)} key={`e-${e.id}`} className="block p-4 border border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-md transition-all bg-white flex items-start gap-3">
+                             <div className="bg-blue-50 text-blue-700 px-3 py-2 rounded-lg text-center shrink-0 border border-blue-100">
+                               <span className="block text-[10px] font-bold uppercase tracking-wider opacity-80">Year</span>
+                               <span className="block text-lg font-black">{e.details?.year || e.title.replace('Election ', '')}</span>
+                             </div>
+                             <div className="flex-1 min-w-0 pt-1">
+                               <h3 className="font-bold text-gray-900 text-sm leading-tight">{e.title}</h3>
+                               <p className="text-xs text-gray-500 mt-1 capitalize line-clamp-2">{e.subtitle}</p>
+                             </div>
                            </Link>
                         ))}
                       </div>
