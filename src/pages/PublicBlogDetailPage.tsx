@@ -54,7 +54,7 @@ export default function PublicBlogDetailPage() {
           <meta name="description" content={(post.content || '').replace(/<[^>]*>?/gm, '').substring(0, 160)} />
           <meta property="og:title" content={post.title} />
           <meta property="og:description" content={(post.content || '').replace(/<[^>]*>?/gm, '').substring(0, 160)} />
-          {post.images && post.images.length > 0 && <meta property="og:image" content={post.images[0].url || "http://kyl.test/" + post.images[0].image_path} />}
+          {post.images && post.images.length > 0 && <meta property="og:image" content={post.images[0].url || "http://kyl.test/" + (post.images[0] as any).image_path} />}
         </Helmet>
       )}
     <div className="bg-white min-h-screen pt-24 pb-12">

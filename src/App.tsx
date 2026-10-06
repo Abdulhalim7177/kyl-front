@@ -2,7 +2,8 @@ import { BrowserRouter, Routes, Route, Link, useLocation, Navigate } from 'react
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import PublicHomePage from '@/pages/PublicHomePage'
 import DistrictsExplorerPage from '@/pages/DistrictsExplorerPage'
-import CandidatesDirectoryPage from '@/pages/CandidatesDirectoryPage'
+import DirectoryPage from '@/pages/DirectoryPage'
+
 import LeadersDirectoryPage from '@/pages/LeadersDirectoryPage'
 import PublicProfilePage from '@/pages/PublicProfilePage'
 import PublicElectionPage from '@/pages/PublicElectionPage'
@@ -92,7 +93,8 @@ function Navigation() {
     <>
       <Link to="/" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Home</Link>
       <Link to="/districts" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/districts') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Districts</Link>
-      <Link to="/candidates" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/candidates') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Candidates</Link>
+      <Link to="/directory" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/directory') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Directory</Link>
+
       <Link to="/leaders" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/leaders') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Elected Leaders</Link>
       <Link to="/polls" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/polls') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Polls</Link>
       <Link to="/elections" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/elections') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Elections</Link>
@@ -185,7 +187,8 @@ function App() {
         <Routes>
           <Route path="/" element={<PublicLayout><PublicHomePage /></PublicLayout>} />
           <Route path="/districts" element={<PublicLayout><DistrictsExplorerPage /></PublicLayout>} />
-          <Route path="/candidates" element={<PublicLayout><CandidatesDirectoryPage /></PublicLayout>} />
+          <Route path="/directory" element={<PublicLayout><DirectoryPage /></PublicLayout>} />
+
           <Route path="/leaders" element={<PublicLayout><LeadersDirectoryPage /></PublicLayout>} />
           <Route path="/profile/:id" element={<PublicLayout><PublicProfilePage /></PublicLayout>} />
           <Route path="/election/:id" element={<PublicLayout><PublicElectionPage /></PublicLayout>} />

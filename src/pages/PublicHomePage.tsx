@@ -209,7 +209,7 @@ export default function PublicHomePage() {
               <div key={post.id} className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col h-full hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-300 group">
                 <div className="w-full h-48 rounded-2xl overflow-hidden mb-6 bg-gray-100 relative">
                   {post.images && post.images.length > 0 ? (
-                    <img src={post.images[0].url || `http://kyl.test/${post.images[0].image_path}`} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img src={post.images[0].url || `http://kyl.test/${(post.images[0] as any).image_path}`} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-400 font-medium">No Image</div>
                   )}
@@ -223,7 +223,7 @@ export default function PublicHomePage() {
                 </p>
                 <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
                   <span className="text-xs text-gray-400 font-medium">{new Date(post.created_at).toLocaleDateString()}</span>
-                  <Link to={/blog/} className="inline-flex items-center text-sm font-bold text-primary hover:text-emerald-700 transition-colors">
+                  <Link to={`/blog/${post.id}`} className="inline-flex items-center text-sm font-bold text-primary hover:text-emerald-700 transition-colors">
                     Read Article <ChevronRight className="w-4 h-4 ml-1" />
                   </Link>
                 </div>
