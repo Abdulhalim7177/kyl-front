@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async';
 import { visitorService } from '@/services/visitors';
 
 import { Mail, Phone, User } from 'lucide-react';
@@ -215,3 +216,5 @@ export default function PublicProfilePage() {
     </div>
   );
 }
+
+

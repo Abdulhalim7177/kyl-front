@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import { pollService, Poll, PollCandidate, PollResult } from '@/services/polls'
 import { ChevronLeft, BarChart2, CheckCircle2 } from 'lucide-react'
 import fpPromise from '@fingerprintjs/fingerprintjs'
@@ -128,6 +129,15 @@ export default function PublicPollDetailPage() {
   }
 
   return (
+    <>
+      {poll && (
+        <Helmet>
+          <title>{poll.question} | Know Your Leaders</title>
+          <meta name="description" content={`Participate in the poll: ${poll.question}`} />
+          <meta property="og:title" content={poll.question} />
+          <meta property="og:description" content={`Participate in the poll: ${poll.question}`} />
+        </Helmet>
+      )}
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <Link to="/polls" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6 transition-colors">
         <ChevronLeft className="w-5 h-5 mr-1" /> Back to Polls
@@ -274,6 +284,9 @@ export default function PublicPollDetailPage() {
         )}
       </div>
     </div>
+    </>
   )
 }
+
+
 

@@ -34,6 +34,7 @@ import PublicPollDetailPage from '@/pages/PublicPollDetailPage'
 import PublicElectionsPage from '@/pages/PublicElectionsPage'
 import PublicPartiesPage from '@/pages/PublicPartiesPage'
 import PublicAboutPage from '@/pages/PublicAboutPage'
+import PublicContactPage from '@/pages/PublicContactPage'
 import './App.css'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -75,6 +76,8 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { Menu } from 'lucide-react'
 import { useState } from 'react'
+import { HelmetProvider } from 'react-helmet-async'
+import Footer from '@/components/Footer'
 import DistrictsPage from '@/pages/DistrictsPage'
 import StateDetailPage from '@/pages/StateDetailPage'
 import WardDetailPage from '@/pages/WardDetailPage'
@@ -155,6 +158,18 @@ function NotFound() {
 
 function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <Navigation />
+      <main className="flex-grow">
+        {children}
+      </main>
+      <Footer />
+    </div>
+  )
+}
+
+function PublicLayoutOld({ children }: { children: React.ReactNode }) {
+  return (
     <div className="min-h-screen bg-background">
       <Navigation />
       {children}
@@ -165,7 +180,8 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <HelmetProvider>
+        <BrowserRouter>
         <Routes>
           <Route path="/" element={<PublicLayout><PublicHomePage /></PublicLayout>} />
           <Route path="/districts" element={<PublicLayout><DistrictsExplorerPage /></PublicLayout>} />
@@ -180,6 +196,7 @@ function App() {
           <Route path="/elections" element={<PublicLayout><PublicElectionsPage /></PublicLayout>} />
           <Route path="/parties" element={<PublicLayout><PublicPartiesPage /></PublicLayout>} />
           <Route path="/about" element={<PublicLayout><PublicAboutPage /></PublicLayout>} />
+          <Route path="/contact" element={<PublicLayout><PublicContactPage /></PublicLayout>} />
           
           <Route
             path="/k8s9d7f3-auth-login"
@@ -487,10 +504,13 @@ function App() {
             <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
         </Routes>
       </BrowserRouter>
+      </HelmetProvider>
     </AuthProvider>
   )
 }
 
 export default App
+
+
 
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import { blogService, Post } from '@/services/blogs'
 import { Calendar, ArrowLeft, Share2 } from 'lucide-react'
 
@@ -46,6 +47,16 @@ export default function PublicBlogDetailPage() {
   }
 
   return (
+    <>
+      {post && (
+        <Helmet>
+          <title>{post.title} | Know Your Leaders</title>
+          <meta name="description" content={(post.content || '').replace(/<[^>]*>?/gm, '').substring(0, 160)} />
+          <meta property="og:title" content={post.title} />
+          <meta property="og:description" content={(post.content || '').replace(/<[^>]*>?/gm, '').substring(0, 160)} />
+          {post.images && post.images.length > 0 && <meta property="og:image" content={post.images[0].url || "http://kyl.test/" + post.images[0].image_path} />}
+        </Helmet>
+      )}
     <div className="bg-white min-h-screen pt-24 pb-12">
       {/* Hero Section */}
       <section className="bg-gray-50 py-16 md:py-24 mt-[-6rem] border-b border-gray-100">
@@ -103,7 +114,11 @@ export default function PublicBlogDetailPage() {
         </div>
       </div>
     </div>
+    </>
   )
 }
+
+
+
 
 

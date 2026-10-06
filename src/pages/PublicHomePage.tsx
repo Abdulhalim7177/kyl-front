@@ -5,6 +5,7 @@ import { pollService, Poll } from '@/services/polls';
 import { blogService, Post } from '@/services/blogs';
 import { Link } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, Calendar, BarChart2 } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 
 export default function PublicHomePage() {
   const [presidency, setPresidency] = useState<any[]>([]);
@@ -290,6 +291,7 @@ export default function PublicHomePage() {
     </div>
   );
 }
+
 
 
 
