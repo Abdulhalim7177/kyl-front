@@ -30,7 +30,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { ArrowLeft, Edit, Loader2, AlertCircle, Trash2, Calendar, Clock3, Eye } from 'lucide-react'
-import { electionService, Election, ElectionTimetable, Office, ElectionType } from '@/services/elections'
+import { electionService, Election, ElectionTimetable, Office, ElectionType, isElectionCompleted } from '@/services/elections'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function ElectionDetailPage() {
@@ -101,6 +101,12 @@ export default function ElectionDetailPage() {
         setElectionTimetables(resolvedTimetables)
         setOffices(resolvedOffices)
         setElectionTypes(resolvedElectionTypes)
+        if (isElectionCompleted(resolvedElection)) {
+          setShowTimetableForm(false)
+          setEditingTimetableId(null)
+          setTimetableToDelete(null)
+          setShowDeleteConfirm(false)
+        }
         if (resolvedOffices.length > 0 && !timetableForm.office_id) {
           setTimetableForm((prev) => ({ ...prev, office_id: String(resolvedOffices[0].id) }))
         }
@@ -119,7 +125,7 @@ export default function ElectionDetailPage() {
   }
 
   const handleAddTimetable = async () => {
-    if (!election || !id) return
+    if (!election || !id || isElectionCompleted(election)) return
 
     if (!timetableForm.date || !timetableForm.starttime || !timetableForm.endtime || !timetableForm.description.trim()) {
       setError('Please complete all timetable fields before saving.')
@@ -169,6 +175,8 @@ export default function ElectionDetailPage() {
   }
 
   const handleEditTimetable = (item: ElectionTimetable) => {
+    if (!election || isElectionCompleted(election)) return
+
     setEditingTimetableId(item.id ?? null)
     setTimetableForm({
       office_id: item.office_id ? String(item.office_id) : (offices[0]?.id ? String(offices[0].id) : '1'),
@@ -197,11 +205,13 @@ export default function ElectionDetailPage() {
   }
 
   const handleDeleteTimetable = async (id: number) => {
+    if (!election || isElectionCompleted(election)) return
+
     setTimetableToDelete(id)
   }
 
   const confirmDeleteTimetable = async () => {
-    if (!timetableToDelete) return
+    if (!timetableToDelete || !election || isElectionCompleted(election)) return
 
     try {
       await electionService.deleteElectionTimetable(timetableToDelete)
@@ -217,6 +227,8 @@ export default function ElectionDetailPage() {
   }
 
   const handleTimetableStatusChange = async (id: number, status: 'Upcoming' | 'Ongoing' | 'Completed') => {
+    if (!election || isElectionCompleted(election)) return
+
     try {
       const updated = await electionService.changeElectionTimetableStatus(id, status)
       setElectionTimetables((prev) => prev.map((item) => item.id === id ? { ...item, ...updated, status: updated.status || status } : item))
@@ -264,15 +276,16 @@ export default function ElectionDetailPage() {
   })
 
   const handleStatusChange = async (newStatus: string) => {
-    if (!election || !id) return
+    if (!election || !id || isElectionCompleted(election)) return
     try {
       setChangingStatus(true)
       await electionService.changeElectionStatus(
         Number(id),
         newStatus as 'Upcoming' | 'Ongoing' | 'Completed'
       )
-      await loadData(Number(id))
-      sessionStorage.setItem('electionsRefresh', '1')
+      setElection((current) => current
+        ? { ...current, status: newStatus }
+        : current)
     } catch (err) {
       console.error('Failed to change status:', err)
       setError('Failed to change election status.')
@@ -282,7 +295,7 @@ export default function ElectionDetailPage() {
   }
 
   const handleDelete = async () => {
-    if (!id) return
+    if (!id || !election || isElectionCompleted(election)) return
     try {
       setDeleting(true)
       await electionService.deleteElection(Number(id))
@@ -345,6 +358,8 @@ export default function ElectionDetailPage() {
     )
   }
 
+  const isCompletedElection = isElectionCompleted(election)
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -371,15 +386,15 @@ export default function ElectionDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Button 
+          {!isCompletedElection && <Button
             variant="outline"
             onClick={() => navigate(`/k8s9d7f3-elections-edit/${election.id}`)}
             className="rounded-xl flex items-center gap-2"
           >
             <Edit className="w-4 h-4" />
             Edit Election
-          </Button>
-          <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white shadow-sm">
+          </Button>}
+          {!isCompletedElection && <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white shadow-sm">
             <select
               value={election.status || 'Upcoming'}
               onChange={(e) => handleStatusChange(e.target.value)}
@@ -393,8 +408,8 @@ export default function ElectionDetailPage() {
                 </option>
               ))}
             </select>
-          </div>
-          <Button 
+          </div>}
+          {!isCompletedElection && <Button 
             variant="outline"
             onClick={() => setShowDeleteConfirm(true)}
             className="rounded-xl flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
@@ -402,13 +417,13 @@ export default function ElectionDetailPage() {
           >
             <Trash2 className="w-4 h-4" />
             Delete
-          </Button>
+          </Button>}
           {changingStatus && <Loader2 className="w-5 h-5 animate-spin text-gray-400" />}
         </div>
       </div>
 
       {/* Delete Confirmation Dialog */}
-      {showDeleteConfirm && (
+      {showDeleteConfirm && !isCompletedElection && (
         <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
           <h3 className="text-lg font-semibold text-red-800 mb-2">Delete Election?</h3>
           <p className="text-sm text-red-600 mb-4">
@@ -445,7 +460,7 @@ export default function ElectionDetailPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
         <div className="p-6 border-b border-gray-100 flex items-center justify-between gap-3">
           <h2 className="text-lg font-bold text-gray-900">Election Timetable</h2>
-          <Button
+          {!isCompletedElection && <Button
             variant="outline"
             size="sm"
             onClick={() => {
@@ -457,10 +472,10 @@ export default function ElectionDetailPage() {
           >
             <Calendar className="w-4 h-4" />
             {showTimetableForm ? 'Close' : 'Add Election Timetable'}
-          </Button>
+          </Button>}
         </div>
 
-        {showTimetableForm && (
+        {!isCompletedElection && showTimetableForm && (
           <div className="p-6 border-b border-gray-100 bg-gray-50/40">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2 md:col-span-2">
@@ -596,7 +611,7 @@ export default function ElectionDetailPage() {
                       {formatDate(item.date)}
                     </TableCell>
                     <TableCell className="py-4 text-sm text-gray-700 min-w-[140px]">
-                      {offices.find((office) => String(office.id) === String(item.office_id))?.name || item.office_id || 'N/A'}
+                      {item.office_name || offices.find((office) => String(office.id) === String(item.office_id))?.name || item.office_id || 'N/A'}
                     </TableCell>
                     <TableCell className="py-4 text-sm text-gray-700 max-w-[260px] align-top break-words whitespace-normal">
                       {item.description || 'Election timetable'}
@@ -615,7 +630,7 @@ export default function ElectionDetailPage() {
                     </TableCell>
                     <TableCell className="py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white shadow-sm">
+                        {!isCompletedElection && <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white shadow-sm">
                           <select
                             value={item.status || 'Upcoming'}
                             onChange={(e) => item.id && handleTimetableStatusChange(item.id, e.target.value as 'Upcoming' | 'Ongoing' | 'Completed')}
@@ -628,7 +643,7 @@ export default function ElectionDetailPage() {
                               </option>
                             ))}
                           </select>
-                        </div>
+                        </div>}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -639,7 +654,7 @@ export default function ElectionDetailPage() {
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button
+                        {!isCompletedElection && <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleEditTimetable(item)}
@@ -647,8 +662,8 @@ export default function ElectionDetailPage() {
                           aria-label="Edit timetable"
                         >
                           <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
+                        </Button>}
+                        {!isCompletedElection && <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => item.id && handleDeleteTimetable(item.id)}
@@ -656,7 +671,7 @@ export default function ElectionDetailPage() {
                           aria-label="Delete timetable"
                         >
                           <Trash2 className="w-4 h-4" />
-                        </Button>
+                        </Button>}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -749,7 +764,7 @@ export default function ElectionDetailPage() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={timetableToDelete !== null} onOpenChange={(open) => !open && setTimetableToDelete(null)}>
+      <AlertDialog open={!isCompletedElection && timetableToDelete !== null} onOpenChange={(open) => !open && setTimetableToDelete(null)}>
         <AlertDialogContent className="sm:max-w-md rounded-xl">
           <AlertDialogHeader>
             <div className="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-red-100 text-red-600">

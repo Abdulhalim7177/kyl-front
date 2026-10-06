@@ -116,8 +116,12 @@ const unwrapApiArray = (payload: any): any[] => {
   return []
 }
 
+const isActiveCandidateStatus = (status: unknown): boolean =>
+  status === 1 || status === true || ['1', 'true', 'active'].includes(String(status).toLowerCase())
+
 export interface CandidateDetail {
   id: number
+  code?: string
   fullName: string
   phoneNo: string
   email?: string
@@ -241,6 +245,16 @@ class CandidateService {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => '')
+      if (response.status === 404) {
+        try {
+          const payload = JSON.parse(errorText)
+          if (typeof payload.message === 'string' && /^No candidate .+ records found$/i.test(payload.message.trim())) {
+            return []
+          }
+        } catch {
+          // Preserve the normal error for unexpected 404 responses.
+        }
+      }
       throw new Error(`Failed to load candidate records: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
     }
 
@@ -441,12 +455,7 @@ class CandidateService {
         ''
 
       const rawStatus = candidate.status
-      const isActive =
-        rawStatus === 1 ||
-        rawStatus === true ||
-        String(rawStatus) === '1' ||
-        String(rawStatus).toLowerCase() === 'active'
-      const normalizedStatus = isActive ? 'Active' : 'Inactive'
+      const normalizedStatus = isActiveCandidateStatus(rawStatus) ? 'Active' : 'Inactive'
 
       return {
         id: candidate.id,
@@ -622,11 +631,7 @@ class CandidateService {
     const candidate = data.data
 
     const rawStatus = candidate.status
-    const isActive =
-      rawStatus === 1 ||
-      String(rawStatus) === '1' ||
-      String(rawStatus).toLowerCase() === 'active'
-    const normalizedStatus = isActive ? 'Active' : 'Inactive'
+    const normalizedStatus = isActiveCandidateStatus(rawStatus) ? 'Active' : 'Inactive'
 
     return {
       id: candidate.id,

@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { AlertTriangle, ArrowLeft, Award, BriefcaseBusiness, CheckCircle2, Eye, GraduationCap, Loader2, Pencil, Plus, Trash2, Upload } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Award, BriefcaseBusiness, CheckCircle2, Eye, GraduationCap, Loader2, Pencil, Plus, Trash2, Upload, UserRound } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import {
   candidateService,
@@ -33,6 +33,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 
 type CandidateRecordTab = 'education' | 'achievements' | 'experience'
+type CandidateDetailTab = 'profile' | CandidateRecordTab
 type CandidateRecord = CandidateEducation | CandidateAchievement | CandidateExperience
 
 const recordTypeLabel = (tab: CandidateRecordTab) => tab === 'achievements' ? 'Achievement' : tab === 'education' ? 'Education' : 'Experience'
@@ -49,7 +50,7 @@ export default function CandidateDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [photoUploadError, setPhotoUploadError] = useState<string | null>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
-  const [activeTab, setActiveTab] = useState<CandidateRecordTab>('education')
+  const [activeTab, setActiveTab] = useState<CandidateDetailTab>('profile')
   const [educationRecords, setEducationRecords] = useState<CandidateEducation[]>([])
   const [achievementRecords, setAchievementRecords] = useState<CandidateAchievement[]>([])
   const [experienceRecords, setExperienceRecords] = useState<CandidateExperience[]>([])
@@ -214,7 +215,7 @@ export default function CandidateDetailPage() {
   }
 
   useEffect(() => {
-    if (candidate) void loadCandidateRecords(activeTab, candidate.id)
+    if (candidate && activeTab !== 'profile') void loadCandidateRecords(activeTab, candidate.id)
   }, [candidate?.id, activeTab])
 
   const openCreateDialog = (tab: CandidateRecordTab) => {
@@ -331,14 +332,16 @@ export default function CandidateDetailPage() {
   }
 
   const handleDeleteRecord = async () => {
-    if (!candidate || !pendingDelete?.record.id) return
+    const pending = pendingDelete
+    const recordId = pending?.record.id
+    if (!candidate || !pending || recordId === undefined) return
     setDeletingRecord(true)
     setRecordsError(null)
     try {
-      const { tab, record } = pendingDelete
-      if (tab === 'education') await candidateService.deleteCandidateEducation(record.id)
-      else if (tab === 'achievements') await candidateService.deleteCandidateAchievement(record.id)
-      else await candidateService.deleteCandidateExperience(record.id)
+      const { tab } = pending
+      if (tab === 'education') await candidateService.deleteCandidateEducation(recordId)
+      else if (tab === 'achievements') await candidateService.deleteCandidateAchievement(recordId)
+      else await candidateService.deleteCandidateExperience(recordId)
       setPendingDelete(null)
       await loadCandidateRecords(tab, candidate.id)
     } catch (err) {
@@ -389,11 +392,11 @@ export default function CandidateDetailPage() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <Avatar className="h-20 w-20 shrink-0">
+          <Avatar className="h-24 w-24 shrink-0 rounded-md">
             {getImageUrl(candidate.image) ? (
               <AvatarImage src={getImageUrl(candidate.image)} alt={candidate.fullName} />
             ) : (
-              <AvatarFallback>{candidate.fullName.charAt(0).toUpperCase()}</AvatarFallback>
+              <AvatarFallback className="rounded-md">{candidate.fullName.charAt(0).toUpperCase()}</AvatarFallback>
             )}
           </Avatar>
           <div>
@@ -411,9 +414,6 @@ export default function CandidateDetailPage() {
             ref={fileInputRef}
             onChange={handlePhotoUpload}
           />
-          <Button variant="outline" size="sm" onClick={() => navigate(`/k8s9f3-candidates-edit/${candidate.id}`)}>
-            Edit Candidate
-          </Button>
           <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto}>
             <Upload className="mr-2 h-4 w-4" />
             {uploadingPhoto ? 'Uploading...' : 'Upload Photo'}
@@ -435,6 +435,7 @@ export default function CandidateDetailPage() {
       <section className="overflow-hidden rounded-lg border border-gray-200 bg-white">
         <div role="tablist" aria-label="Candidate background" className="flex overflow-x-auto border-b border-gray-200 px-3 pt-2">
           {([
+            { id: 'profile', label: 'View Profile', icon: UserRound },
             { id: 'education', label: 'Education', icon: GraduationCap },
             { id: 'achievements', label: 'Achievements', icon: Award },
             { id: 'experience', label: 'Experience', icon: BriefcaseBusiness },
@@ -456,7 +457,46 @@ export default function CandidateDetailPage() {
         </div>
 
         <div id="candidate-record-panel" role="tabpanel" aria-labelledby={`candidate-tab-${activeTab}`} className="p-4 sm:p-6">
-          {recordsLoading ? (
+          {activeTab === 'profile' ? (
+            <div className="space-y-6">
+              <div className="flex flex-col gap-2 border-b border-gray-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-base font-semibold text-gray-900">Candidate profile</h2>
+                  <p className="mt-1 text-sm text-gray-500">Personal and political details</p>
+                </div>
+                <span className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${candidate.status === 1 ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
+                  {candidate.status === 1 ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+              <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+                {([
+                  ['Candidate code', candidate.code],
+                  ['Full name', candidate.fullName],
+                  ['Phone number', candidate.phoneNo],
+                  ['Email address', candidate.email],
+                  ['Date of birth', candidate.dob],
+                  ['Gender', candidate.gender],
+                  ['NIN', candidate.nin],
+                  ['Religion', candidate.religion],
+                  ['Political party', candidate.party?.name],
+                  ['LGA / District', candidate.lga_district?.name],
+                  ['State', candidate.state?.name],
+                  ['Address', candidate.address],
+                ] as const).map(([label, value]) => (
+                  <div key={label} className="min-w-0">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</dt>
+                    <dd className="mt-1 break-words text-sm font-medium text-gray-900">{value ?? '—'}</dd>
+                  </div>
+                ))}
+                {candidate.bio && (
+                  <div className="sm:col-span-2 lg:col-span-3">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-gray-500">Biography</dt>
+                    <dd className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-gray-800">{candidate.bio}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+          ) : recordsLoading ? (
             <div className="flex items-center justify-center py-12 text-gray-500">
               <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading {activeTab}...
             </div>
@@ -490,7 +530,7 @@ export default function CandidateDetailPage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                )) : <TableRow><TableCell colSpan={6} className="py-10 text-center text-gray-500">No education records yet.</TableCell></TableRow>}
+                )) : <TableRow><TableCell colSpan={6} className="py-10 text-center text-gray-500">No education details added yet.</TableCell></TableRow>}
               </TableBody>
             </Table>
           ) : activeTab === 'achievements' ? (
@@ -519,7 +559,7 @@ export default function CandidateDetailPage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                )) : <TableRow><TableCell colSpan={5} className="py-10 text-center text-gray-500">No achievements yet.</TableCell></TableRow>}
+                )) : <TableRow><TableCell colSpan={5} className="py-10 text-center text-gray-500">No achievement details added yet.</TableCell></TableRow>}
               </TableBody>
             </Table>
           ) : (
@@ -550,7 +590,7 @@ export default function CandidateDetailPage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                )) : <TableRow><TableCell colSpan={6} className="py-10 text-center text-gray-500">No experience records yet.</TableCell></TableRow>}
+                )) : <TableRow><TableCell colSpan={6} className="py-10 text-center text-gray-500">No experience details added yet.</TableCell></TableRow>}
               </TableBody>
             </Table>
           )}
@@ -650,10 +690,11 @@ export default function CandidateDetailPage() {
           ) : viewingRecord && (
             <dl className="grid gap-4 sm:grid-cols-2">
               {Object.entries(viewingRecord.record)
-                .filter(([key]) => !['id', 'candidate_id', 'created_at', 'updated_at', 'createdAt', 'updatedAt'].includes(key))
+                .filter(([key]) => !['id', 'candidate_id', 'created_at', 'updated_at', 'createdAt', 'updatedAt'].includes(key)
+                  && !(viewingRecord.tab === 'experience' && key === 'is_current'))
                 .map(([key, value]) => (
                   <div key={key} className="min-w-0">
-                    <dt className="text-xs font-medium uppercase text-gray-500">{key.replaceAll('_', ' ')}</dt>
+                    <dt className="text-xs font-medium uppercase text-gray-500">{key.replace(/_/g, ' ')}</dt>
                     <dd className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-900">
                       {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value ?? '—')}
                     </dd>

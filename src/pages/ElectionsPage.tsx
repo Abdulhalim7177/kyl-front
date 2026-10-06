@@ -68,16 +68,11 @@ export default function ElectionsPage() {
     try {
       setLoading(true)
       const [allElections, statsData] = await Promise.all([
-        electionService.getAllElections(),
+        showOnlyActive ? electionService.getActiveElections() : electionService.getAllElections(),
         electionService.getElectionStats()
       ])
-      
-      if (showOnlyActive) {
-        setElections(allElections.filter(e => e.status === 'Ongoing' || e.status === 'Upcoming'))
-      } else {
-        setElections(allElections)
-      }
-      
+
+      setElections(allElections)
       setStats(statsData)
     } catch (err) {
       console.error('Failed to load elections data:', err)
@@ -160,7 +155,7 @@ export default function ElectionsPage() {
             className={`text-white transition-colors ${showOnlyActive ? 'bg-[#115a42] shadow-inner' : 'bg-[#146c4f] hover:bg-[#115a42]'}`}
             onClick={() => setShowOnlyActive(!showOnlyActive)}
           >
-            {showOnlyActive ? 'Viewing Active Elections' : 'View Active Elections'}
+            {showOnlyActive ? 'Viewing Active Election' : 'View Active Election'}
           </Button>
           <Button
             className="bg-[#146c4f] hover:bg-[#115a42] text-white"
@@ -234,7 +229,6 @@ export default function ElectionsPage() {
             <TableHeader>
               <TableRow className="hover:bg-transparent border-gray-100 bg-gray-50/50">
                 <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider h-11 px-6">NAME</TableHead>
-                <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider h-11">CATEGORY</TableHead>
                 <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider h-11">TYPE</TableHead>
                 <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider h-11">DATE</TableHead>
                 <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider h-11">STATUS</TableHead>
@@ -244,7 +238,7 @@ export default function ElectionsPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
+                  <TableCell colSpan={5} className="text-center py-8">
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#146c4f]"></div>
                     </div>
@@ -252,7 +246,7 @@ export default function ElectionsPage() {
                 </TableRow>
               ) : elections.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={5} className="text-center py-8 text-gray-500">
                     No elections found
                   </TableCell>
                 </TableRow>
@@ -267,9 +261,6 @@ export default function ElectionsPage() {
                       <span className="text-sm text-gray-900 font-medium hover:underline hover:text-[#146c4f]">
                         {election.details || `${election.year} Election`}
                       </span>
-                    </TableCell>
-                    <TableCell className="py-4 text-sm text-gray-500">
-                      {election.category || '—'}
                     </TableCell>
                     <TableCell className="py-4 text-sm text-gray-500">
                       {election.type || 'General'}

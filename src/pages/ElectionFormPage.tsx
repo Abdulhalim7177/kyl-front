@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 // Select components removed as they are no longer needed
 import { ArrowLeft, Save, Loader2 } from 'lucide-react'
-import { electionService } from '@/services/elections'
+import { electionService, isElectionCompleted } from '@/services/elections'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function ElectionFormPage() {
@@ -35,6 +35,10 @@ export default function ElectionFormPage() {
       setLoading(true)
       const data = await electionService.getElectionById(electionId)
       if (data) {
+        if (isElectionCompleted(data)) {
+          navigate(`/k8s9d7f3-elections-view/${electionId}`, { replace: true })
+          return
+        }
         setFormData({
           year: data.year ? String(data.year) : '',
           details: data.details || ''
