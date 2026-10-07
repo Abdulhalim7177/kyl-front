@@ -6,19 +6,11 @@ import { Input } from '@/components/ui/input'
 import { Party, partyService } from '@/services/parties'
 import { PaginationControls } from '@/components/PaginationControls'
 import { useClientPagination } from '@/components/useClientPagination'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { Search, ToggleRight } from 'lucide-react'
 import AddPartyDialog from '@/components/AddPartyDialog'
 import { getLogoUrl, cn } from '@/lib/utils'
+import { Card } from '@/components/ui/card'
 
-// Types/Interfaces
 interface PartiesPageState {
   parties: Party[]
   search: string
@@ -26,9 +18,7 @@ interface PartiesPageState {
   error: string | null
 }
 
-// Component
 export default function PartiesPage() {
-  // State
   const [state, setState] = useState<PartiesPageState>({
     parties: [],
     search: '',
@@ -38,18 +28,14 @@ export default function PartiesPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set())
 
-  // Effects
   useEffect(() => {
     loadParties()
   }, [])
 
-  // Handlers
   const loadParties = async () => {
     setState((prev) => ({ ...prev, loading: true, error: null }))
     try {
       const parties = await partyService.getAllParties()
-      console.log('Loaded parties:', parties)
-      console.log('Party logos:', parties.map(p => ({ name: p.name, logopath: p.logopath })))
       setState((prev) => ({
         ...prev,
         parties,
@@ -62,14 +48,12 @@ export default function PartiesPage() {
         error: errorMessage,
         loading: false,
       }))
-      console.error('Failed to load parties:', err)
     }
   }
 
   const handleToggleParty = async (partyId: number) => {
     setTogglingIds((prev) => new Set(prev).add(partyId))
     setState((prev) => ({ ...prev, error: null }))
-
     try {
       const updatedParty = await partyService.togglePartyStatus(partyId)
       setState((prev) => ({
@@ -79,12 +63,10 @@ export default function PartiesPage() {
         ),
       }))
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to change party status'
       setState((prev) => ({
         ...prev,
-        error: errorMessage,
+        error: err instanceof Error ? err.message : 'Failed to change party status',
       }))
-      console.error('Failed to toggle party status:', err)
     } finally {
       setTogglingIds((prev) => {
         const next = new Set(prev)
@@ -94,12 +76,6 @@ export default function PartiesPage() {
     }
   }
 
-  const handleSearchChange = (value: string) => {
-    setState((prev) => ({ ...prev, search: value }))
-  }
-
-
-
   const toggleSelect = (id: number) => {
     const next = new Set(selectedIds)
     if (next.has(id)) next.delete(id)
@@ -107,21 +83,15 @@ export default function PartiesPage() {
     setSelectedIds(next)
   }
 
-  const selectedCount = selectedIds.size
-
   const handleToggleSelectedParties = async () => {
-    if (selectedCount === 0) return
-
+    if (selectedIds.size === 0) return
     setTogglingIds(new Set(selectedIds))
     setState((prev) => ({ ...prev, error: null }))
 
     try {
       const updatedParties = await Promise.all(
-        Array.from(selectedIds).map(async (partyId) => {
-          return await partyService.togglePartyStatus(partyId)
-        })
+        Array.from(selectedIds).map((partyId) => partyService.togglePartyStatus(partyId))
       )
-
       setState((prev) => ({
         ...prev,
         parties: prev.parties.map((party) => {
@@ -130,18 +100,15 @@ export default function PartiesPage() {
         }),
       }))
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to toggle selected parties'
       setState((prev) => ({
         ...prev,
-        error: errorMessage,
+        error: err instanceof Error ? err.message : 'Failed to toggle selected parties',
       }))
-      console.error('Failed to toggle selected parties:', err)
     } finally {
       setTogglingIds(new Set())
     }
   }
 
-  // Computed values
   const filteredParties = useMemo(() => {
     const term = state.search.trim().toLowerCase()
     if (!term) return state.parties
@@ -154,7 +121,6 @@ export default function PartiesPage() {
     )
   }, [state.parties, state.search])
 
-
   const {
     currentPage,
     totalPages,
@@ -163,202 +129,205 @@ export default function PartiesPage() {
     paginatedData,
     handlePageChange,
     handleItemsPerPageChange
-  } = useClientPagination(filteredParties, 20)
+  } = useClientPagination(filteredParties, 12)
 
   const toggleSelectAll = () => {
     const allVisibleSelected = paginatedData.length > 0 && paginatedData.every((party) => selectedIds.has(party.id))
     const next = new Set(selectedIds)
-
     if (allVisibleSelected) {
       paginatedData.forEach((party) => next.delete(party.id))
       setSelectedIds(next)
       return
     }
-
     paginatedData.forEach((party) => next.add(party.id))
     setSelectedIds(next)
   }
 
-  // Render
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold text-gray-900">Parties</h2>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-xl font-bold text-gray-900">Political Parties</h2>
           <p className="text-sm text-gray-500">
-            Manage registered political parties, their slogans, and candidate status across all election cycles.
+            Manage registered political parties, update their logos, and control their active status.
           </p>
         </div>
         <AddPartyDialog onPartyAdded={loadParties} />
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-        <div className="relative flex-1 w-full">
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="relative w-full sm:w-96">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <Input
             value={state.search}
-            onChange={(event) => handleSearchChange(event.target.value)}
-            placeholder="Search by party name, slogan or year..."
-            className="pl-9 bg-white border-gray-200 rounded-lg h-10"
+            onChange={(e) => setState(prev => ({ ...prev, search: e.target.value }))}
+            placeholder="Search parties by name or slogan..."
+            className="pl-9 bg-gray-50 border-transparent focus:bg-white transition-colors h-10"
           />
+        </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Checkbox 
+            id="selectAll"
+            checked={paginatedData.length > 0 && paginatedData.every((party) => selectedIds.has(party.id))}
+            onCheckedChange={toggleSelectAll} 
+            className="data-[state=checked]:bg-[#146c4f] data-[state=checked]:border-[#146c4f]"
+          />
+          <label htmlFor="selectAll" className="text-sm font-medium text-gray-600 cursor-pointer select-none">
+            Select All Visible
+          </label>
         </div>
       </div>
 
-      {selectedCount > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-green-50 border border-green-100 rounded-lg px-4 py-3">
-          <p className="text-sm text-green-700">{selectedCount} party{selectedCount > 1 ? 'ies' : ''} selected</p>
+      {selectedIds.size > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-green-50/50 border border-green-100 rounded-lg px-4 py-3 animate-in fade-in slide-in-from-top-2">
+          <p className="text-sm font-medium text-green-800">{selectedIds.size} party{selectedIds.size > 1 ? 'ies' : ''} selected</p>
           <div className="flex flex-wrap gap-2">
             <Button
               variant="secondary"
+              size="sm"
               onClick={handleToggleSelectedParties}
               disabled={togglingIds.size > 0}
+              className="bg-white text-green-700 hover:bg-green-50 border border-green-200"
             >
-              Toggle selected status
+              Toggle Status for Selected
             </Button>
             <Button
-              variant="outline"
+              variant="ghost"
+              size="sm"
               onClick={() => setSelectedIds(new Set())}
               disabled={togglingIds.size > 0}
+              className="text-gray-500 hover:text-gray-700"
             >
-              Clear selection
+              Clear
             </Button>
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-x-auto">
-        {state.error && (
-          <div className="px-4 py-3 text-sm text-red-800 bg-red-50 border-b border-red-100">
-            {state.error}
-          </div>
-        )}
-
-        <div className="min-w-full">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-gray-100 bg-gray-50/50">
-                <TableHead className="w-12 px-4 py-3">
-                  <Checkbox
-                    checked={paginatedData.length > 0 && paginatedData.every((party) => selectedIds.has(party.id))}
-                    onCheckedChange={toggleSelectAll}
-                    className="rounded-[4px] border-gray-300"
-                  />
-                </TableHead>
-                <TableHead className="text-[0.7rem] font-semibold text-gray-600 tracking-wider py-3">ABBR</TableHead>
-                <TableHead className="text-[0.7rem] font-semibold text-gray-600 tracking-wider py-3">PARTY NAME</TableHead>
-                <TableHead className="text-[0.7rem] font-semibold text-gray-600 tracking-wider py-3">SLOGAN</TableHead>
-                <TableHead className="text-[0.7rem] font-semibold text-gray-600 tracking-wider py-3 text-center">STATUS</TableHead>
-                <TableHead className="text-[0.7rem] font-semibold text-gray-600 tracking-wider py-3">REGISTERED YEAR</TableHead>
-                <TableHead className="text-[0.7rem] font-semibold text-gray-600 tracking-wider py-3 text-center">ACTIONS</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {state.loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="py-10 text-center text-sm text-gray-500">
-                    Loading parties...
-                  </TableCell>
-                </TableRow>
-              ) : paginatedData.length > 0 ? (
-                paginatedData.map((party) => {
-                  const isSelected = selectedIds.has(party.id)
-                  const abbreviation = party.name
-                    .split(' ')
-                    .map((word) => word[0] ?? '')
-                    .join('')
-                    .slice(0, 4)
-                    .toUpperCase()
-
-                  return (
-                    <TableRow key={party.id} className={`border-gray-50 ${isSelected ? 'bg-green-50/70' : 'hover:bg-gray-50/50'} transition-colors`}>
-                      <TableCell className="px-4 py-4">
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => toggleSelect(party.id)}
-                          className="rounded-[4px] border-gray-300 data-[state=checked]:bg-[#146c4f] data-[state=checked]:border-[#146c4f]"
-                        />
-                      </TableCell>
-                      <TableCell className="font-semibold text-gray-900 text-sm py-4">{abbreviation}</TableCell>
-                      <TableCell className="font-medium text-gray-900 py-4">
-                        <div className="flex items-center gap-3">
-                          {party.logopath && getLogoUrl(party.logopath) ? (
-                            <img 
-                              src={getLogoUrl(party.logopath) || ''} 
-                              alt={`${party.name} logo`} 
-                              className="h-8 w-8 object-contain rounded" 
-                              onError={(e) => {
-                                console.error(`Failed to load logo for ${party.name}:`, getLogoUrl(party.logopath))
-                                console.error('Error event:', e)
-                              }}
-                              onLoad={() => {
-                                console.log(`Logo loaded successfully for ${party.name}:`, getLogoUrl(party.logopath))
-                              }}
-                            />
-                          ) : (
-                            <div className="h-8 w-8 rounded bg-gray-100 flex items-center justify-center">
-                              <span className="text-xs font-semibold text-gray-600">{abbreviation}</span>
-                            </div>
-                          )}
-                          <span>{party.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-gray-600 text-sm py-4 max-w-xs truncate">{party.slogan}</TableCell>
-                      <TableCell className="text-gray-600 py-4">
-                        <div className="inline-flex items-center gap-2">
-                          <span className={cn(
-                            'rounded-full px-2 py-1 text-[0.7rem] font-semibold',
-                            party.status
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-red-100 text-red-800'
-                          )}>
-                            {party.status ? 'Active' : 'Inactive'}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleParty(party.id)}
-                            disabled={togglingIds.has(party.id)}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                            aria-label={`Toggle status for ${party.name}`}
-                          >
-                            <ToggleRight className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-gray-600 text-sm py-4">{party.registrationYear || 'N/A'}</TableCell>
-                      <TableCell className="py-4">
-                        <div className="flex items-center justify-center gap-2">
-                          <Button
-                            asChild
-                            variant="ghost"
-                            className="h-8 px-2 text-xs text-green-700 hover:bg-green-50 rounded"
-                          >
-                            <Link to={`/k8s9d7f3-parties/${party.id}`}>View</Link>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="py-10 text-center text-sm text-gray-500">
-                    No parties match your search.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+      {state.error && (
+        <div className="px-4 py-3 text-sm text-red-800 bg-red-50 border border-red-100 rounded-lg">
+          {state.error}
         </div>
+      )}
 
-        <PaginationControls
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          itemsPerPage={itemsPerPage}
-          onPageChange={handlePageChange}
-          onItemsPerPageChange={handleItemsPerPageChange}
-        />
-      </div>
+      {state.loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <div key={i} className="h-64 bg-gray-100 animate-pulse rounded-xl"></div>
+          ))}
+        </div>
+      ) : paginatedData.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {paginatedData.map((party) => {
+            const isSelected = selectedIds.has(party.id)
+            const isToggling = togglingIds.has(party.id)
+            const abbreviation = party.name.split(' ').map((word) => word[0] ?? '').join('').slice(0, 4).toUpperCase()
+
+            return (
+              <Card 
+                key={party.id} 
+                className={cn(
+                  "relative overflow-hidden group transition-all duration-200 hover:shadow-md border",
+                  isSelected ? "border-[#146c4f] ring-1 ring-[#146c4f] shadow-sm" : "border-gray-200"
+                )}
+              >
+                <div className="absolute top-3 left-3 z-10">
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={() => toggleSelect(party.id)}
+                    className="rounded-sm border-gray-300 data-[state=checked]:bg-[#146c4f] data-[state=checked]:border-[#146c4f] shadow-sm bg-white"
+                  />
+                </div>
+                
+                <div className="absolute top-3 right-3 z-10 flex gap-2">
+                  <span className={cn(
+                    "px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider shadow-sm backdrop-blur-md",
+                    party.status 
+                      ? "bg-green-100/90 text-green-800 border border-green-200/50" 
+                      : "bg-red-100/90 text-red-800 border border-red-200/50"
+                  )}>
+                    {party.status ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+
+                <div className="p-6 flex flex-col items-center text-center space-y-4 pt-10">
+                  <div className="w-20 h-20 rounded-full flex items-center justify-center bg-gray-50 border border-gray-100 shadow-sm overflow-hidden p-2">
+                    {party.logopath && getLogoUrl(party.logopath) ? (
+                      <img 
+                        src={getLogoUrl(party.logopath) || ''} 
+                        alt={party.name} 
+                        className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
+                      />
+                    ) : (
+                      <span className="text-2xl font-bold text-gray-300">{abbreviation}</span>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-1.5 w-full">
+                    <h3 className="font-bold text-gray-900 leading-tight truncate px-2" title={party.name}>
+                      {party.name}
+                    </h3>
+                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
+                      {abbreviation} • {party.registrationYear || 'N/A'}
+                    </p>
+                  </div>
+                  
+                  {party.slogan && (
+                    <p className="text-sm text-gray-600 line-clamp-2 italic px-2 min-h-[40px]">
+                      "{party.slogan}"
+                    </p>
+                  )}
+                </div>
+                
+                <div className="p-3 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleToggleParty(party.id)}
+                    disabled={isToggling}
+                    className={cn(
+                      "flex-1 h-9 text-xs font-medium",
+                      party.status ? "text-red-600 hover:text-red-700 hover:bg-red-50" : "text-green-600 hover:text-green-700 hover:bg-green-50"
+                    )}
+                  >
+                    <ToggleRight className="w-3.5 h-3.5 mr-1.5" />
+                    {party.status ? 'Deactivate' : 'Activate'}
+                  </Button>
+                  <Button
+                    asChild
+                    variant="default"
+                    size="sm"
+                    className="flex-1 h-9 bg-gray-900 hover:bg-gray-800 text-xs font-medium"
+                  >
+                    <Link to={`/k8s9d7f3-parties/${party.id}`}>Manage</Link>
+                  </Button>
+                </div>
+              </Card>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="py-20 text-center bg-white rounded-xl border border-gray-100">
+          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Search className="w-8 h-8 text-gray-300" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-1">No parties found</h3>
+          <p className="text-gray-500 text-sm">We couldn't find any parties matching your search criteria.</p>
+        </div>
+      )}
+
+      {paginatedData.length > 0 && (
+        <div className="bg-white px-4 py-3 rounded-xl border border-gray-100">
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleItemsPerPageChange}
+          />
+        </div>
+      )}
     </div>
   )
 }

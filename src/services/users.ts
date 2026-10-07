@@ -144,6 +144,16 @@ class UserService {
     return this.extractDataArray<User>(data)
   }
 
+  async getDashboardStats(): Promise<{ users: number, parties: number, elections: number, candidates: number }> {
+    const response = await fetch(`${API_BASE_URL}/users/dashboard-stats`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+    if (!response.ok) throw new Error('Failed to fetch dashboard stats')
+    const data = await response.json()
+    return data.success && data.data ? data.data : { users: 0, parties: 0, elections: 0, candidates: 0 }
+  }
+
   async getUser(id: number): Promise<User> {
     const response = await fetch(`${API_BASE_URL}/users/show-user/${id}`, {
       method: 'GET',

@@ -732,6 +732,64 @@ class CandidateService {
       return []
     }
   }
+
+  async addEducation(data: CandidateEducation): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/candidates/create-candidate-education`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to add education');
+    return await response.json();
+  }
+
+  async addExperience(data: CandidateExperience): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/candidates/create-candidate-experience`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to add experience');
+    return await response.json();
+  }
+
+  async addAchievement(data: CandidateAchievement): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/candidates/create-candidate-achievement`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to add achievement');
+    return await response.json();
+  }
 }
 
 export const candidateService = new CandidateService()
+
+export interface CandidateEducation {
+  candidate_id: number;
+  education_level: string;
+  field_of_study?: string;
+  institution?: string;
+  country?: string;
+  start_year?: number;
+  graduation_year?: number;
+}
+
+export interface CandidateExperience {
+  candidate_id: number;
+  job_title: string;
+  organization?: string;
+  industry_type?: string;
+  start_date: string;
+  end_date?: string;
+  is_current?: boolean;
+}
+
+export interface CandidateAchievement {
+  candidate_id: number;
+  title: string;
+  description?: string;
+  issuer: string;
+  achievement_date: string;
+}

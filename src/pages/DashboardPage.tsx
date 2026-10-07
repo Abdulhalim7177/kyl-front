@@ -37,6 +37,7 @@ export default function DashboardPage() {
   const [userCount, setUserCount] = useState(0);
   const [partyCount, setPartyCount] = useState(0);
   const [electionCount, setElectionCount] = useState(0);
+  const [candidateCount, setCandidateCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,18 +47,17 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [activityLogs, allCandidates, allUsers, allParties, allElections] = await Promise.all([
+      const [activityLogs, allCandidates, statsData] = await Promise.all([
         userService.getActivityLogs(),
         candidateService.getAllCandidates(),
-        userService.getUsers(),
-        partyService.getAllParties(),
-        electionService.getAllElections()
+        userService.getDashboardStats()
       ]);
       setLogs(activityLogs.slice(0, 5));
       setCandidates(allCandidates.slice(0, 5));
-      setUserCount(allUsers.length);
-      setPartyCount(allParties.length);
-      setElectionCount(allElections.length);
+      setUserCount(statsData.users);
+      setPartyCount(statsData.parties);
+      setElectionCount(statsData.elections);
+      setCandidateCount(statsData.candidates);
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
     } finally {
@@ -69,7 +69,7 @@ export default function DashboardPage() {
     { label: "Users", value: userCount.toString(), change: "+0%", icon: HiUsers, color: "text-teal-600", bgColor: "bg-teal-50" },
     { label: "Political Parties", value: partyCount.toString(), change: "+0%", icon: FaLandmark, color: "text-blue-600", bgColor: "bg-blue-50" },
     { label: "Elections", value: electionCount.toString(), change: "+0%", icon: MdHowToVote, color: "text-purple-600", bgColor: "bg-purple-50" },
-    { label: "Candidates", value: candidates.length.toString(), change: "+0%", icon: MdPeople, color: "text-green-600", bgColor: "bg-green-50" },
+    { label: "Candidates", value: candidateCount.toString(), change: "+0%", icon: MdPeople, color: "text-green-600", bgColor: "bg-green-50" },
   ];
 
   if (loading) {

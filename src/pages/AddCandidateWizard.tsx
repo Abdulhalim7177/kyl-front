@@ -1,27 +1,22 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
-  Check,
-  Eye,
-  ArrowLeft,
-  CheckCircle,
-  User,
-  MapPin,
-  Phone,
-  Save,
-  ArrowRight,
+  Check, Eye, ArrowLeft, CheckCircle, User, MapPin, Phone, Save, ArrowRight, Book, Briefcase, Award, Plus, Trash2
 } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { candidateService, Candidate, CreateCandidateData, Party, LGADistrict } from '@/services/candidates'
+import { candidateService, Candidate, CreateCandidateData, Party, LGADistrict, CandidateEducation, CandidateExperience, CandidateAchievement } from '@/services/candidates'
 
 // Wizard steps configuration
 const WIZARD_STEPS = [
   { number: 1, label: 'Personal Profile', icon: User },
   { number: 2, label: 'Contact', icon: Phone },
   { number: 3, label: 'District', icon: MapPin },
+  { number: 4, label: 'Education', icon: Book },
+  { number: 5, label: 'Experience', icon: Briefcase },
+  { number: 6, label: 'Achievements', icon: Award },
 ]
 
 export default function AddCandidateWizard() {
@@ -40,6 +35,10 @@ export default function AddCandidateWizard() {
   const [lgas, setLgas] = useState<LGADistrict[]>([])
   const [loadingSelectData, setLoadingSelectData] = useState(false)
   
+  const [educations, setEducations] = useState<Partial<CandidateEducation>[]>([])
+  const [experiences, setExperiences] = useState<Partial<CandidateExperience>[]>([])
+  const [achievements, setAchievements] = useState<Partial<CandidateAchievement>[]>([])
+
   const [formData, setFormData] = useState<CreateCandidateData>({
     fullName: '',
     phoneNo: '',
@@ -103,7 +102,7 @@ export default function AddCandidateWizard() {
       }
     }
 
-    if (currentStep < 3) {
+    if (currentStep < 6) {
       setCurrentStep(currentStep + 1)
     } else {
       handleSubmit()
@@ -116,18 +115,40 @@ export default function AddCandidateWizard() {
     }
   }
 
-  const handleSubmit = async () => {
+    const handleSubmit = async () => {
     try {
       setIsSubmitting(true)
-      console.log('📋 Submitting form data:', formData)
+      console.log('Submitting form data:', formData)
       const candidate = isEditMode && candidateId
         ? await candidateService.updateCandidate(Number(candidateId), formData)
         : await candidateService.createCandidate(formData)
+      
+      const savedCandidateId = isEditMode && candidateId ? Number(candidateId) : candidate.id
+
+      // Save related arrays using candidate id
+      if (savedCandidateId) {
+        for (const ed of educations) {
+          if (ed.education_level) {
+            await candidateService.addEducation({ ...ed, candidate_id: savedCandidateId } as CandidateEducation)
+          }
+        }
+        for (const ex of experiences) {
+          if (ex.job_title && ex.start_date) {
+            await candidateService.addExperience({ ...ex, candidate_id: savedCandidateId } as CandidateExperience)
+          }
+        }
+        for (const ach of achievements) {
+          if (ach.title && ach.issuer && ach.achievement_date) {
+            await candidateService.addAchievement({ ...ach, candidate_id: savedCandidateId } as CandidateAchievement)
+          }
+        }
+      }
+
       setSubmittedCandidate(candidate)
-      setCurrentStep(4) // Show success page
+      setCurrentStep(7) // Show success page
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err)
-      console.error('❌ Submission error:', errorMessage)
+      console.error('Submission error:', errorMessage)
       alert(`Failed to ${isEditMode ? 'update' : 'create'} candidate:\n\n${errorMessage}`)
     } finally {
       setIsSubmitting(false)
@@ -403,7 +424,114 @@ export default function AddCandidateWizard() {
           </div>
         )
 
-      case 4:
+            case 4:
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-800">Education History</h3>
+              <Button type="button" variant="outline" size="sm" onClick={() => setEducations([...educations, {}])}>
+                <Plus className="w-4 h-4 mr-2" /> Add Education
+              </Button>
+            </div>
+            {educations.map((ed, idx) => (
+              <div key={idx} className="p-4 border rounded-lg space-y-4 bg-gray-50 relative">
+                <Button type="button" variant="ghost" size="sm" className="absolute top-2 right-2 text-red-500" onClick={() => setEducations(educations.filter((_, i) => i !== idx))}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Level *</label>
+                    <Input placeholder="e.g. BSc, MSc" value={ed.education_level || ''} onChange={e => { const newEd = [...educations]; newEd[idx].education_level = e.target.value; setEducations(newEd); }} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Field of Study</label>
+                    <Input placeholder="e.g. Economics" value={ed.field_of_study || ''} onChange={e => { const newEd = [...educations]; newEd[idx].field_of_study = e.target.value; setEducations(newEd); }} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Institution</label>
+                    <Input placeholder="e.g. University of Lagos" value={ed.institution || ''} onChange={e => { const newEd = [...educations]; newEd[idx].institution = e.target.value; setEducations(newEd); }} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Graduation Year</label>
+                    <Input type="number" placeholder="YYYY" value={ed.graduation_year || ''} onChange={e => { const newEd = [...educations]; newEd[idx].graduation_year = parseInt(e.target.value); setEducations(newEd); }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+            {educations.length === 0 && <p className="text-sm text-gray-500 italic">No education history added.</p>}
+          </div>
+        );
+      case 5:
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-800">Professional Experience</h3>
+              <Button type="button" variant="outline" size="sm" onClick={() => setExperiences([...experiences, {}])}>
+                <Plus className="w-4 h-4 mr-2" /> Add Experience
+              </Button>
+            </div>
+            {experiences.map((ex, idx) => (
+              <div key={idx} className="p-4 border rounded-lg space-y-4 bg-gray-50 relative">
+                <Button type="button" variant="ghost" size="sm" className="absolute top-2 right-2 text-red-500" onClick={() => setExperiences(experiences.filter((_, i) => i !== idx))}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Job Title *</label>
+                    <Input placeholder="e.g. CEO, Commissioner" value={ex.job_title || ''} onChange={e => { const newEx = [...experiences]; newEx[idx].job_title = e.target.value; setExperiences(newEx); }} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Organization</label>
+                    <Input placeholder="e.g. State Government" value={ex.organization || ''} onChange={e => { const newEx = [...experiences]; newEx[idx].organization = e.target.value; setExperiences(newEx); }} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Start Date *</label>
+                    <Input type="date" value={ex.start_date || ''} onChange={e => { const newEx = [...experiences]; newEx[idx].start_date = e.target.value; setExperiences(newEx); }} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">End Date</label>
+                    <Input type="date" value={ex.end_date || ''} onChange={e => { const newEx = [...experiences]; newEx[idx].end_date = e.target.value; setExperiences(newEx); }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+            {experiences.length === 0 && <p className="text-sm text-gray-500 italic">No professional experience added.</p>}
+          </div>
+        );
+      case 6:
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-800">Achievements</h3>
+              <Button type="button" variant="outline" size="sm" onClick={() => setAchievements([...achievements, {}])}>
+                <Plus className="w-4 h-4 mr-2" /> Add Achievement
+              </Button>
+            </div>
+            {achievements.map((ach, idx) => (
+              <div key={idx} className="p-4 border rounded-lg space-y-4 bg-gray-50 relative">
+                <Button type="button" variant="ghost" size="sm" className="absolute top-2 right-2 text-red-500" onClick={() => setAchievements(achievements.filter((_, i) => i !== idx))}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Title *</label>
+                    <Input placeholder="e.g. Award of Excellence" value={ach.title || ''} onChange={e => { const newAch = [...achievements]; newAch[idx].title = e.target.value; setAchievements(newAch); }} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Issuer *</label>
+                    <Input placeholder="e.g. Federal Government" value={ach.issuer || ''} onChange={e => { const newAch = [...achievements]; newAch[idx].issuer = e.target.value; setAchievements(newAch); }} />
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <label className="text-sm font-medium">Date *</label>
+                    <Input type="date" value={ach.achievement_date || ''} onChange={e => { const newAch = [...achievements]; newAch[idx].achievement_date = e.target.value; setAchievements(newAch); }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+            {achievements.length === 0 && <p className="text-sm text-gray-500 italic">No achievements added.</p>}
+          </div>
+        );
+      case 7:
         // Success Page
         return (
           <div className="flex items-center justify-center min-h-[320px]">
@@ -517,7 +645,7 @@ export default function AddCandidateWizard() {
       {/* Content Area */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
         {/* Step Title */}
-        {currentStep < 4 && (
+        {currentStep < 7 && (
           <div className="mb-3">
             <h2 className="text-lg font-semibold text-gray-800">
               Step {currentStep}: {WIZARD_STEPS[currentStep - 1]?.label}
@@ -532,7 +660,7 @@ export default function AddCandidateWizard() {
         {renderStepContent()}
 
         {/* Navigation Buttons */}
-        {currentStep < 4 && (
+        {currentStep < 7 && (
           <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mt-5 pt-3 border-t border-gray-100">
             <div className="w-full sm:w-auto">
               {currentStep === 1 ? (
@@ -556,7 +684,7 @@ export default function AddCandidateWizard() {
               )}
             </div>
             <div className="w-full sm:w-auto">
-              {currentStep === 3 ? (
+              {currentStep === 6 ? (
                 <Button 
                   className="bg-[#146c4f] hover:bg-[#115a42] text-white flex items-center gap-2 w-full sm:w-auto"
                   onClick={handleNext}
@@ -581,3 +709,6 @@ export default function AddCandidateWizard() {
     </div>
   )
 }
+
+
+

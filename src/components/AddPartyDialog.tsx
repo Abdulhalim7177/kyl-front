@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Upload, X } from 'lucide-react'
+import { useRef } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -30,6 +32,9 @@ export default function AddPartyDialog({ onPartyAdded }: AddPartyDialogProps) {
     registrationYear: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -57,6 +62,27 @@ export default function AddPartyDialog({ onPartyAdded }: AddPartyDialogProps) {
     return Object.keys(newErrors).length === 0
   }
 
+    const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setErrors(prev => ({ ...prev, logo: 'Logo must be less than 2MB' }))
+        return
+      }
+      setLogoFile(file)
+      setLogoPreview(URL.createObjectURL(file))
+      setErrors(prev => ({ ...prev, logo: '' }))
+    }
+  }
+
+  const removeLogo = () => {
+    setLogoFile(null)
+    setLogoPreview(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -75,9 +101,20 @@ export default function AddPartyDialog({ onPartyAdded }: AddPartyDialogProps) {
         registrationYear: formData.registrationYear ? Number(formData.registrationYear) : undefined,
       }
 
-      await partyService.createParty(partyData)
+            const createdParty = await partyService.createParty(partyData)
+
+      if (logoFile && createdParty && createdParty.id) {
+        try {
+          await partyService.uploadPartyLogo(createdParty.id, logoFile)
+        } catch (logoError) {
+          console.error('Failed to upload logo:', logoError)
+          // We don't block the dialog closing, but we could show a toast
+        }
+      }
 
       setOpen(false)
+      setLogoFile(null)
+      setLogoPreview(null)
       setFormData({
         name: '',
         description: '',
@@ -104,13 +141,46 @@ export default function AddPartyDialog({ onPartyAdded }: AddPartyDialogProps) {
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="pb-3">
+                <DialogHeader className="pb-3">
           <DialogTitle>Add New Party</DialogTitle>
           <DialogDescription>
             Create a new political party with the required information.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          
+          <div className="flex flex-col items-center justify-center space-y-2 mb-2">
+            <div className="relative">
+              {logoPreview ? (
+                <div className="relative w-24 h-24 rounded-full border-2 border-gray-200 overflow-hidden group">
+                  <img src={logoPreview} alt="Logo preview" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button type="button" onClick={removeLogo} className="text-white hover:text-red-400 p-1">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-500 hover:border-[#146c4f] hover:text-[#146c4f] hover:bg-green-50 transition-colors"
+                >
+                  <Upload className="w-6 h-6 mb-1" />
+                  <span className="text-[10px] font-medium">Upload Logo</span>
+                </button>
+              )}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleLogoChange}
+                accept="image/*"
+                className="hidden"
+              />
+            </div>
+            {errors.logo && <p className="text-xs text-red-500">{errors.logo}</p>}
+          </div>
+
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-0.5">
               Party Name *
