@@ -20,14 +20,20 @@ export function PaginationControls({
   onPageChange,
   onItemsPerPageChange,
 }: PaginationControlsProps) {
+  const pageSizes = Array.from(new Set([
+    20,
+    ...(totalItems > 250 ? [250] : []),
+    totalItems,
+  ])).filter((pageSize) => pageSize > 0)
+
   return (
-    <div className="flex items-center justify-between px-2 py-4 mt-4 bg-white border-t rounded-b-lg">
-      <div className="flex-1 text-sm text-gray-500">
+    <div className="mt-4 flex flex-col gap-3 rounded-b-lg border-t bg-white px-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-2">
+      <div className="text-sm text-gray-500 sm:flex-1">
         Showing {totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to{' '}
         {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} entries
       </div>
-      <div className="flex items-center space-x-6 lg:space-x-8">
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end sm:gap-6 lg:gap-8">
+        <div className="flex items-center gap-2">
           <p className="text-sm font-medium text-gray-700">Rows per page</p>
           <Select
             value={`${itemsPerPage}`}
@@ -37,7 +43,7 @@ export function PaginationControls({
               <SelectValue placeholder={itemsPerPage} />
             </SelectTrigger>
             <SelectContent side="top">
-              {[10, 20, 50, 100, 250, 500].map((pageSize) => (
+              {pageSizes.map((pageSize) => (
                 <SelectItem key={pageSize} value={`${pageSize}`}>
                   {pageSize}
                 </SelectItem>
@@ -48,7 +54,7 @@ export function PaginationControls({
         <div className="flex w-[100px] items-center justify-center text-sm font-medium text-gray-700">
           Page {currentPage} of {Math.max(1, totalPages)}
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             className="hidden h-8 w-8 p-0 lg:flex"

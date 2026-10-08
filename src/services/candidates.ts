@@ -3,16 +3,50 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 export interface Candidate {
   id: number
+  candidate_id?: number
+  assignment_id?: number
   user_id: string
   full_name: string
+  email?: string
+  address?: string
+  dob?: string
+  gender?: string
+  bio?: string
+  manifesto?: string
+  start_date?: string
+  end_date?: string
+  tenure?: string
+  remark?: string
+  office_id?: number
+  office_title?: string
+  election_id?: number
+  nin?: string | number
+  phoneNo?: string
+  party_id?: number
+  image?: string | Record<string, any> | null
   political_party: string
   senatorial_district: string
+  federal_house_district?: string
   state: string
   state_id?: number
   status: string
   created_at: string
+  election?: {
+    id?: number
+    year?: string | number
+    details?: string
+    current_status?: string
+  }
   party?: {
     name: string
+    logopath?: string | Record<string, any> | null
+    logo?: string | Record<string, any> | null
+    logo_path?: string | Record<string, any> | null
+    logo_url?: string | Record<string, any> | null
+    url?: string | Record<string, any> | null
+    path?: string | Record<string, any> | null
+    image_url?: string | Record<string, any> | null
+    image_path?: string | Record<string, any> | null
   }
 }
 
@@ -37,6 +71,48 @@ export interface AddGovernatorialCandidateData {
   party_id: number
   election_id: number
   state_id: number
+  manifesto: string
+}
+
+export type UpdateGovernatorialCandidateData = AddGovernatorialCandidateData
+
+interface CandidateAssignmentData {
+  candidate_id: number
+  office_id: number
+  party_id: number
+  election_id: number
+  manifesto: string
+}
+
+export interface AddSenatorialCandidateData extends CandidateAssignmentData {
+  senetorial_district_id: number
+}
+
+export interface AddFederalHouseCandidateData extends CandidateAssignmentData {
+  federal_house_district_id: number
+}
+
+export interface AddStateAssemblyCandidateData extends CandidateAssignmentData {
+  state_house_district_id: number
+}
+
+export interface AddLgaCandidateData extends CandidateAssignmentData {
+  lga_district_id: number
+}
+
+export interface AddWardCandidateData extends CandidateAssignmentData {
+  ward_id: number
+}
+
+export type UpdateFederalHouseCandidateData = AddFederalHouseCandidateData
+export type UpdateStateAssemblyCandidateData = AddStateAssemblyCandidateData
+
+export interface UpdateSenatorialCandidateData {
+  candidate_id: number
+  office_id: number
+  party_id: number
+  election_id: number
+  senetorial_district_id: number
   manifesto: string
 }
 
@@ -202,9 +278,35 @@ class CandidateService {
     const rawData: PaginatedResponse<any> = await response.json()
     console.log('📊 Candidates API Response Data:', rawData)
 
-     const rawCandidates = Array.isArray(rawData.data?.data) 
-       ? rawData.data.data 
-       : (Array.isArray(rawData.data) ? rawData.data : [])
+     const rawCandidates = Array.isArray(rawData.data?.data)
+       ? [...rawData.data.data]
+       : (Array.isArray(rawData.data) ? [...rawData.data] : [])
+     const lastPage = Number((rawData.data as { last_page?: number })?.last_page ?? 1)
+     if (lastPage > 1) {
+       const remainingPages = await Promise.all(
+         Array.from({ length: lastPage - 1 }, async (_, index) => {
+           const page = index + 2
+           const pageResponse = await fetch(`${API_BASE_URL}/candidates/get-all-candidates?page=${page}`, {
+             method: 'GET',
+             headers: this.getAuthHeaders()
+           })
+           if (!pageResponse.ok) {
+             throw new Error(`Failed to fetch candidates page ${page}: ${pageResponse.status} ${pageResponse.statusText}`)
+           }
+           const pageData = await pageResponse.json()
+           if (pageData?.success === false) {
+             throw new Error(pageData.message || `Failed to fetch candidates page ${page}`)
+           }
+           const pagePayload = pageData?.data
+           return Array.isArray(pagePayload?.data)
+             ? pagePayload.data
+             : Array.isArray(pagePayload)
+               ? pagePayload
+               : []
+         })
+       )
+       rawCandidates.push(...remainingPages.flat())
+     }
      console.log('📊 Raw candidates length:', rawCandidates.length)
 
      const candidates = rawCandidates.map((candidate: any) => {
@@ -219,10 +321,29 @@ class CandidateService {
        return {
          id: candidate.id,
          user_id: String(candidate.id),
-         full_name: candidate.fullName ?? '',
+         full_name: candidate.full_name ?? candidate.fullName ?? candidate.name ?? '',
+         email: candidate.email ?? '',
+         nin: candidate.nin,
+         phoneNo: candidate.phoneNo ?? candidate.phone_no ?? candidate.phone ?? '',
+         party_id: candidate.party_id ?? candidate.partyId ?? candidate.party?.id,
+         image: candidate.image ?? candidate.photo ?? candidate.photo_url ?? candidate.profile_photo ?? candidate.profile_picture ?? candidate.avatar ?? candidate.user?.image ?? null,
          political_party: candidate.party?.name ?? '',
-         senatorial_district: candidate.lga_district?.name ?? '',
-         state: candidate.state && typeof candidate.state === 'object' ? candidate.state.name : String(candidate.state ?? ''),
+         party: candidate.party ? {
+           name: candidate.party.name ?? '',
+           logopath: candidate.party.logopath ?? candidate.party.logo_path ?? candidate.party.logo_url ?? candidate.party.logo ?? candidate.party.url ?? candidate.party.path ?? candidate.party.image_url ?? candidate.party.image_path ?? null,
+           logo: candidate.party.logo ?? null,
+           logo_path: candidate.party.logo_path ?? null,
+           logo_url: candidate.party.logo_url ?? null,
+           url: candidate.party.url ?? null,
+           path: candidate.party.path ?? null,
+           image_url: candidate.party.image_url ?? null,
+           image_path: candidate.party.image_path ?? null
+         } : undefined,
+         senatorial_district: candidate.senetorial_district?.name ?? candidate.senatorial_district?.name ?? candidate.lga_district?.name ?? '',
+         state: candidate.state && typeof candidate.state === 'object'
+           ? candidate.state.name ?? candidate.lga_district?.state?.name ?? ''
+           : String(candidate.state ?? candidate.lga_district?.state?.name ?? ''),
+         state_id: Number(candidate.state_id ?? candidate.state?.id ?? candidate.lga_district?.state_id) || undefined,
          status: normalizedStatus,
          created_at: candidate.created_at ?? ''
        }
@@ -453,8 +574,9 @@ class CandidateService {
     return data.data
   }
 
-  async getActiveGovernatorialCandidates(): Promise<Candidate[]> {
-    const response = await fetch(`${API_BASE_URL}/elections/get-active-election-governatorial`, {
+  async getActiveGovernatorialCandidates(stateId?: number): Promise<Candidate[]> {
+    const query = stateId ? `?state_id=${stateId}` : ''
+    const response = await fetch(`${API_BASE_URL}/elections/get-active-election-governatorial${query}`, {
       method: 'GET',
       headers: this.getAuthHeaders()
     })
@@ -466,10 +588,654 @@ class CandidateService {
 
     const result = await response.json()
     const payload = result?.data ?? result
-    if (Array.isArray(payload)) return payload
-    if (Array.isArray(payload?.candidates)) return payload.candidates
-    if (Array.isArray(payload?.data)) return payload.data
-    return []
+    const assignments = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.candidates)
+          ? payload.candidates
+          : []
+
+    return this.normalizeGovernatorialCandidates(assignments)
+  }
+
+  async getActiveElectionSenatorialCandidates(districtId: number): Promise<Candidate[]> {
+    const query = new URLSearchParams({
+      senetorial_district_id: districtId.toString()
+    })
+
+    const response = await fetch(`${API_BASE_URL}/elections/get-active-election-senatorial?${query.toString()}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+
+    if (!response.ok) {
+      if (response.status === 404) return []
+      throw new Error('Failed to fetch election senatorial candidates')
+    }
+
+    const result = await response.json()
+    if (result?.success === false) {
+      throw new Error(result.message || 'Failed to fetch active senatorial candidates')
+    }
+    const payload = result?.data ?? result
+    const assignments = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.candidates)
+          ? payload.candidates
+          : []
+
+    return this.normalizeGovernatorialCandidates(assignments)
+  }
+
+  async getActiveElectionFederalHouseCandidates(districtId: number): Promise<Candidate[]> {
+    const query = new URLSearchParams({
+      federal_house_district_id: districtId.toString(),
+      page: '1'
+    })
+    const assignments: any[] = []
+    let page = 1
+    let lastPage = 1
+
+    do {
+      query.set('page', String(page))
+      const response = await fetch(`${API_BASE_URL}/elections/get-active-election-federal-house?${query.toString()}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      })
+
+      if (!response.ok) {
+        if (response.status === 404 && page === 1) return []
+        throw new Error(`Failed to fetch active Federal House candidates: ${response.status}`)
+      }
+
+      const result = await response.json()
+      if (result?.success === false) {
+        throw new Error(result.message || 'Failed to fetch active Federal House candidates')
+      }
+      const payload = result?.data ?? result
+      const pageAssignments = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload?.candidates)
+            ? payload.candidates
+            : []
+      assignments.push(...pageAssignments)
+
+      const requestedLastPage = Number(payload?.last_page ?? 1)
+      lastPage = Number.isInteger(requestedLastPage) && requestedLastPage > page
+        ? requestedLastPage
+        : page
+      page += 1
+    } while (page <= lastPage)
+
+    return this.normalizeGovernatorialCandidates(assignments)
+  }
+
+  async getActiveElectionStateAssemblyCandidates(districtId: number): Promise<Candidate[]> {
+    const query = new URLSearchParams({
+      state_house_district_id: districtId.toString(),
+      page: '1'
+    })
+    const assignments: any[] = []
+    let page = 1
+    let lastPage = 1
+
+    do {
+      query.set('page', String(page))
+      const response = await fetch(`${API_BASE_URL}/elections/get-active-election-state-assembly?${query.toString()}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      })
+
+      if (!response.ok) {
+        if (response.status === 404 && page === 1) return []
+        throw new Error(`Failed to fetch active State Assembly candidates: ${response.status}`)
+      }
+
+      const result = await response.json()
+      if (result?.success === false) {
+        throw new Error(result.message || 'Failed to fetch active State Assembly candidates')
+      }
+      const payload = result?.data ?? result
+      const pageAssignments = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload?.candidates)
+            ? payload.candidates
+            : []
+      assignments.push(...pageAssignments)
+
+      const requestedLastPage = Number(payload?.last_page ?? 1)
+      lastPage = Number.isInteger(requestedLastPage) && requestedLastPage > page
+        ? requestedLastPage
+        : page
+      page += 1
+    } while (page <= lastPage)
+
+    return this.normalizeGovernatorialCandidates(assignments)
+  }
+
+  async getActiveElectionLgaCandidates(lgaDistrictId: number): Promise<Candidate[]> {
+    const query = new URLSearchParams({
+      lga_district_id: lgaDistrictId.toString(),
+      page: '1'
+    })
+    const assignments: any[] = []
+    let page = 1
+    let lastPage = 1
+
+    do {
+      query.set('page', String(page))
+      const response = await fetch(`${API_BASE_URL}/elections/get-active-election-lga?${query.toString()}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      })
+
+      if (!response.ok) {
+        if (response.status === 404 && page === 1) return []
+        throw new Error(`Failed to fetch active LGA candidates: ${response.status}`)
+      }
+
+      const result = await response.json()
+      if (result?.success === false) {
+        throw new Error(result.message || 'Failed to fetch active LGA candidates')
+      }
+      const payload = result?.data ?? result
+      const pageAssignments = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload?.candidates)
+            ? payload.candidates
+            : []
+      assignments.push(...pageAssignments)
+
+      const requestedLastPage = Number(payload?.last_page ?? 1)
+      lastPage = Number.isInteger(requestedLastPage) && requestedLastPage > page
+        ? requestedLastPage
+        : page
+      page += 1
+    } while (page <= lastPage)
+
+    return this.normalizeGovernatorialCandidates(assignments)
+  }
+
+  async getActiveElectionWardCandidates(wardId: number): Promise<Candidate[]> {
+    const query = new URLSearchParams({
+      ward_id: wardId.toString(),
+      page: '1'
+    })
+    const assignments: any[] = []
+    let page = 1
+    let lastPage = 1
+
+    do {
+      query.set('page', String(page))
+      const response = await fetch(`${API_BASE_URL}/elections/get-active-election-ward?${query.toString()}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      })
+
+      if (!response.ok) {
+        if (response.status === 404 && page === 1) return []
+        throw new Error(`Failed to fetch active ward candidates: ${response.status}`)
+      }
+
+      const result = await response.json()
+      if (result?.success === false) {
+        throw new Error(result.message || 'Failed to fetch active ward candidates')
+      }
+      const payload = result?.data ?? result
+      const pageAssignments = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload?.candidates)
+            ? payload.candidates
+            : []
+      assignments.push(...pageAssignments)
+
+      const requestedLastPage = Number(payload?.last_page ?? payload?.data?.last_page ?? 1)
+      lastPage = Number.isInteger(requestedLastPage) && requestedLastPage > page
+        ? requestedLastPage
+        : page
+      page += 1
+    } while (page <= lastPage)
+
+    return this.normalizeGovernatorialCandidates(assignments)
+  }
+
+  async getElectionWardCandidates(wardId: number, electionId: number, partyId?: number): Promise<Candidate[]> {
+    const query = new URLSearchParams({
+      ward_id: wardId.toString(),
+      election_id: electionId.toString()
+    })
+    if (partyId !== undefined) query.set('party_id', partyId.toString())
+
+    const assignments: any[] = []
+    let page = 1
+    let lastPage = 1
+    do {
+      query.set('page', String(page))
+      const response = await fetch(`${API_BASE_URL}/elections/get-election-ward-candidates?${query.toString()}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      })
+
+      if (!response.ok) {
+        if (response.status === 404 && page === 1) return []
+        throw new Error(`Failed to fetch ward candidates: ${response.status}`)
+      }
+
+      const result = await response.json()
+      if (result?.success === false) {
+        throw new Error(result.message || 'Failed to fetch ward candidates')
+      }
+      const payload = result?.data ?? result
+      const pageAssignments = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload?.candidates)
+            ? payload.candidates
+            : []
+      assignments.push(...pageAssignments)
+
+      const requestedLastPage = Number(payload?.last_page ?? payload?.data?.last_page ?? 1)
+      lastPage = Number.isInteger(requestedLastPage) && requestedLastPage > page
+        ? requestedLastPage
+        : page
+      page += 1
+    } while (page <= lastPage)
+
+    return this.normalizeGovernatorialCandidates(assignments)
+  }
+
+  async getElectionLgaCandidates(lgaDistrictId: number, electionId: number, partyId?: number): Promise<Candidate[]> {
+    const query = new URLSearchParams({
+      lga_district_id: lgaDistrictId.toString(),
+      election_id: electionId.toString()
+    })
+    if (partyId !== undefined) query.set('party_id', partyId.toString())
+
+    const assignments: any[] = []
+    let page = 1
+    let lastPage = 1
+
+    do {
+      query.set('page', String(page))
+      const response = await fetch(`${API_BASE_URL}/elections/get-election-lga-candidates?${query.toString()}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      })
+
+      if (!response.ok) {
+        if (response.status === 404 && page === 1) return []
+        throw new Error(`Failed to fetch LGA candidates: ${response.status}`)
+      }
+
+      const result = await response.json()
+      if (result?.success === false) {
+        throw new Error(result.message || 'Failed to fetch LGA candidates')
+      }
+
+      const payload = result?.data ?? result
+      const pageAssignments = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload?.candidates)
+            ? payload.candidates
+            : []
+      assignments.push(...pageAssignments)
+
+      const requestedLastPage = Number(payload?.last_page ?? 1)
+      lastPage = Number.isInteger(requestedLastPage) && requestedLastPage > page
+        ? requestedLastPage
+        : page
+      page += 1
+    } while (page <= lastPage)
+
+    return this.normalizeGovernatorialCandidates(assignments)
+  }
+
+  async addStateAssemblyCandidate(data: AddStateAssemblyCandidateData): Promise<Candidate> {
+    const response = await fetch(`${API_BASE_URL}/elections/add-state-assembly-candidate`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      const validationErrors = result.errors ? Object.values(result.errors).flat().join(' | ') : ''
+      throw new Error(result.message || validationErrors || 'Failed to add State Assembly candidate')
+    }
+
+    return result.data ?? result
+  }
+
+  async addLgaCandidate(data: AddLgaCandidateData): Promise<Candidate> {
+    const response = await fetch(`${API_BASE_URL}/elections/add-lga-candidate`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      const validationErrors = result.errors ? Object.values(result.errors).flat().join(' | ') : ''
+      throw new Error(result.message || validationErrors || 'Failed to add LGA candidate')
+    }
+
+    return result.data ?? result
+  }
+
+  async addWardCandidate(data: AddWardCandidateData): Promise<Candidate> {
+    const response = await fetch(`${API_BASE_URL}/elections/add-ward-candidate`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      const validationErrors = result.errors ? Object.values(result.errors).flat().join(' | ') : ''
+      throw new Error(result.message || validationErrors || 'Failed to add ward candidate')
+    }
+
+    return result.data ?? result
+  }
+
+  async updateWardCandidate(id: number, data: AddWardCandidateData): Promise<Candidate> {
+    const response = await fetch(`${API_BASE_URL}/elections/update-ward-candidate/${id}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      const validationErrors = result.errors ? Object.values(result.errors).flat().join(' | ') : ''
+      throw new Error(result.message || validationErrors || 'Failed to update ward candidate')
+    }
+
+    return result.data ?? result
+  }
+
+  async removeWardCandidate(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/elections/remove-ward-candidate/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      throw new Error(result.message || 'Failed to remove ward candidate')
+    }
+  }
+
+  async updateLgaCandidate(id: number, data: AddLgaCandidateData): Promise<Candidate> {
+    const response = await fetch(`${API_BASE_URL}/elections/update-lga-candidate/${id}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      const validationErrors = result.errors ? Object.values(result.errors).flat().join(' | ') : ''
+      throw new Error(result.message || validationErrors || 'Failed to update LGA candidate')
+    }
+
+    return result.data ?? result
+  }
+
+  async removeLgaCandidate(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/elections/remove-lga-candidate/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      throw new Error(result.message || 'Failed to remove LGA candidate')
+    }
+  }
+
+  async updateStateAssemblyCandidate(id: number, data: UpdateStateAssemblyCandidateData): Promise<Candidate> {
+    const response = await fetch(`${API_BASE_URL}/elections/update-state-assembly-candidate/${id}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      const validationErrors = result.errors ? Object.values(result.errors).flat().join(' | ') : ''
+      throw new Error(result.message || validationErrors || 'Failed to update State Assembly candidate')
+    }
+
+    return result.data ?? result
+  }
+
+  async removeStateAssemblyCandidate(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/elections/remove-state-assembly-candidate/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      throw new Error(result.message || 'Failed to remove State Assembly candidate')
+    }
+  }
+
+  async getElectionStateAssemblyCandidates(
+    districtId: number,
+    electionId: number,
+    partyId?: number
+  ): Promise<Candidate[]> {
+    const query = new URLSearchParams({
+      state_house_district_id: districtId.toString(),
+      election_id: electionId.toString()
+    })
+    if (partyId !== undefined) query.set('party_id', partyId.toString())
+
+    const assignments: any[] = []
+    let page = 1
+    let lastPage = 1
+
+    do {
+      query.set('page', String(page))
+      const response = await fetch(`${API_BASE_URL}/elections/get-election-state-assembly-candidates?${query.toString()}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      })
+
+      if (!response.ok) {
+        if (response.status === 404 && page === 1) return []
+        throw new Error(`Failed to fetch State Assembly candidates: ${response.status}`)
+      }
+
+      const result = await response.json()
+      if (result?.success === false) {
+        throw new Error(result.message || 'Failed to fetch State Assembly candidates')
+      }
+
+      const payload = result?.data ?? result
+      const pageAssignments = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload?.candidates)
+            ? payload.candidates
+            : []
+      assignments.push(...pageAssignments)
+
+      const requestedLastPage = Number(payload?.last_page ?? 1)
+      lastPage = Number.isInteger(requestedLastPage) && requestedLastPage > page
+        ? requestedLastPage
+        : page
+      page += 1
+    } while (page <= lastPage)
+
+    return this.normalizeGovernatorialCandidates(assignments)
+  }
+
+  async getElectionFederalHouseCandidates(
+    districtId: number,
+    electionId: number,
+    partyId?: number
+  ): Promise<Candidate[]> {
+    const query = new URLSearchParams({
+      federal_house_district_id: districtId.toString(),
+      election_id: electionId.toString()
+    })
+    if (partyId !== undefined) query.set('party_id', partyId.toString())
+
+    const assignments: any[] = []
+    let page = 1
+    let lastPage = 1
+
+    do {
+      query.set('page', String(page))
+      const response = await fetch(`${API_BASE_URL}/elections/get-election-federal-house-candidates?${query.toString()}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      })
+
+      if (!response.ok) {
+        if (response.status === 404 && page === 1) return []
+        throw new Error(`Failed to fetch Federal House candidates: ${response.status} ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      if (result?.success === false) {
+        throw new Error(result.message || 'Failed to fetch Federal House candidates')
+      }
+
+      const payload = result?.data ?? result
+      const pageAssignments = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload?.candidates)
+            ? payload.candidates
+            : []
+      assignments.push(...pageAssignments)
+
+      const requestedLastPage = Number(payload?.last_page ?? 1)
+      lastPage = Number.isInteger(requestedLastPage) && requestedLastPage > page
+        ? requestedLastPage
+        : page
+      page += 1
+    } while (page <= lastPage)
+
+    return this.normalizeGovernatorialCandidates(assignments)
+  }
+
+  async getElectionGovernatorialCandidates(stateId: number, electionId: number, partyId?: number): Promise<Candidate[]> {
+    const query = new URLSearchParams({
+      state_id: stateId.toString(),
+      election_id: electionId.toString()
+    })
+    if (partyId !== undefined) query.set('party_id', partyId.toString())
+
+    let page = 1
+    let lastPage = 1
+    const assignments: any[] = []
+
+    do {
+      const pageQuery = new URLSearchParams(query)
+      pageQuery.set('page', page.toString())
+      const response = await fetch(`${API_BASE_URL}/elections/get-election-governatorial-candidates?${pageQuery.toString()}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      })
+
+      if (!response.ok) {
+        if (response.status === 404) return []
+        throw new Error('Failed to fetch election gubernatorial candidates')
+      }
+
+      const result = await response.json()
+      if (result?.success === false) {
+        throw new Error(result.message || 'Failed to fetch election gubernatorial candidates')
+      }
+      const payload = result?.data ?? result
+      const pageAssignments = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload?.candidates)
+            ? payload.candidates
+            : []
+      assignments.push(...pageAssignments)
+      lastPage = Number(payload?.last_page ?? payload?.meta?.last_page ?? result?.meta?.last_page ?? 1)
+      page += 1
+    } while (page <= lastPage)
+
+    return this.normalizeGovernatorialCandidates(assignments)
+  }
+
+  private normalizeGovernatorialCandidates(assignments: any[]): Candidate[] {
+    return assignments.map((assignment: any): Candidate => {
+      const candidate = assignment.candidate ?? assignment.user ?? assignment
+      const party = assignment.party ?? candidate.party
+      const rawStatus = assignment.status ?? candidate.status
+      const isActive = rawStatus === 1 || rawStatus === true || String(rawStatus).toLowerCase() === 'active'
+
+      return {
+        id: Number(candidate.id ?? assignment.candidate_id ?? assignment.id),
+        candidate_id: Number(assignment.candidate_id ?? candidate.id),
+        assignment_id: Number(assignment.id),
+        user_id: String(candidate.code ?? candidate.id ?? assignment.candidate_id ?? ''),
+        full_name: candidate.fullName ?? candidate.full_name ?? candidate.name ?? '',
+        email: candidate.email ?? '',
+        address: candidate.address ?? '',
+        dob: candidate.dob ?? '',
+        gender: candidate.gender ?? '',
+        bio: candidate.bio ?? '',
+        manifesto: assignment.manifesto ?? '',
+        office_id: Number(assignment.office_id ?? assignment.office?.id) || undefined,
+        office_title: assignment.office?.title ?? assignment.office_title ?? '',
+        election_id: Number(assignment.election_id ?? assignment.election?.id) || undefined,
+        nin: candidate.nin,
+        phoneNo: candidate.phoneNo ?? candidate.phone_no ?? candidate.phone ?? '',
+        party_id: Number(assignment.party_id ?? party?.id ?? candidate.party_id) || undefined,
+        image: candidate.image ?? candidate.photo ?? candidate.photo_url ?? candidate.profile_photo ?? candidate.profile_picture ?? candidate.avatar ?? null,
+        political_party: party?.name ?? candidate.party_name ?? candidate.partyName ?? candidate.political_party ?? '',
+        party: party ? {
+          name: party.name ?? '',
+          logopath: party.logopath ?? party.logo_path ?? party.logo_url ?? party.logo ?? party.url ?? party.path ?? party.image_url ?? party.image_path ?? null,
+          logo: party.logo ?? null,
+          logo_path: party.logo_path ?? null,
+          logo_url: party.logo_url ?? null,
+          url: party.url ?? null,
+          path: party.path ?? null,
+          image_url: party.image_url ?? null,
+          image_path: party.image_path ?? null
+        } : undefined,
+        senatorial_district: assignment.senetorial_district?.name ?? assignment.senatorial_district?.name ?? candidate.senetorial_district?.name ?? candidate.senatorial_district?.name ?? candidate.lga_district?.name ?? '',
+        federal_house_district: assignment.federal_house_district?.name ?? assignment.federalHouseDistrict?.name ?? '',
+        state: candidate.state?.name ?? assignment.state?.name ?? '',
+        state_id: Number(assignment.state_id ?? candidate.state?.id ?? assignment.state?.id) || undefined,
+        status: isActive ? 'Active' : 'Inactive',
+        election: assignment.election ? {
+          id: Number(assignment.election.id) || undefined,
+          year: assignment.election.year,
+          details: assignment.election.details,
+          current_status: assignment.election.current_status
+        } : undefined,
+        created_at: assignment.created_at ?? candidate.created_at ?? ''
+      }
+    })
   }
 
   async addGovernatorialCandidate(data: AddGovernatorialCandidateData): Promise<Candidate> {
@@ -493,6 +1259,122 @@ class CandidateService {
     }
 
     return result.data || result
+  }
+
+  async updateGovernatorialCandidate(id: number, data: UpdateGovernatorialCandidateData): Promise<Candidate> {
+    const response = await fetch(`${API_BASE_URL}/elections/update-governatorial-candidate/${id}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      const validationErrors = result.errors ? Object.values(result.errors).flat().join(' | ') : ''
+      throw new Error(result.message || validationErrors || 'Failed to update governatorial candidate')
+    }
+
+    return result.data ?? result
+  }
+
+  async removeGovernatorialCandidate(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/elections/remove-governatorial-candidate/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      throw new Error(result.message || 'Failed to remove governatorial candidate')
+    }
+  }
+
+  async addSenatorialCandidate(data: AddSenatorialCandidateData): Promise<Candidate> {
+    const response = await fetch(`${API_BASE_URL}/elections/add-senatorial-candidate`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      const validationErrors = result.errors ? Object.values(result.errors).flat().join(' | ') : ''
+      throw new Error(result.message || validationErrors || 'Failed to add senatorial candidate')
+    }
+
+    return result.data ?? result
+  }
+
+  async addFederalHouseCandidate(data: AddFederalHouseCandidateData): Promise<Candidate> {
+    const response = await fetch(`${API_BASE_URL}/elections/add-federal-house-candidate`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      const validationErrors = result.errors ? Object.values(result.errors).flat().join(' | ') : ''
+      throw new Error(result.message || validationErrors || 'Failed to add Federal House candidate')
+    }
+
+    return result.data ?? result
+  }
+
+  async updateFederalHouseCandidate(id: number, data: UpdateFederalHouseCandidateData): Promise<Candidate> {
+    const response = await fetch(`${API_BASE_URL}/elections/update-federal-house-candidate/${id}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      const validationErrors = result.errors ? Object.values(result.errors).flat().join(' | ') : ''
+      throw new Error(result.message || validationErrors || 'Failed to update Federal House candidate')
+    }
+
+    return result.data ?? result
+  }
+
+  async removeFederalHouseCandidate(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/elections/remove-federal-house-candidate/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      throw new Error(result.message || 'Failed to remove Federal House candidate')
+    }
+  }
+
+  async updateSenatorialCandidate(id: number, data: UpdateSenatorialCandidateData): Promise<Candidate> {
+    const response = await fetch(`${API_BASE_URL}/elections/update-senatorial-candidate/${id}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      const validationErrors = result.errors ? Object.values(result.errors).flat().join(' | ') : ''
+      throw new Error(result.message || validationErrors || 'Failed to update senatorial candidate')
+    }
+
+    return result.data ?? result
+  }
+
+  async removeSenatorialCandidate(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/elections/remove-senatorial-candidate/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      throw new Error(result.message || 'Failed to remove senatorial candidate')
+    }
   }
 
   async getPartySenators(): Promise<Candidate[]> {

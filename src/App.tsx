@@ -63,9 +63,18 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import { Menu } from 'lucide-react'
 import { useState } from 'react'
 import DistrictsPage from '@/pages/DistrictsPage'
+import SenatorialCandidatesPage from '@/pages/SenatorialCandidatesPage'
+import ElectedSenatorsPage from '@/pages/ElectedSenatorsPage'
 import StateDetailPage from '@/pages/StateDetailPage'
+import ElectedGovernorsPage from '@/pages/ElectedGovernorsPage'
 import WardDetailPage from '@/pages/WardDetailPage'
 import LgaDetailPage from '@/pages/LgaDetailPage'
+import LgaLeadershipPage from '@/pages/LgaLeadershipPage'
+import FederalHouseCandidatesPage from '@/pages/FederalHouseCandidatesPage'
+import ElectedFederalHousePage from '@/pages/ElectedFederalHousePage'
+import StateAssemblyCandidatesPage from '@/pages/StateAssemblyCandidatesPage'
+import ElectedStateAssemblyPage from '@/pages/ElectedStateAssemblyPage'
+import WardElectionPage from '@/pages/WardElectionPage'
 
 function Navigation() {
   const location = useLocation()
@@ -380,11 +389,41 @@ function App() {
             }
           />
           <Route
+            path="/k8s9d7f3-districts/states/:id/elected"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Manage Elected Leadership">
+                  <ElectedGovernorsPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/k8s9d7f3-districts/senatorial"
             element={
               <ProtectedRoute>
                 <AdminLayout title="Admin / Districts / Senatorial">
                   <DistrictsPage type="senatorial" title="Senatorial Districts" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/senatorial/:id/candidates"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Manage Senatorial Candidates">
+                  <SenatorialCandidatesPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/senatorial/:id/elected"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Manage Elected Senator">
+                  <ElectedSenatorsPage />
                 </AdminLayout>
               </ProtectedRoute>
             }
@@ -400,11 +439,51 @@ function App() {
             }
           />
           <Route
+            path="/k8s9d7f3-districts/federal/:id/candidates"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Manage Federal House Candidates">
+                  <FederalHouseCandidatesPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/federal/:id/elected"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Manage Elected Federal House Member">
+                  <ElectedFederalHousePage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/k8s9d7f3-districts/state-house"
             element={
               <ProtectedRoute>
                 <AdminLayout title="Admin / Districts / State Constituencies">
                   <DistrictsPage type="state-house" title="State Constituencies" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/state-house/:id/candidates"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Manage State House Candidates">
+                  <StateAssemblyCandidatesPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/state-house/:id/elected"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Manage Elected State House Assembly Members">
+                  <ElectedStateAssemblyPage />
                 </AdminLayout>
               </ProtectedRoute>
             }
@@ -430,11 +509,51 @@ function App() {
             }
           />
           <Route
+            path="/k8s9d7f3-districts/lgas/:id/candidates"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Manage Active LGA Candidates">
+                  <LgaLeadershipPage mode="candidates" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/lgas/:id/elected"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Manage Elected LGA Chairman">
+                  <LgaLeadershipPage mode="elected" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/k8s9d7f3-districts/wards"
             element={
               <ProtectedRoute>
                 <AdminLayout title="Admin / Districts / Wards">
                   <DistrictsPage type="wards" title="Wards" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/wards/:id/candidates"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Manage Ward Candidates">
+                  <WardElectionPage mode="candidates" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/k8s9d7f3-districts/wards/:id/elected"
+            element={
+              <ProtectedRoute>
+                <AdminLayout title="Manage Elected Ward Members">
+                  <WardElectionPage mode="elected" />
                 </AdminLayout>
               </ProtectedRoute>
             }
