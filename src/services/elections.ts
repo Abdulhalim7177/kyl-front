@@ -1,6 +1,6 @@
 // force vite reload
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const API_BASE_URL = '/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 export interface Election {
   id: number
@@ -20,6 +20,20 @@ export interface ElectionStats {
   upcoming: number
   completed: number
   ongoing: number
+}
+
+export interface StateOffice {
+  id: number
+  title: string
+  remark?: string
+  status: number
+}
+
+export interface SenateOffice {
+  id: number
+  title: string
+  remark?: string
+  status?: number
 }
 
 export interface ElectionResponse {
@@ -239,6 +253,76 @@ class ElectionService {
       ...e, 
       status: this.normalizeStatus(e.current_status || e.status) 
     }))
+  }
+
+  async checkCandidateRegistration(data: { candidate_id: number; election_id: number }): Promise<void> {
+    console.debug('[Candidate registration check] Request:', data)
+    let response: Response
+    try {
+      response = await fetch(`${API_BASE_URL}/elections/check-candidate-registration`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(data)
+      })
+    } catch (error) {
+      if (error instanceof TypeError) {
+        throw new Error('Could not connect to the registration API. Check your internet connection and try again. If the problem continues, the API server may be unavailable.')
+      }
+      throw error
+    }
+    const result = await response.json().catch(() => ({}))
+    const payload = result.data ?? result
+
+    console.debug('[Candidate registration check] Response:', {
+      status: response.status,
+      success: result.success,
+      message: result.message,
+      data: {
+        candidate_id: payload?.candidate_id,
+        election_id: payload?.election_id,
+        already_registered: payload?.already_registered,
+        can_register: payload?.can_register,
+        is_registered: payload?.is_registered,
+        isRegistered: payload?.isRegistered,
+        registered: payload?.registered,
+        candidate_registered: payload?.candidate_registered,
+        candidateRegistered: payload?.candidateRegistered,
+        registrations_present: payload?.registrations != null
+      }
+    })
+
+    if (!response.ok || result.success === false) {
+      throw new Error(result.message || 'Candidate is not registered for the selected election.')
+    }
+
+    if (!payload || typeof payload !== 'object') {
+      throw new Error('Candidate registration could not be verified for the selected election.')
+    }
+
+    if ('can_register' in payload || 'already_registered' in payload) {
+      if (payload.already_registered === true) {
+        throw new Error(result.message || 'Candidate is already registered for the selected election.')
+      }
+      if (payload.can_register !== true) {
+        throw new Error(result.message || 'Candidate is not available for registration in the selected election.')
+      }
+      return
+    }
+
+    const registered = payload.is_registered
+      ?? payload.isRegistered
+      ?? payload.registered
+      ?? payload.candidate_registered
+      ?? payload.candidateRegistered
+    const isRegistered = registered === true ||
+      String(registered).toLowerCase() === 'true' ||
+      String(registered) === '1'
+
+    if (!isRegistered) {
+      throw new Error(result.message || (registered === undefined
+        ? 'Candidate registration could not be verified for the selected election.'
+        : 'Candidate is not registered for the selected election.'))
+    }
   }
 
   // Normalize status from API (could be number or string)
@@ -634,7 +718,114 @@ class ElectionService {
     return data.data || [];
   }
 
-  async getStateOffices(stateId?: number): Promise<any[]> {
+  // GET /elections/get-election-timetable/{id}
+  async getElectionTimetable(id: number): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/elections/get-election-timetable/${id}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+    if (!response.ok) throw new Error('Failed to fetch election timetable')
+    const rawData = await response.json()
+    return rawData.data || rawData
+  }
+
+  // GET /elections/get-election-types
+  async getElectionTypes(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/elections/get-election-types`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+    if (!response.ok) throw new Error('Failed to fetch election types')
+    const rawData = await response.json()
+    return rawData.data || rawData
+  }
+
+  // GET /offices/get-offices (Assuming it's /offices or /offices/get-offices)
+  async getOffices(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/offices/get-offices`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+    if (!response.ok) {
+       // fallback if route is different
+       const fallbackResponse = await fetch(`${API_BASE_URL}/offices`, {
+         method: 'GET',
+         headers: this.getAuthHeaders()
+       })
+       if (!fallbackResponse.ok) throw new Error('Failed to fetch offices')
+       const rawData = await fallbackResponse.json()
+       return rawData.data?.offices || rawData.data || rawData
+    }
+    const rawData = await response.json()
+    return rawData.data?.offices || rawData.data || rawData
+  }
+
+  async getSenateOffices(): Promise<SenateOffice[]> {
+    const response = await fetch(`${API_BASE_URL}/offices/get-senate-office`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      throw new Error(result.message || `Failed to fetch Senate offices: ${response.status}`)
+    }
+
+    const payload = result.data ?? result
+    const offices = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.offices)
+          ? payload.offices
+          : null
+
+    if (!offices) {
+      throw new Error('The Senate offices response did not contain an office list.')
+    }
+
+    return offices.map((office: Record<string, unknown>) => ({
+      id: Number(office.id),
+      title: String(office.title ?? office.name ?? ''),
+      remark: typeof office.remark === 'string' ? office.remark : undefined,
+      status: office.status === undefined ? undefined : Number(office.status)
+    })).filter((office: SenateOffice) => office.id > 0 && office.title.length > 0)
+  }
+
+  async getFederalHouseOffices(): Promise<SenateOffice[]> {
+    const response = await fetch(`${API_BASE_URL}/offices/get-federal-house-office`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      throw new Error(result.message || `Failed to fetch Federal House offices: ${response.status}`)
+    }
+
+    const payload = result.data ?? result
+    const offices = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.offices)
+          ? payload.offices
+          : null
+
+    if (!offices) {
+      throw new Error('The Federal House offices response did not contain an office list.')
+    }
+
+    return offices.map((office: Record<string, unknown>) => ({
+      id: Number(office.id),
+      title: String(office.title ?? office.name ?? ''),
+      remark: typeof office.remark === 'string' ? office.remark : undefined,
+      status: office.status === undefined ? undefined : Number(office.status)
+    })).filter((office: SenateOffice) => office.id > 0 && office.title.length > 0)
+  }
+
+  // GET /offices/get-state-offices
+  async getStateOffices(stateId?: number): Promise<StateOffice[]> {
     const query = stateId ? `?state_id=${stateId}` : ''
     const response = await fetch(`${API_BASE_URL}/offices/get-state-offices${query}`, {
       method: 'GET',
@@ -644,6 +835,159 @@ class ElectionService {
     const rawData = await response.json()
     const data = rawData.data ?? rawData
     return data.offices || data
+  }
+  async getStateAssemblyOffices(): Promise<StateOffice[]> {
+    const response = await fetch(`${API_BASE_URL}/offices/get-state-assembly-office`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      throw new Error(result.message || `Failed to fetch State Assembly offices: ${response.status}`)
+    }
+
+    const payload = result.data ?? result
+    const offices = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.offices)
+          ? payload.offices
+          : null
+
+    if (!offices) {
+      throw new Error('The State Assembly offices response did not contain an office list.')
+    }
+
+    return offices.map((office: Record<string, unknown>) => ({
+      id: Number(office.id),
+      title: String(office.title ?? office.name ?? ''),
+      remark: typeof office.remark === 'string' ? office.remark : undefined,
+      status: office.status === undefined ? undefined : Number(office.status)
+    })).filter((office: StateOffice) => office.id > 0 && office.title.length > 0)
+  }
+
+  async getLgaOffices(): Promise<StateOffice[]> {
+    const response = await fetch(`${API_BASE_URL}/offices/get-lga-offices`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      throw new Error(result.message || `Failed to fetch LGA offices: ${response.status}`)
+    }
+
+    const payload = result.data ?? result
+    const offices = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.offices)
+          ? payload.offices
+          : null
+
+    if (!offices) {
+      throw new Error('The LGA offices response did not contain an office list.')
+    }
+
+    return offices.map((office: Record<string, unknown>) => ({
+      id: Number(office.id),
+      title: String(office.title ?? office.name ?? ''),
+      remark: typeof office.remark === 'string' ? office.remark : undefined,
+      status: office.status === undefined ? undefined : Number(office.status)
+    })).filter((office: StateOffice) => office.id > 0 && office.title.length > 0 && office.status !== 0)
+  }
+
+  async getWardOffices(): Promise<StateOffice[]> {
+    const response = await fetch(`${API_BASE_URL}/offices/get-ward-office`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      throw new Error(result.message || `Failed to fetch ward offices: ${response.status}`)
+    }
+
+    const payload = result.data ?? result
+    const offices = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.offices)
+          ? payload.offices
+          : null
+
+    if (!offices) {
+      throw new Error('The ward offices response did not contain an office list.')
+    }
+
+    return offices.map((office: Record<string, unknown>) => ({
+      id: Number(office.id),
+      title: String(office.title ?? office.name ?? ''),
+      remark: typeof office.remark === 'string' ? office.remark : undefined,
+      status: office.status === undefined ? undefined : Number(office.status)
+    })).filter((office: StateOffice) => office.id > 0 && office.title.length > 0 && office.status !== 0)
+  }
+
+  // POST /elections/create-election-timetable
+  async createElectionTimetable(data: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/elections/create-election-timetable`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) {
+      let errorMsg = `Failed to create timetable: ${response.status} ${response.statusText}`
+      try {
+        const errJson = await response.json()
+        if (errJson.message) errorMsg = errJson.message
+        if (errJson.errors) {
+           const details = Object.values(errJson.errors).flat().join(' | ')
+           errorMsg += ': ' + details
+        }
+      } catch {
+        // ignore
+      }
+      throw new Error(errorMsg)
+    }
+    const rawData = await response.json()
+    return rawData.data || rawData
+  }
+
+  // PATCH /elections/update-election-timetable/{id}
+  async updateElectionTimetable(id: number, data: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/elections/update-election-timetable/${id}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) throw new Error('Failed to update election timetable')
+    const rawData = await response.json()
+    return rawData.data || rawData
+  }
+
+  // PATCH /elections/change-election-timetable-status/{id}
+  async changeElectionTimetableStatus(id: number, status: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/elections/change-election-timetable-status/${id}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ status })
+    })
+    if (!response.ok) throw new Error('Failed to change timetable status')
+    const rawData = await response.json()
+    return rawData.data || rawData
+  }
+
+  // DELETE /elections/delete-election-timetable/{id}
+  async deleteElectionTimetable(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/elections/delete-election-timetable/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    })
+    if (!response.ok) throw new Error('Failed to delete election timetable')
   }
 }
 

@@ -24,6 +24,10 @@ export default function AddCandidateWizard() {
   const { id: candidateId } = useParams()
   const isEditMode = Boolean(candidateId)
   const [currentStep, setCurrentStep] = useState(1)
+  const [identityType, setIdentityType] = useState<'nin' | 'phone'>('nin')
+  const [identityValue, setIdentityValue] = useState('')
+  const [identityError, setIdentityError] = useState('')
+  const [isIdentityVerified, setIsIdentityVerified] = useState(Boolean(candidateId))
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoadingCandidate, setIsLoadingCandidate] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -75,7 +79,31 @@ export default function AddCandidateWizard() {
     fetchSelectData()
   }, [])
 
+  const verifyIdentity = () => {
+    const digits = identityValue.replace(/\D/g, '')
+    if (identityType === 'nin' && digits.length !== 11) {
+      setIdentityError('Enter a valid 11-digit NIN.')
+      return
+    }
+    if (identityType === 'phone' && (digits.length < 10 || digits.length > 15)) {
+      setIdentityError('Enter a valid phone number with 10 to 15 digits.')
+      return
+    }
+
+    setFormData((current) => ({
+      ...current,
+      ...(identityType === 'nin' ? { nin: Number(digits) } : { phoneNo: identityValue.trim() })
+    }))
+    setIdentityError('')
+    setIsIdentityVerified(true)
+  }
+
   const handleNext = () => {
+    if (!isEditMode && !isIdentityVerified) {
+      verifyIdentity()
+      return
+    }
+
     // Validate required fields for current step before proceeding
     if (currentStep === 1) {
       if (!formData.fullName.trim()) {
@@ -197,6 +225,69 @@ export default function AddCandidateWizard() {
   }
 
   const renderStepContent = () => {
+    if (!isEditMode && !isIdentityVerified) {
+      return (
+        <div className="mx-auto max-w-xl space-y-5 py-4">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">Verify candidate identity</h3>
+            <p className="mt-1 text-sm text-gray-500">Enter the candidate's NIN or phone number to continue to the profile fields.</p>
+          </div>
+          <div className="space-y-2">
+            <span className="text-sm font-medium text-gray-700">Identifier type</span>
+            <div className="grid grid-cols-2 gap-2 rounded-lg bg-gray-100 p-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setIdentityType('nin')
+                  setIdentityError('')
+                }}
+                className={`h-10 rounded-md text-sm font-medium transition-colors ${identityType === 'nin' ? 'bg-white text-[#146c4f] shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
+                aria-pressed={identityType === 'nin'}
+              >
+                NIN
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIdentityType('phone')
+                  setIdentityError('')
+                }}
+                className={`h-10 rounded-md text-sm font-medium transition-colors ${identityType === 'phone' ? 'bg-white text-[#146c4f] shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
+                aria-pressed={identityType === 'phone'}
+              >
+                Phone number
+              </button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="candidate-identity" className="text-sm font-medium text-gray-700">
+              {identityType === 'nin' ? 'National Identification Number' : 'Phone number'} *
+            </label>
+            <Input
+              id="candidate-identity"
+              type="tel"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder={identityType === 'nin' ? 'Enter 11-digit NIN' : 'Enter phone number'}
+              value={identityValue}
+              onChange={(event) => {
+                setIdentityValue(event.target.value)
+                setIdentityError('')
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  verifyIdentity()
+                }
+              }}
+              className="h-12"
+            />
+            {identityError && <p className="text-sm text-red-600">{identityError}</p>}
+          </div>
+        </div>
+      )
+    }
+
     switch (currentStep) {
       case 1:
         return (
@@ -606,7 +697,7 @@ export default function AddCandidateWizard() {
       </div>
 
       {/* Step Indicator */}
-      <div className="bg-white border-b border-gray-200 px-3 py-1">
+      {(isEditMode || isIdentityVerified) && <div className="bg-white border-b border-gray-200 px-3 py-1">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between gap-2">
             {WIZARD_STEPS.map((step, index) => {
@@ -640,7 +731,7 @@ export default function AddCandidateWizard() {
             })}
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Content Area */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
@@ -663,15 +754,20 @@ export default function AddCandidateWizard() {
         {currentStep < 7 && (
           <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mt-5 pt-3 border-t border-gray-100">
             <div className="w-full sm:w-auto">
-              {currentStep === 1 ? (
+              {currentStep === 1 && (isEditMode || isIdentityVerified) ? (
                 <Button 
                   variant="outline" 
-                  onClick={handleSaveDraft}
+                  onClick={() => {
+                    if (!isEditMode) setIsIdentityVerified(false)
+                    else handleSaveDraft()
+                  }}
                   className="flex items-center gap-2"
                 >
-                  <Save className="w-4 h-4" />
-                  Save as Draft
+                  {isEditMode ? <Save className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
+                  {isEditMode ? 'Save as Draft' : 'Change identifier'}
                 </Button>
+              ) : currentStep === 1 ? (
+                <span />
               ) : (
                 <Button 
                   variant="outline" 
@@ -698,7 +794,7 @@ export default function AddCandidateWizard() {
                   className="bg-[#146c4f] hover:bg-[#115a42] text-white flex items-center gap-2 w-full sm:w-auto"
                   onClick={handleNext}
                 >
-                  Next Step
+                  {!isEditMode && !isIdentityVerified ? 'Check & Continue' : 'Next Step'}
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               )}
