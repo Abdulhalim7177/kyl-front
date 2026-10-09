@@ -337,6 +337,7 @@ export default function ElectionDetailPage() {
     }
   }
 
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[50vh]">
@@ -784,6 +785,69 @@ export default function ElectionDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+<<<<<<< HEAD
+=======
+      {/* Candidates Table */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-6">
+        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-gray-900">Participating Candidates</h2>
+          <select 
+            value={selectedTimetableId}
+            onChange={(e) => setSelectedTimetableId(e.target.value)}
+            className="text-sm border-gray-200 rounded-md shadow-sm focus:border-[#146c4f] focus:ring-[#146c4f]"
+          >
+            <option value="all">All Timetables / Offices</option>
+            {electionTimetables.map(t => (
+              <option key={t.id} value={t.id || ''}>{t.description} ({offices.find(o => String(o.id) === String(t.office_id))?.name})</option>
+            ))}
+          </select>
+        </div>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent border-gray-100 bg-gray-50/50">
+                <TableHead className="text-xs font-semibold text-gray-500 tracking-wider h-11 px-6">CANDIDATE</TableHead>
+                <TableHead className="text-xs font-semibold text-gray-500 tracking-wider h-11">PARTY</TableHead>
+                <TableHead className="text-xs font-semibold text-gray-500 tracking-wider h-11">DISTRICT/STATE</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {displayedCandidates.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                    No candidates found for this selection.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                displayedCandidates.map((candidate) => (
+                  <TableRow key={candidate.id} className="hover:bg-gray-50/50 transition-colors border-gray-50">
+                    <TableCell className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-[#146c4f]/10 flex items-center justify-center text-[#146c4f] font-semibold text-xs">
+                          {candidate.full_name.charAt(0)}
+                        </div>
+                        <span className="font-medium text-gray-800">{candidate.full_name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4">
+                      <Badge variant="outline" className="border-[#146c4f]/30 text-[#146c4f] bg-[#146c4f]/5 font-medium">
+                        {candidate.political_party}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-4 text-sm text-gray-500">
+                      {candidate.senatorial_district || candidate.state || 'N/A'}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+>>>>>>> origin/candid_edu
     </div>
   )
 }
+
+
+

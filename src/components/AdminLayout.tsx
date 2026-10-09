@@ -11,6 +11,7 @@ import {
   Users,
   Flag,
   Vote,
+  BarChart,
   MapPin,
   UserCheck,
   FileText,
@@ -41,7 +42,8 @@ const SIDEBAR_ITEMS = [
       { name: 'Wards', path: '/k8s9d7f3-districts/wards' },
     ]
   },
-  { name: 'Blogs', icon: FileText, path: '#' },
+  { name: 'Polls', icon: BarChart, path: '/k8s9d7f3-polls' },
+  { name: 'Blogs', icon: FileText, path: '/k8s9d7f3-blogs' },
   { name: 'Activity Logs', icon: Activity, path: '/k8s9d7f3-activity-logs' },
 ]
 
@@ -237,3 +239,4 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
     </div>
   )
 }
+

@@ -33,10 +33,10 @@ export default function PublicElectionPage() {
         const cMap: Record<number, any[]> = {};
         for (const tb of timetablesData) {
           try {
-            const candidates = await electionService.getTimetableCandidates(tb.id);
-            cMap[tb.id] = candidates;
+            const candidates = tb.id ? await electionService.getTimetableCandidates(tb.id) : [];
+            if (tb.id) cMap[tb.id] = candidates;
           } catch (e) {
-             cMap[tb.id] = [];
+             if (tb.id) cMap[tb.id] = [];
           }
         }
         setCandidatesMap(cMap);
@@ -212,12 +212,23 @@ export default function PublicElectionPage() {
                       {tb.partyGroups.map((group: any, gIdx: number) => (
                         <div key={gIdx} className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-xl hover:border-primary/30 transition-all duration-300 flex flex-col">
                           
-                          <div className="bg-gray-50/80 p-4 border-b border-gray-100 flex items-center justify-between">
-                            <span className="font-bold text-gray-900">{group.party.name}</span>
-                            <span className="px-2.5 py-1 bg-white text-primary text-xs font-bold rounded-lg shadow-sm border border-gray-100">
-                              {group.party.acronym}
+                          <Link to={`/party/${group.party?.id}`} className="bg-gray-50/80 p-4 border-b border-gray-100 flex items-center justify-between gap-3 hover:bg-gray-100/80 transition-colors group/party">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-white rounded-lg p-1 border border-gray-100 shadow-sm flex items-center justify-center shrink-0 group-hover/party:border-primary/30 transition-colors">
+                                {group.party?.logopath ? (
+                                  <img 
+                                    src={group.party.logopath.startsWith('http') ? group.party.logopath : `${(import.meta.env.VITE_API_BASE_URL || '').replace(/\/api\/v1\/?$/, '')}/${group.party.logopath}`} 
+                                    className="w-full h-full object-contain" 
+                                    alt={group.party.name} 
+                                  />
+                                ) : <span className="font-bold text-gray-400 text-xs text-center">{group.party?.name || 'N/A'}</span>}
+                              </div>
+                              <span className="font-bold text-gray-900 text-sm md:text-base line-clamp-2 group-hover/party:text-primary transition-colors">{group.party?.description || group.party?.name || 'Independent'}</span>
+                            </div>
+                            <span className="px-2.5 py-1 bg-white text-primary text-xs font-bold rounded-lg shadow-sm border border-gray-100 shrink-0">
+                              {group.party?.name || 'IND'}
                             </span>
-                          </div>
+                          </Link>
 
                           <div className="p-4 flex flex-col gap-4">
                             {group.candidates.map((candidate: any, cIdx: number) => {
@@ -265,3 +276,4 @@ export default function PublicElectionPage() {
     </div>
   );
 }
+

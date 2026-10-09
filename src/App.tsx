@@ -2,7 +2,8 @@ import { BrowserRouter, Routes, Route, Link, useLocation, Navigate } from 'react
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import PublicHomePage from '@/pages/PublicHomePage'
 import DistrictsExplorerPage from '@/pages/DistrictsExplorerPage'
-import CandidatesDirectoryPage from '@/pages/CandidatesDirectoryPage'
+import DirectoryPage from '@/pages/DirectoryPage'
+
 import LeadersDirectoryPage from '@/pages/LeadersDirectoryPage'
 import PublicProfilePage from '@/pages/PublicProfilePage'
 import PublicElectionPage from '@/pages/PublicElectionPage'
@@ -23,11 +24,19 @@ import ElectionFormPage from '@/pages/ElectionFormPage'
 import ElectionDetailPage from '@/pages/ElectionDetailPage'
 import RolesManagementPage from '@/pages/RolesManagementPage'
 import AdminLayout from '@/components/AdminLayout'
+import AdminPollsPage from '@/pages/AdminPollsPage'
+import AdminPollFormPage from '@/pages/AdminPollFormPage'
+import AdminBlogsPage from '@/pages/AdminBlogsPage'
+import AdminBlogFormPage from '@/pages/AdminBlogFormPage'
 import PublicPollsPage from '@/pages/PublicPollsPage'
+import PublicBlogsPage from '@/pages/PublicBlogsPage'
+import PublicBlogDetailPage from '@/pages/PublicBlogDetailPage'
+import PublicPollDetailPage from '@/pages/PublicPollDetailPage'
 import PublicElectionsPage from '@/pages/PublicElectionsPage'
 import PublicPartiesPage from '@/pages/PublicPartiesPage'
-import PublicBlogsPage from '@/pages/PublicBlogsPage'
+import PublicPartyProfilePage from '@/pages/PublicPartyProfilePage'
 import PublicAboutPage from '@/pages/PublicAboutPage'
+import PublicContactPage from '@/pages/PublicContactPage'
 import './App.css'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -69,6 +78,8 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { Menu } from 'lucide-react'
 import { useState } from 'react'
+import { HelmetProvider } from 'react-helmet-async'
+import Footer from '@/components/Footer'
 import DistrictsPage from '@/pages/DistrictsPage'
 import StateDetailPage from '@/pages/StateDetailPage'
 import WardDetailPage from '@/pages/WardDetailPage'
@@ -83,7 +94,8 @@ function Navigation() {
     <>
       <Link to="/" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Home</Link>
       <Link to="/districts" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/districts') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Districts</Link>
-      <Link to="/candidates" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/candidates') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Candidates</Link>
+      <Link to="/directory" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/directory') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Directory</Link>
+
       <Link to="/leaders" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/leaders') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Elected Leaders</Link>
       <Link to="/polls" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/polls') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Polls</Link>
       <Link to="/elections" onClick={() => setOpen(false)} className={`px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/elections') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>Elections</Link>
@@ -149,6 +161,18 @@ function NotFound() {
 
 function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <Navigation />
+      <main className="flex-grow">
+        {children}
+      </main>
+      <Footer />
+    </div>
+  )
+}
+
+function PublicLayoutOld({ children }: { children: React.ReactNode }) {
+  return (
     <div className="min-h-screen bg-background">
       <Navigation />
       {children}
@@ -159,19 +183,25 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <HelmetProvider>
+        <BrowserRouter>
         <Routes>
           <Route path="/" element={<PublicLayout><PublicHomePage /></PublicLayout>} />
           <Route path="/districts" element={<PublicLayout><DistrictsExplorerPage /></PublicLayout>} />
-          <Route path="/candidates" element={<PublicLayout><CandidatesDirectoryPage /></PublicLayout>} />
+          <Route path="/directory" element={<PublicLayout><DirectoryPage /></PublicLayout>} />
+
           <Route path="/leaders" element={<PublicLayout><LeadersDirectoryPage /></PublicLayout>} />
           <Route path="/profile/:id" element={<PublicLayout><PublicProfilePage /></PublicLayout>} />
           <Route path="/election/:id" element={<PublicLayout><PublicElectionPage /></PublicLayout>} />
           <Route path="/polls" element={<PublicLayout><PublicPollsPage /></PublicLayout>} />
+          <Route path="/blogs" element={<PublicLayout><PublicBlogsPage /></PublicLayout>} />
+          <Route path="/blog/:id" element={<PublicLayout><PublicBlogDetailPage /></PublicLayout>} />
+          <Route path="/poll/:id" element={<PublicLayout><PublicPollDetailPage /></PublicLayout>} />
           <Route path="/elections" element={<PublicLayout><PublicElectionsPage /></PublicLayout>} />
           <Route path="/parties" element={<PublicLayout><PublicPartiesPage /></PublicLayout>} />
-          <Route path="/blogs" element={<PublicLayout><PublicBlogsPage /></PublicLayout>} />
+          <Route path="/party/:id" element={<PublicLayout><PublicPartyProfilePage /></PublicLayout>} />
           <Route path="/about" element={<PublicLayout><PublicAboutPage /></PublicLayout>} />
+          <Route path="/contact" element={<PublicLayout><PublicContactPage /></PublicLayout>} />
           
           <Route
             path="/k8s9d7f3-auth-login"
@@ -468,11 +498,24 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
+                      <Route path="/k8s9d7f3-polls" element={<ProtectedRoute><AdminLayout title="Admin / Polls"><AdminPollsPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/k8s9d7f3-polls-add" element={<ProtectedRoute><AdminLayout title="Admin / Polls / Add"><AdminPollFormPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/k8s9d7f3-polls-edit/:id" element={<ProtectedRoute><AdminLayout title="Admin / Polls / Edit"><AdminPollFormPage /></AdminLayout></ProtectedRoute>} />
+            
+            <Route path="/k8s9d7f3-blogs" element={<ProtectedRoute><AdminLayout title="Admin / Blogs"><AdminBlogsPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/k8s9d7f3-blogs-add" element={<ProtectedRoute><AdminLayout title="Admin / Blogs / Add"><AdminBlogFormPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/k8s9d7f3-blogs-edit/:id" element={<ProtectedRoute><AdminLayout title="Admin / Blogs / Edit"><AdminBlogFormPage /></AdminLayout></ProtectedRoute>} />
+            
+            <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
         </Routes>
       </BrowserRouter>
+      </HelmetProvider>
     </AuthProvider>
   )
 }
 
 export default App
+
+
+
+

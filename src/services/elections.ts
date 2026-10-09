@@ -1,3 +1,4 @@
+// force vite reload
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const API_BASE_URL = '/api'
 
@@ -627,58 +628,12 @@ class ElectionService {
 
   // GET /elections/get-timetable-candidates/{timetableid}
   async getTimetableCandidates(timetableId: number): Promise<any[]> {
-    const response = await fetch(`${API_BASE_URL}/elections/get-timetable-candidates/${timetableId}`, {
-      method: 'GET',
-      headers: this.getAuthHeaders()
-    })
-    if (!response.ok) throw new Error('Failed to fetch timetable candidates')
-    const rawData = await response.json()
-    return rawData.data || rawData
+    const response = await fetch(`${API_BASE_URL}/elections/get-timetable-candidates/${timetableId}`, { headers: this.getAuthHeaders() });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.data || [];
   }
 
-  // GET /elections/get-election-timetable/{id}
-  async getElectionTimetable(id: number): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/elections/get-election-timetable/${id}`, {
-      method: 'GET',
-      headers: this.getAuthHeaders()
-    })
-    if (!response.ok) throw new Error('Failed to fetch election timetable')
-    const rawData = await response.json()
-    return rawData.data || rawData
-  }
-
-  // GET /elections/get-election-types
-  async getElectionTypes(): Promise<any[]> {
-    const response = await fetch(`${API_BASE_URL}/elections/get-election-types`, {
-      method: 'GET',
-      headers: this.getAuthHeaders()
-    })
-    if (!response.ok) throw new Error('Failed to fetch election types')
-    const rawData = await response.json()
-    return rawData.data || rawData
-  }
-
-  // GET /offices/get-offices (Assuming it's /offices or /offices/get-offices)
-  async getOffices(): Promise<any[]> {
-    const response = await fetch(`${API_BASE_URL}/offices/get-offices`, {
-      method: 'GET',
-      headers: this.getAuthHeaders()
-    })
-    if (!response.ok) {
-       // fallback if route is different
-       const fallbackResponse = await fetch(`${API_BASE_URL}/offices`, {
-         method: 'GET',
-         headers: this.getAuthHeaders()
-       })
-       if (!fallbackResponse.ok) throw new Error('Failed to fetch offices')
-       const rawData = await fallbackResponse.json()
-       return rawData.data?.offices || rawData.data || rawData
-    }
-    const rawData = await response.json()
-    return rawData.data?.offices || rawData.data || rawData
-  }
-
-  // GET /offices/get-state-offices
   async getStateOffices(stateId?: number): Promise<any[]> {
     const query = stateId ? `?state_id=${stateId}` : ''
     const response = await fetch(`${API_BASE_URL}/offices/get-state-offices${query}`, {
@@ -690,7 +645,7 @@ class ElectionService {
     const data = rawData.data ?? rawData
     return data.offices || data
   }
-
 }
 
-export const electionService = new ElectionService()
+export const electionService = new ElectionService();
+
