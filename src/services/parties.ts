@@ -525,10 +525,10 @@ class PartyService {
 
   async assignChairman(partyId: string, candidateId: number): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/parties/${partyId}/assign-chairman`, {
+      const response = await fetch(`${API_BASE_URL}/parties/create-party-chairman`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify({ candidateId }),
+        body: JSON.stringify({ candidate_id: candidateId, party_id: Number(partyId) }),
       })
 
       if (!response.ok) {

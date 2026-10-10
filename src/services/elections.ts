@@ -931,64 +931,6 @@ class ElectionService {
       status: office.status === undefined ? undefined : Number(office.status)
     })).filter((office: StateOffice) => office.id > 0 && office.title.length > 0 && office.status !== 0)
   }
-
-  // POST /elections/create-election-timetable
-  async createElectionTimetable(data: any): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/elections/create-election-timetable`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) {
-      let errorMsg = `Failed to create timetable: ${response.status} ${response.statusText}`
-      try {
-        const errJson = await response.json()
-        if (errJson.message) errorMsg = errJson.message
-        if (errJson.errors) {
-           const details = Object.values(errJson.errors).flat().join(' | ')
-           errorMsg += ': ' + details
-        }
-      } catch {
-        // ignore
-      }
-      throw new Error(errorMsg)
-    }
-    const rawData = await response.json()
-    return rawData.data || rawData
-  }
-
-  // PATCH /elections/update-election-timetable/{id}
-  async updateElectionTimetable(id: number, data: any): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/elections/update-election-timetable/${id}`, {
-      method: 'PATCH',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(data)
-    })
-    if (!response.ok) throw new Error('Failed to update election timetable')
-    const rawData = await response.json()
-    return rawData.data || rawData
-  }
-
-  // PATCH /elections/change-election-timetable-status/{id}
-  async changeElectionTimetableStatus(id: number, status: string): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/elections/change-election-timetable-status/${id}`, {
-      method: 'PATCH',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ status })
-    })
-    if (!response.ok) throw new Error('Failed to change timetable status')
-    const rawData = await response.json()
-    return rawData.data || rawData
-  }
-
-  // DELETE /elections/delete-election-timetable/{id}
-  async deleteElectionTimetable(id: number): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/elections/delete-election-timetable/${id}`, {
-      method: 'DELETE',
-      headers: this.getAuthHeaders()
-    })
-    if (!response.ok) throw new Error('Failed to delete election timetable')
-  }
 }
 
 export const electionService = new ElectionService();

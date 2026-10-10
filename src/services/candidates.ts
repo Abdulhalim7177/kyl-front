@@ -1813,31 +1813,3 @@ class CandidateService {
 }
 
 export const candidateService = new CandidateService()
-
-export interface CandidateEducation {
-  candidate_id: number;
-  education_level: string;
-  field_of_study?: string;
-  institution?: string;
-  country?: string;
-  start_year?: number;
-  graduation_year?: number;
-}
-
-export interface CandidateExperience {
-  candidate_id: number;
-  job_title: string;
-  organization?: string;
-  industry_type?: string;
-  start_date: string;
-  end_date?: string;
-  is_current?: boolean;
-}
-
-export interface CandidateAchievement {
-  candidate_id: number;
-  title: string;
-  description?: string;
-  issuer: string;
-  achievement_date: string;
-}
