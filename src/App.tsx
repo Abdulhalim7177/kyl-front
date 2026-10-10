@@ -81,6 +81,9 @@ import { useState } from 'react'
 import { HelmetProvider } from 'react-helmet-async'
 import Footer from '@/components/Footer'
 import DistrictsPage from '@/pages/DistrictsPage'
+import PresidencyPage from '@/pages/PresidencyPage'
+import PresidencyCandidatesPage from '@/pages/PresidencyCandidatesPage'
+import ElectedPresidencyPage from '@/pages/ElectedPresidencyPage'
 import SenatorialCandidatesPage from '@/pages/SenatorialCandidatesPage'
 import ElectedSenatorsPage from '@/pages/ElectedSenatorsPage'
 import StateDetailPage from '@/pages/StateDetailPage'
@@ -418,7 +421,7 @@ function App() {
           />
           
                     <Route
-            path="/k8s9d7f3-districts/states"
+            path="/k8s9d7f3-districts/presidency" element={<ProtectedRoute><AdminLayout title="Admin / Districts / Presidency"><PresidencyPage /></AdminLayout></ProtectedRoute>} /><Route path="/k8s9d7f3-districts/presidency/candidates" element={<ProtectedRoute><AdminLayout title="Manage Presidential Candidates"><PresidencyCandidatesPage /></AdminLayout></ProtectedRoute>} /><Route path="/k8s9d7f3-districts/presidency/elected" element={<ProtectedRoute><AdminLayout title="Manage Elected Presidency"><ElectedPresidencyPage /></AdminLayout></ProtectedRoute>} /><Route path="/k8s9d7f3-districts/states"
             element={
               <ProtectedRoute>
                 <AdminLayout title="Admin / Districts / States">

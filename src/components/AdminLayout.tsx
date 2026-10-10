@@ -34,6 +34,7 @@ const SIDEBAR_ITEMS = [
     icon: MapPin, 
     path: '#',
     subItems: [
+      { name: 'Presidency', path: '/k8s9d7f3-districts/presidency' },
       { name: 'States', path: '/k8s9d7f3-districts/states' },
       { name: 'Senatorial Districts', path: '/k8s9d7f3-districts/senatorial' },
       { name: 'Federal Constituencies', path: '/k8s9d7f3-districts/federal' },
