@@ -8,8 +8,17 @@ class VisitorService {
     }
   }
 
-  private async fetchApi(endpoint: string) {
-    const response = await fetch(`${API_BASE_URL}/visitors/${endpoint}`, {
+  private async fetchApi(endpoint: string, params?: Record<string, string | number>) {
+    let url = `${API_BASE_URL}/visitors/${endpoint}`
+    if (params) {
+      const searchParams = new URLSearchParams()
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) searchParams.append(key, String(value))
+      })
+      const qs = searchParams.toString()
+      if (qs) url += `?${qs}`
+    }
+    const response = await fetch(url, {
       method: 'GET',
       headers: this.getHeaders()
     })
@@ -34,20 +43,20 @@ class VisitorService {
   async getLgaWards(lgaId: number) { return this.fetchApi(`lga-wards/${lgaId}`) }
 
   // --- Candidates ---
-  async getActivePresidencyCandidates() { return this.fetchApi('get-active-presidency-candidates') }
-  async getPresidencyCandidates() { return this.fetchApi('get-presidency-candidates') }
-  async getActiveGovernatorialCandidates() { return this.fetchApi('get-active-governatorial-candidates') }
-  async getGovernatorialCandidates() { return this.fetchApi('get-governatorial-candidates') }
-  async getActiveSenatorialCandidates() { return this.fetchApi('get-active-senatorial-candidates') }
-  async getSenatorialCandidates() { return this.fetchApi('get-senatorial-candidates') }
-  async getActiveFederalHouseCandidates() { return this.fetchApi('get-active-federal-house-candidates') }
-  async getFederalHouseCandidates() { return this.fetchApi('get-federal-house-candidates') }
-  async getActiveStateHouseCandidates() { return this.fetchApi('get-active-state-house-candidates') }
-  async getStateHouseCandidates() { return this.fetchApi('get-state-house-candidates') }
-  async getActiveLgaCandidates() { return this.fetchApi('get-active-lga-candidates') }
-  async getLgaCandidates() { return this.fetchApi('get-lga-candidates') }
-  async getActiveWardCandidates() { return this.fetchApi('get-active-ward-candidates') }
-  async getWardCandidates() { return this.fetchApi('get-ward-candidates') }
+  async getActivePresidencyCandidates(params?: Record<string, string|number>) { return this.fetchApi('get-active-presidency-candidates', params) }
+  async getPresidencyCandidates(params?: Record<string, string|number>) { return this.fetchApi('get-presidency-candidates', params) }
+  async getActiveGovernatorialCandidates(params?: Record<string, string|number>) { return this.fetchApi('get-active-governatorial-candidates', params) }
+  async getGovernatorialCandidates(params?: Record<string, string|number>) { return this.fetchApi('get-governatorial-candidates', params) }
+  async getActiveSenatorialCandidates(params?: Record<string, string|number>) { return this.fetchApi('get-active-senatorial-candidates', params) }
+  async getSenatorialCandidates(params?: Record<string, string|number>) { return this.fetchApi('get-senatorial-candidates', params) }
+  async getActiveFederalHouseCandidates(params?: Record<string, string|number>) { return this.fetchApi('get-active-federal-house-candidates', params) }
+  async getFederalHouseCandidates(params?: Record<string, string|number>) { return this.fetchApi('get-federal-house-candidates', params) }
+  async getActiveStateHouseCandidates(params?: Record<string, string|number>) { return this.fetchApi('get-active-state-house-candidates', params) }
+  async getStateHouseCandidates(params?: Record<string, string|number>) { return this.fetchApi('get-state-house-candidates', params) }
+  async getActiveLgaCandidates(params?: Record<string, string|number>) { return this.fetchApi('get-active-lga-candidates', params) }
+  async getLgaCandidates(params?: Record<string, string|number>) { return this.fetchApi('get-lga-candidates', params) }
+  async getActiveWardCandidates(params?: Record<string, string|number>) { return this.fetchApi('get-active-ward-candidates', params) }
+  async getWardCandidates(params?: Record<string, string|number>) { return this.fetchApi('get-ward-candidates', params) }
 
   // --- Elected Leaders ---
   async getActiveElectedPresidency() { return this.fetchApi('get-active-elected-presidency') }
