@@ -364,7 +364,7 @@ export default function ElectedSenatorsPage() {
       </Link>
       <Card className="border border-gray-100 shadow-md">
         <CardContent className="p-0">
-          <div className="flex flex-col gap-4 border-b border-gray-100 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 border-b border-gray-100 p-4 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100"><MapPin className="h-6 w-6 text-blue-600" /></div>
               <div>
@@ -505,20 +505,22 @@ export default function ElectedSenatorsPage() {
           {filteredLeaders.length === 0 ? (
             <div className="p-10 text-center text-gray-500">{loading ? 'Loading elected senator records...' : search ? 'No elected senators match your search.' : 'No elected senators found for this district.'}</div>
           ) : (
-            <div className="grid w-full grid-cols-1 gap-4 p-6">
+            <div className="grid w-full grid-cols-1 gap-4 p-4 sm:p-6">
               {filteredLeaders.map((leader) => {
                 const candidateName = leader.name || 'Senator'
                 const partyName = leader.partyName || 'N/A'
                 const photoUrl = getLogoUrl(leader.candidatePhoto)
+                const partyPhotoUrl = getLogoUrl(leader.partyLogo ?? leader.party?.logopath ?? leader.candidate?.party?.logopath)
                 const candidate = leader.candidate
                 const electionLabel = [leader.election?.year, leader.election?.details]
                   .filter(Boolean)
                   .join(' - ') || 'N/A'
                 return (
-                  <article key={leader.id} className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-                    <div className="flex flex-col gap-4 border-b border-gray-100 bg-gradient-to-r from-[#146c4f]/5 to-transparent p-5 sm:flex-row sm:items-center">
-                      <div className="flex min-w-0 items-center gap-4">
-                        <Avatar className="h-16 w-16 shrink-0 border border-gray-200">
+                  <article key={leader.id} className="w-full min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    <div className="h-2 bg-gradient-to-r from-[#146c4f] to-emerald-300" />
+                    <div className="relative border-b border-gray-100 bg-gradient-to-r from-[#146c4f]/5 to-transparent p-4 text-center sm:p-5">
+                      <div className="flex min-w-0 flex-col items-center gap-3">
+                        <Avatar className="h-28 w-28 shrink-0 border border-gray-200">
                           {photoUrl && <AvatarImage src={photoUrl} alt={candidateName} className="object-cover" />}
                           <AvatarFallback className="bg-[#146c4f]/10 text-lg font-bold text-[#146c4f]">{candidateName.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
@@ -527,19 +529,28 @@ export default function ElectedSenatorsPage() {
                           <p className="text-sm font-semibold text-[#146c4f]">{leader.position || 'Senator'}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 sm:ml-auto">
-                        <span className="self-start rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold uppercase text-emerald-800 sm:self-center">{leader.status || 'Active'}</span>
-                        <Button type="button" size="sm" variant="outline" onClick={() => openEditForm(leader)} className="self-start sm:self-center">
-                          <Pencil className="mr-2 h-4 w-4" /> Edit
+                      <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:absolute sm:right-5 sm:top-5 sm:mt-0 sm:justify-end">
+                        <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold uppercase text-emerald-800">{leader.status || 'Active'}</span>
+                        <Button type="button" size="sm" variant="outline" onClick={() => openEditForm(leader)} className="h-8 px-2 sm:h-9 sm:px-3">
+                          <Pencil className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
                         </Button>
-                        <Button type="button" size="sm" variant="destructive" onClick={() => removeElectedSenator(leader)} disabled={isDeleting} className="self-start sm:self-center">
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        <Button type="button" size="sm" variant="destructive" onClick={() => removeElectedSenator(leader)} disabled={isDeleting} className="h-8 px-2 sm:h-9 sm:px-3">
+                          <Trash2 className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Delete</span>
                         </Button>
                       </div>
                     </div>
-                    <div className="space-y-4 p-5">
+                    <div className="space-y-4 p-4 sm:p-5">
                       <dl className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
-                        <div className="rounded-lg bg-gray-50 p-3"><dt className="text-xs text-gray-500">Political party</dt><dd className="mt-1 font-medium text-gray-800">{partyName}</dd></div>
+                        <div className="rounded-lg bg-gray-50 p-3">
+                          <dt className="text-xs text-gray-500">Political party</dt>
+                          <dd className="mt-1 flex min-w-0 items-center gap-3 font-medium text-gray-800">
+                            <Avatar className="h-14 w-14 shrink-0 border border-gray-200 bg-white">
+                              {partyPhotoUrl && <AvatarImage src={partyPhotoUrl} alt={`${partyName} logo`} className="object-contain p-1" />}
+                              <AvatarFallback className="text-sm font-semibold">{partyName.charAt(0)?.toUpperCase() || 'P'}</AvatarFallback>
+                            </Avatar>
+                            <span className="truncate">{partyName}</span>
+                          </dd>
+                        </div>
                         <div className="rounded-lg bg-gray-50 p-3"><dt className="text-xs text-gray-500">Election</dt><dd className="mt-1 font-medium text-gray-800">{electionLabel}</dd></div>
                         <div className="rounded-lg bg-gray-50 p-3"><dt className="text-xs text-gray-500">Tenure</dt><dd className="mt-1 font-medium text-gray-800">{leader.tenure || 'N/A'}</dd></div>
                         <div className="rounded-lg bg-gray-50 p-3"><dt className="text-xs text-gray-500">Term dates</dt><dd className="mt-1 font-medium text-gray-800">{leader.start_date || 'N/A'} – {leader.end_date || 'N/A'}</dd></div>

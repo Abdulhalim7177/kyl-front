@@ -1003,7 +1003,7 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
                 : `No active ${mode === 'candidates' ? 'candidates' : 'elected ward members'} found for this ward.`}
             </div>
           ) : (
-            <div className={`grid grid-cols-1 gap-4 p-4 sm:p-6 ${mode === 'candidates' ? 'md:grid-cols-2' : ''}`}>
+            <div className={`grid grid-cols-1 gap-4 p-4 sm:p-6 ${mode === 'candidates' ? 'sm:grid-cols-2' : ''}`}>
               {visibleCandidates.map((candidate) => {
                 const candidateName = candidate.full_name || 'Candidate'
                 const partyName = candidate.party?.name ?? candidate.political_party ?? 'N/A'
@@ -1015,10 +1015,86 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
                 return (
                   <article
                     key={`${candidate.assignment_id ?? candidate.id}-${candidate.election_id ?? ''}`}
-                    className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
+                    className="min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5"
                   >
-                    <div className="mb-4 flex min-w-0 items-center gap-3 border-b border-gray-100 pb-4">
-                      <Avatar className="h-12 w-12 shrink-0 border border-gray-200">
+                    <div className="-mx-4 -mt-4 mb-4 h-2 bg-gradient-to-r from-[#146c4f] to-emerald-300 sm:-mx-5 sm:-mt-5" />
+                    <div className="relative mb-4 flex flex-col border-b border-gray-100 pb-4">
+                      <div className="order-2 mt-4 flex w-full flex-wrap items-center justify-center gap-1.5 sm:absolute sm:right-0 sm:top-0 sm:order-none sm:mt-0 sm:justify-end sm:gap-2">
+                        {mode === 'elected' && (
+                          <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-800">
+                            {candidate.status || 'Active'}
+                          </span>
+                        )}
+                        {mode === 'candidates' && (
+                          <>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="h-8 px-2 sm:h-9 sm:px-3"
+                              onClick={() => void openEditDialog(candidate)}
+                              disabled={!candidate.assignment_id || isUpdating || isDeleting}
+                            >
+                              <Pencil className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="destructive"
+                              className="h-8 px-2 sm:h-9 sm:px-3"
+                              onClick={() => {
+                                setDeleteError('')
+                                setDeletingCandidate(candidate)
+                              }}
+                              disabled={!candidate.assignment_id || isDeleting}
+                            >
+                              <Trash2 className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Delete</span>
+                            </Button>
+                          </>
+                        )}
+                        {mode === 'elected' && (
+                          <>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="h-8 px-2 sm:h-9 sm:px-3"
+                              onClick={() => void openEditElectedCouncillor(candidate)}
+                              disabled={!candidate.assignment_id || isUpdatingElected || isProcessingElectedAction}
+                            >
+                              <Pencil className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="h-8 px-2 sm:h-9 sm:px-3"
+                              onClick={() => {
+                                setElectedActionError('')
+                                setElectedAction({ type: 'terminate', candidate })
+                              }}
+                              disabled={!candidate.assignment_id || isProcessingElectedAction}
+                            >
+                              <Ban className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Terminate</span>
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="destructive"
+                              className="h-8 px-2 sm:h-9 sm:px-3"
+                              onClick={() => {
+                                setElectedActionError('')
+                                setElectedAction({ type: 'delete', candidate })
+                              }}
+                              disabled={!candidate.assignment_id || isProcessingElectedAction}
+                            >
+                              <Trash2 className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Delete</span>
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                      <div className="order-1 flex min-w-0 flex-col items-center gap-3 text-center">
+                      <Avatar className="h-28 w-28 shrink-0 border border-gray-200">
                         <AvatarImage src={getLogoUrl(candidate.image) ?? undefined} alt={candidateName} className="object-cover" />
                         <AvatarFallback className="bg-[#146c4f]/10 font-bold text-[#146c4f]">
                           {candidateName.charAt(0).toUpperCase()}
@@ -1028,78 +1104,14 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
                         <h2 className="truncate font-bold text-gray-900">{candidateName}</h2>
                         <p className="text-xs font-semibold text-[#146c4f]">{candidate.office_title || 'Ward Candidate'}</p>
                       </div>
-                      {mode === 'candidates' && (
-                        <div className="ml-auto flex shrink-0 gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => void openEditDialog(candidate)}
-                            disabled={!candidate.assignment_id || isUpdating || isDeleting}
-                          >
-                            <Pencil className="mr-2 h-4 w-4" /> Edit
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => {
-                              setDeleteError('')
-                              setDeletingCandidate(candidate)
-                            }}
-                            disabled={!candidate.assignment_id || isDeleting}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                          </Button>
-                        </div>
-                      )}
-                      {mode === 'elected' && (
-                        <div className="ml-auto flex shrink-0 flex-wrap justify-end gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => void openEditElectedCouncillor(candidate)}
-                            disabled={!candidate.assignment_id || isUpdatingElected || isProcessingElectedAction}
-                          >
-                            <Pencil className="mr-2 h-4 w-4" /> Edit
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setElectedActionError('')
-                              setElectedAction({ type: 'terminate', candidate })
-                            }}
-                            disabled={!candidate.assignment_id || isProcessingElectedAction}
-                          >
-                            <Ban className="mr-2 h-4 w-4" /> Terminate
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => {
-                              setElectedActionError('')
-                              setElectedAction({ type: 'delete', candidate })
-                            }}
-                            disabled={!candidate.assignment_id || isProcessingElectedAction}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                          </Button>
-                        </div>
-                      )}
-                      <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-800">
-                        {candidate.status || 'Active'}
-                      </span>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                       <div className="rounded-xl bg-gray-50 p-3">
                         <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Political Party</p>
                         <div className="mt-1 flex min-w-0 items-center gap-2">
-                          <Avatar className="h-8 w-8 shrink-0 border border-gray-200 bg-white">
+                          <Avatar className="h-14 w-14 shrink-0 border border-gray-200 bg-white">
                             {partyLogo && <AvatarImage src={partyLogo} alt={`${partyName} logo`} className="object-contain p-0.5" />}
                             <AvatarFallback className="text-[10px] font-bold text-gray-500">{partyName.charAt(0)?.toUpperCase() || 'P'}</AvatarFallback>
                           </Avatar>

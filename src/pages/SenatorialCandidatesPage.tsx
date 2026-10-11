@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Loader2, MapPin, Pencil, Plus, Search, Trash2 } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, MapPin, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -29,6 +29,7 @@ export default function SenatorialCandidatesPage() {
   const [offices, setOffices] = useState<OfficeOption[]>([])
   const [electionId, setElectionId] = useState('')
   const [search, setSearch] = useState('')
+  const [candidatePage, setCandidatePage] = useState(1)
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [candidateSearch, setCandidateSearch] = useState('')
   const [candidateSearchError, setCandidateSearchError] = useState('')
@@ -176,6 +177,16 @@ export default function SenatorialCandidatesPage() {
       candidate.manifesto
     ].some((value) => String(value ?? '').toLowerCase().includes(query)))
   }, [candidates, search])
+  const candidatesPerPage = 4
+  const totalCandidatePages = Math.max(1, Math.ceil(filteredCandidates.length / candidatesPerPage))
+  const paginatedCandidates = useMemo(
+    () => filteredCandidates.slice((candidatePage - 1) * candidatesPerPage, candidatePage * candidatesPerPage),
+    [candidatePage, filteredCandidates]
+  )
+
+  useEffect(() => {
+    if (candidatePage > totalCandidatePages) setCandidatePage(totalCandidatePages)
+  }, [candidatePage, totalCandidatePages])
 
   const verifyCandidate = async () => {
     const identifier = normalizeCandidateIdentifier(candidateSearch)
@@ -234,6 +245,7 @@ export default function SenatorialCandidatesPage() {
       })
       const updatedCandidates = await candidateService.getActiveElectionSenatorialCandidates(districtId)
       setCandidates(updatedCandidates)
+      setCandidatePage(1)
       setIsAddOpen(false)
       setCandidateSearch('')
       setCandidateSearchError('')
@@ -282,6 +294,7 @@ export default function SenatorialCandidatesPage() {
       await candidateService.updateSenatorialCandidate(assignmentId, editData)
       const updatedCandidates = await candidateService.getActiveElectionSenatorialCandidates(districtId)
       setCandidates(updatedCandidates)
+      setCandidatePage(1)
       setEditingCandidate(null)
     } catch (updateError) {
       setEditError(updateError instanceof Error ? updateError.message : 'Unable to update senatorial candidate.')
@@ -353,16 +366,16 @@ export default function SenatorialCandidatesPage() {
       </Link>
       <Card className="border border-gray-100 shadow-md">
         <CardContent className="p-0">
-          <div className="flex flex-col gap-4 border-b border-gray-100 p-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100"><MapPin className="h-6 w-6 text-blue-600" /></div>
-              <div>
+          <div className="flex flex-col gap-4 border-b border-gray-100 p-4 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-w-0 items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100"><MapPin className="h-6 w-6 text-blue-600" /></div>
+              <div className="min-w-0">
                 <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Senatorial Candidates</p>
-                <h1 className="mt-1 text-2xl font-bold text-gray-900">{districtName}</h1>
+                <h1 className="mt-1 break-words text-xl font-bold text-gray-900 sm:text-2xl">{districtName}</h1>
                 <p className="text-sm text-gray-500">{district?.state?.name ?? 'State not specified'}</p>
               </div>
             </div>
-            <Button type="button" onClick={() => handleAddDialogChange(true)} className="bg-[#146c4f] hover:bg-[#10563f]">
+            <Button type="button" onClick={() => handleAddDialogChange(true)} className="w-full bg-[#146c4f] hover:bg-[#10563f] lg:w-auto">
               <Plus className="mr-2 h-4 w-4" /> Add Candidate
             </Button>
           </div>
@@ -466,12 +479,17 @@ export default function SenatorialCandidatesPage() {
           )}
           </Dialog>
 
-          <div className="flex flex-col gap-3 border-b border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <label className="relative block w-full sm:max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <Input aria-label="Search senatorial candidates" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search candidates by name, office, or party" className="pl-9" />
+              <Input aria-label="Search senatorial candidates" value={search} onChange={(event) => {
+                setSearch(event.target.value)
+                setCandidatePage(1)
+              }} placeholder="Search candidates by name, office, or party" className="pl-9" />
             </label>
-            <p className="text-sm text-gray-500">Showing {filteredCandidates.length} candidates</p>
+            <p className="text-sm text-gray-500">
+              Showing {filteredCandidates.length ? (candidatePage - 1) * candidatesPerPage + 1 : 0}–{Math.min(candidatePage * candidatesPerPage, filteredCandidates.length)} of {filteredCandidates.length} candidates
+            </p>
           </div>
 
           {filteredCandidates.length === 0 ? (
@@ -485,8 +503,8 @@ export default function SenatorialCandidatesPage() {
                     : 'No active senatorial candidates found for this district.'}
             </div>
           ) : (
-            <div className="grid w-full grid-cols-1 gap-4 p-6">
-              {filteredCandidates.map((candidate) => {
+            <div className="grid w-full grid-cols-1 gap-4 p-4 sm:grid-cols-2 sm:p-6">
+              {paginatedCandidates.map((candidate) => {
                 const partyName = candidate.party?.name || candidate.political_party || 'N/A'
                 const photoUrl = getLogoUrl(candidate.image)
                 const partyLogoUrl = getPartyLogoValue(candidate.party)
@@ -495,11 +513,12 @@ export default function SenatorialCandidatesPage() {
                   .join(' - ') || 'N/A'
                 const nameInitial = candidate.full_name?.trim().charAt(0).toUpperCase() || 'C'
                 return (
-                  <article key={`${candidate.assignment_id ?? candidate.id}-${candidate.office_id ?? 'office'}`} className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+                  <article key={`${candidate.assignment_id ?? candidate.id}-${candidate.office_id ?? 'office'}`} className="w-full min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+                    <div className="h-2 bg-gradient-to-r from-[#146c4f] to-emerald-300" />
                     <div className="border-b border-gray-100 bg-gradient-to-r from-[#146c4f]/5 to-transparent p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex min-w-0 items-center gap-3">
-                          <Avatar className="h-14 w-14 shrink-0 border border-gray-200">
+                      <div className="flex flex-wrap items-center justify-center gap-3 text-center">
+                        <div className="flex min-w-0 flex-col items-center gap-3">
+                          <Avatar className="h-20 w-20 shrink-0 border border-gray-200">
                             {photoUrl && <AvatarImage src={photoUrl} alt={candidate.full_name} className="object-cover" />}
                             <AvatarFallback className="bg-[#146c4f]/10 font-semibold text-[#146c4f]">{nameInitial}</AvatarFallback>
                           </Avatar>
@@ -509,20 +528,20 @@ export default function SenatorialCandidatesPage() {
                             <p className="text-xs text-gray-500">Candidate ID {candidate.user_id || candidate.id}</p>
                           </div>
                         </div>
-                        <Button type="button" size="sm" variant="outline" className="shrink-0" onClick={() => openEditForm(candidate)}>
-                          <Pencil className="mr-2 h-4 w-4" /> Edit
+                        <Button type="button" size="sm" variant="outline" className="h-8 shrink-0 px-2 sm:h-9 sm:px-3" onClick={() => openEditForm(candidate)}>
+                          <Pencil className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
                         </Button>
                         <Button
                           type="button"
                           size="sm"
                           variant="outline"
-                          className="shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                          className="h-8 shrink-0 px-2 text-red-600 hover:bg-red-50 hover:text-red-700 sm:h-9 sm:px-3"
                           onClick={() => {
                             setDeleteError('')
                             setDeletingCandidate(candidate)
                           }}
                         >
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          <Trash2 className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Delete</span>
                         </Button>
                       </div>
                     </div>
@@ -598,6 +617,33 @@ export default function SenatorialCandidatesPage() {
                   </article>
                 )
               })}
+            </div>
+          )}
+          {filteredCandidates.length > 0 && (
+            <div className="flex flex-col gap-3 border-t border-gray-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <p className="text-sm text-gray-500">
+                Page {candidatePage} of {totalCandidatePages}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCandidatePage((page) => Math.max(1, page - 1))}
+                  disabled={candidatePage === 1}
+                >
+                  <ChevronLeft className="mr-1 h-4 w-4" /> Previous
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCandidatePage((page) => Math.min(totalCandidatePages, page + 1))}
+                  disabled={candidatePage >= totalCandidatePages}
+                >
+                  Next <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>

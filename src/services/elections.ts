@@ -42,6 +42,65 @@ export interface ElectionResponse {
   message: string
 }
 
+export interface PresidencyCandidate {
+  id: number
+  candidate_id: number
+  office_id: number
+  party_id: number
+  election_id: number
+  manifesto: string
+  status: string
+  candidate: {
+    id: number
+    fullName: string
+    email?: string | null
+    phoneNo?: string | null
+    bio?: string | null
+    image?: { image_path?: string | null } | null
+  }
+  office: {
+    id: number
+    title: string
+  }
+  party: {
+    id: number
+    name: string
+    description?: string | null
+    logopath?: string | null
+  }
+  election: {
+    id: number
+    year: string | number
+    details?: string | null
+  }
+}
+
+export interface PaginatedPresidencyCandidates {
+  current_page: number
+  data: PresidencyCandidate[]
+  last_page: number
+  next_page_url: string | null
+  prev_page_url: string | null
+  per_page: number
+  total: number
+}
+
+export interface PresidencyCandidatesResponse {
+  success: boolean
+  data: PaginatedPresidencyCandidates
+  message: string
+}
+
+export interface AddPresidencyCandidateData {
+  candidate_id: number
+  office_id: number
+  party_id: number
+  election_id: number
+  manifesto: string
+}
+
+export type UpdatePresidencyCandidateData = AddPresidencyCandidateData
+
 export interface SingleElectionResponse {
   success: boolean
   data: Election
@@ -85,6 +144,95 @@ class ElectionService {
       'Accept': 'application/json',
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
+    }
+  }
+
+  async getActiveElectionPresidency(page = 1): Promise<PresidencyCandidatesResponse> {
+    const query = new URLSearchParams({ page: String(page) })
+    const response = await fetch(
+      `${API_BASE_URL}/elections/get-active-election-presidency?${query.toString()}`,
+      {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      }
+    )
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(errorText || `Failed to fetch presidency candidates: ${response.status}`)
+    }
+
+    const result = await response.json() as PresidencyCandidatesResponse
+    if (!result.success || !result.data || !Array.isArray(result.data.data)) {
+      throw new Error(result.message || 'The presidency candidates response was invalid.')
+    }
+
+    return result
+  }
+
+  async getElectionPresidencyCandidates(electionId: number, page = 1): Promise<PresidencyCandidatesResponse> {
+    const query = new URLSearchParams({
+      election_id: String(electionId),
+      page: String(page)
+    })
+    const response = await fetch(
+      `${API_BASE_URL}/elections/get-election-presidency-candidates?${query.toString()}`,
+      {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      }
+    )
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(errorText || `Failed to fetch presidency candidates: ${response.status}`)
+    }
+
+    const result = await response.json() as PresidencyCandidatesResponse
+    if (!result.success || !result.data || !Array.isArray(result.data.data)) {
+      throw new Error(result.message || 'The presidency candidates response was invalid.')
+    }
+
+    return result
+  }
+
+  async addPresidencyCandidate(data: AddPresidencyCandidateData): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/elections/add-presidency-candidate`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      const validationErrors = result.errors ? Object.values(result.errors).flat().join(' | ') : ''
+      throw new Error(result.message || validationErrors || `Failed to add presidential candidate: ${response.status}`)
+    }
+  }
+
+  async updatePresidencyCandidate(id: number, data: UpdatePresidencyCandidateData): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/elections/update-presidency-candidate/${id}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      const validationErrors = result.errors ? Object.values(result.errors).flat().join(' | ') : ''
+      throw new Error(result.message || validationErrors || `Failed to update presidential candidate: ${response.status}`)
+    }
+  }
+
+  async removePresidencyCandidate(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/elections/remove-presidency-candidate/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      throw new Error(result.message || `Failed to remove presidential candidate: ${response.status}`)
     }
   }
 
@@ -868,6 +1016,40 @@ class ElectionService {
     })).filter((office: StateOffice) => office.id > 0 && office.title.length > 0)
   }
 
+  async getPresidencyOffices(): Promise<StateOffice[]> {
+    const response = await fetch(`${API_BASE_URL}/offices/get-presidency-offices`, {
+      method: 'GET',
+      headers: this.getAuthHeaders()
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      throw new Error(result.message || `Failed to fetch presidency offices: ${response.status}`)
+    }
+
+    const payload = result.data ?? result
+    const offices = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.offices)
+          ? payload.offices
+          : null
+
+    if (!offices) {
+      throw new Error('The presidency offices response did not contain an office list.')
+    }
+
+    return offices.map((office: Record<string, unknown>) => ({
+      id: Number(office.id ?? office.office_id),
+      title: String(office.title ?? office.name ?? ''),
+      remark: typeof office.remark === 'string' ? office.remark : undefined,
+      status: office.status === undefined ? undefined : Number(office.status)
+    })).filter((office: StateOffice) =>
+      office.id > 0 && office.title.length > 0 && office.status !== 0
+    )
+  }
+
   async getLgaOffices(): Promise<StateOffice[]> {
     const response = await fetch(`${API_BASE_URL}/offices/get-lga-offices`, {
       method: 'GET',
@@ -934,4 +1116,3 @@ class ElectionService {
 }
 
 export const electionService = new ElectionService();
-

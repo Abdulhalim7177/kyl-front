@@ -21,7 +21,6 @@ import {
   Search
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 
 const SIDEBAR_ITEMS = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/k8s9d7f3-admin-panel' },
@@ -192,21 +191,6 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
           </div>
           
           <div className="flex items-center gap-2 sm:gap-4 text-gray-500">
-             {title === 'Manage Governatorial' && (
-               <Button
-                 type="button"
-                 size="sm"
-                 className="bg-[#146c4f] text-white hover:bg-[#10563f]"
-                 onClick={() => {
-                   window.dispatchEvent(new CustomEvent('open-governatorial-form'))
-                   const nextParams = new URLSearchParams(searchParams)
-                   nextParams.set('addGovernatorial', 'true')
-                   setSearchParams(nextParams)
-                 }}
-               >
-                 Add Governatorial
-               </Button>
-             )}
              {title === 'Admin / Districts / States' && (
                <div className="relative w-36 sm:w-56">
                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -240,4 +224,3 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
     </div>
   )
 }
-

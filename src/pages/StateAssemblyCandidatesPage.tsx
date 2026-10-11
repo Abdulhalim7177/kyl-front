@@ -468,7 +468,7 @@ export default function StateAssemblyCandidatesPage() {
       </Link>
       <Card className="border border-gray-100 shadow-md">
         <CardContent className="p-0">
-          <div className="flex flex-col gap-4 border-b border-gray-100 p-6 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex flex-col gap-4 border-b border-gray-100 p-4 sm:p-6 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100">
                 <MapPin className="h-6 w-6 text-blue-600" />
@@ -534,7 +534,7 @@ export default function StateAssemblyCandidatesPage() {
             </div>
           )}
           {!loading && !candidatesLoading && !error && filteredCandidates.length > 0 && (
-            <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 sm:p-6">
               {paginatedCandidates.map((candidate) => {
                 const photoUrl = getLogoUrl(candidate.image)
                 const partyPhotoUrl = getPartyLogoValue(candidate.party)
@@ -543,10 +543,11 @@ export default function StateAssemblyCandidatesPage() {
                   ? `${candidate.election.year}${candidate.election.details ? ` - ${candidate.election.details}` : ''}`
                   : candidate.election?.details ?? 'N/A'
                 return (
-                  <article key={`${candidate.assignment_id ?? candidate.id}-${candidate.election_id ?? ''}`} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <div className="mb-4 flex items-start justify-between gap-3 border-b border-gray-100 pb-4">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <Avatar className="h-12 w-12 border border-gray-200">
+                  <article key={`${candidate.assignment_id ?? candidate.id}-${candidate.election_id ?? ''}`} className="min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+                    <div className="-mx-4 -mt-4 mb-4 h-2 bg-gradient-to-r from-[#146c4f] to-emerald-300 sm:-mx-5 sm:-mt-5" />
+                    <div className="mb-4 flex flex-col items-center gap-3 border-b border-gray-100 pb-4 text-center">
+                      <div className="flex min-w-0 flex-col items-center gap-3">
+                        <Avatar className="h-20 w-20 border border-gray-200">
                           {photoUrl && <AvatarImage src={photoUrl} alt={candidate.full_name} className="object-cover" />}
                           <AvatarFallback className="bg-[#146c4f]/10 font-bold text-[#146c4f]">
                             {candidate.full_name?.charAt(0)?.toUpperCase() || 'C'}
@@ -557,8 +558,8 @@ export default function StateAssemblyCandidatesPage() {
                           <p className="text-xs font-semibold text-[#146c4f]">{candidate.office_title || 'State House of Assembly Candidate'}</p>
                         </div>
                       </div>
-                      <Button type="button" size="sm" variant="outline" onClick={() => openEditDialog(candidate)} disabled={!candidate.assignment_id}>
-                        <Pencil className="mr-2 h-4 w-4" /> Edit
+                      <Button type="button" size="sm" variant="outline" className="h-8 shrink-0 px-2 sm:h-9 sm:px-3" onClick={() => openEditDialog(candidate)} disabled={!candidate.assignment_id}>
+                        <Pencil className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
                       </Button>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm">
