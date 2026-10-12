@@ -5,6 +5,44 @@ export interface ElectedLeader {
   id: number | string
   name: string
   position: string
+  candidate_id?: number | string
+  office_id?: number
+  party_id?: number
+  election_id?: number
+  start_date?: string
+  end_date?: string
+  tenure?: string
+  remark?: string
+  election?: {
+    year?: string | number
+    details?: string
+    [key: string]: any
+  }
+  office?: {
+    title?: string
+    [key: string]: any
+  }
+  party?: {
+    name?: string
+    logopath?: string | null
+    [key: string]: any
+  }
+  candidate?: {
+    id?: number | string
+    fullName?: string
+    full_name?: string
+    phoneNo?: string
+    phone_no?: string
+    email?: string
+    nin?: string | number
+    image?: string | Record<string, any> | null
+    party?: {
+      name?: string
+      logopath?: string | null
+      [key: string]: any
+    }
+    [key: string]: any
+  }
   stateId?: number
   stateName?: string
   candidateId?: number | string
@@ -50,6 +88,19 @@ export interface AddElectedGovernorData {
   remark: string
   status: string
 }
+
+export interface AddElectedPresidencyData {
+  candidate_id: number
+  office_id: number
+  party_id: number
+  election_id: number
+  start_date: string
+  end_date: string
+  tenure: string
+  remark: string
+}
+
+export type UpdateElectedPresidencyData = AddElectedPresidencyData
 
 export interface UpdateElectedGovernorData {
   candidate_id: number
@@ -209,6 +260,36 @@ const getErrorMessage = (result: any, fallback: string) => {
 }
 
 class LeadersService {
+  async getActiveElectedPresidency(): Promise<ElectedLeader[]> {
+    const response = await fetch(`${API_BASE_URL}/leaders/get-active-elected-presidency`, {
+      method: 'GET',
+      headers: getAuthHeaders()
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result?.success === false) {
+      throw new Error(getErrorMessage(result, `Failed to fetch active elected presidency: ${response.status}`))
+    }
+
+    const payload = unwrapPayload(result)
+    return toArray(payload).map((leader) => normalizeLeader(leader))
+  }
+
+  async getElectedPresidency(electionId: number): Promise<ElectedLeader[]> {
+    const query = new URLSearchParams({ election_id: String(electionId) })
+    const response = await fetch(`${API_BASE_URL}/leaders/get-elected-presidency?${query.toString()}`, {
+      method: 'GET',
+      headers: getAuthHeaders()
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result?.success === false) {
+      throw new Error(getErrorMessage(result, `Failed to fetch elected presidency for election ${electionId}: ${response.status}`))
+    }
+
+    return toArray(unwrapPayload(result)).map((leader) => normalizeLeader(leader))
+  }
+
   async getActiveElectedGovernors(stateId: number): Promise<ElectedLeader[]> {
     const query = new URLSearchParams({ state_id: stateId.toString() })
     const response = await fetch(`${API_BASE_URL}/leaders/get-active-elected-governor?${query.toString()}`, {
@@ -224,6 +305,60 @@ class LeadersService {
 
     const result = await response.json()
     return toArray(unwrapPayload(result)).map((leader) => normalizeLeader(leader))
+  }
+
+  async addElectedPresidency(data: AddElectedPresidencyData): Promise<ElectedLeader> {
+    const response = await fetch(`${API_BASE_URL}/leaders/add-elected-presidency`, {
+      method: 'POST',
+      headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      throw new Error(getErrorMessage(result, 'Failed to add elected presidency leader'))
+    }
+
+    return normalizeLeader(result.data ?? result)
+  }
+
+  async updateElectedPresidency(id: number, data: UpdateElectedPresidencyData): Promise<ElectedLeader> {
+    const response = await fetch(`${API_BASE_URL}/leaders/update-elected-presidency/${id}`, {
+      method: 'PATCH',
+      headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      throw new Error(getErrorMessage(result, 'Failed to update elected presidency leader'))
+    }
+
+    return normalizeLeader(result.data ?? result)
+  }
+
+  async removeElectedPresidency(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/leaders/remove-elected-presidency/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      throw new Error(getErrorMessage(result, 'Failed to remove elected presidency leader'))
+    }
+  }
+
+  async terminateElectedPresidency(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/leaders/terminate-elected-presidency/${id}`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    })
+
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || result.success === false) {
+      throw new Error(getErrorMessage(result, 'Failed to terminate elected presidency leader'))
+    }
   }
 
   async getElectedGovernors(stateId: number, electionId: number): Promise<ElectedLeader[]> {

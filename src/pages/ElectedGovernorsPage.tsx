@@ -345,56 +345,55 @@ export default function ElectedGovernorsPage() {
 
       <Card className="border border-gray-100 shadow-md">
         <CardContent className="p-0">
-          <div className="border-b border-gray-100 p-6 md:p-8">
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-4">
+          <div className="border-b border-gray-100 p-4 sm:p-6">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100">
                   <MapPin className="h-6 w-6 text-blue-600" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Elected Leadership</p>
-                  <h1 className="mt-1 text-2xl font-bold text-gray-900">{stateName || 'State'}</h1>
+                  <h1 className="mt-1 break-words text-xl font-bold text-gray-900 sm:text-2xl">{stateName || 'State'}</h1>
+                  <p className="mt-1 text-sm text-gray-500">Manage elected governor and deputy governor records.</p>
                 </div>
               </div>
 
-              {/* Dynamic Free-Text Search Input Bar */}
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-[#146c4f]">
-                  <Search className="h-4 w-4 text-gray-400" />
+                <Button type="button" onClick={() => setIsAddOpen(true)} className="w-full bg-[#146c4f] hover:bg-[#10563f] sm:w-auto">
+                  <Plus className="h-4 w-4" />
+                  Add Elected
+                </Button>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-[#146c4f]">
+                  <Search className="h-4 w-4 shrink-0 text-gray-400" />
                   <input
                     type="text"
+                    aria-label="Search elected state leaders"
                     placeholder="Search governor, party, year..."
-                    className="w-52 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
+                    className="min-w-0 flex-1 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
                     value={searchFilter}
                     onChange={(event) => setSearchFilter(event.target.value)}
                   />
                 </div>
 
-                <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-2">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Records</p>
+                <div className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-4 py-2 sm:justify-start">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 sm:mr-3">Records</p>
                   <div className="flex items-center gap-1.5 font-semibold text-[#146c4f]">
                     <CheckCircle2 className="h-4 w-4" />
                     {filteredLeaders.length} elected
                   </div>
                 </div>
-
-                <Button type="button" onClick={() => setIsAddOpen(true)} className="bg-[#146c4f] hover:bg-[#10563f]">
-                  <Plus className="h-4 w-4" />
-                  Add Elected
-                </Button>
               </div>
             </div>
-            <p className="mt-4 text-sm text-gray-500">
-              Active governor and elected deputy leadership for {stateName || 'this state'}. Use the search input above to filter by name, office, or year.
-            </p>
           </div>
 
           {filteredLeaders.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">
+            <div className="p-8 text-center text-gray-500 sm:p-12">
               {searchFilter ? `No active or past elected leaders match "${searchFilter}".` : 'No active governor or leadership records found for this state.'}
             </div>
           ) : (
-            <div className="grid gap-4 p-6 md:grid-cols-2">
+            <div className="grid min-w-0 gap-4 p-4 sm:p-6 md:grid-cols-2">
               {filteredLeaders.map((leader) => {
                 const candidateName = leader?.candidate?.full_name ?? leader?.candidate?.fullName ?? leader?.name ?? 'Candidate'
                 const positionTitle = leader?.office?.title ?? leader?.position ?? 'Position'
@@ -417,127 +416,98 @@ export default function ElectedGovernorsPage() {
                 )
 
                 return (
-                  <div
-                    key={`${leader?.id ?? 'leader'}-${positionTitle}`}
-                    className="flex flex-col justify-between rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
-                  >
-                    <div>
-                      <div className="mb-4 flex items-center justify-between gap-3 border-b border-gray-100 pb-4">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-12 w-12 border border-gray-200">
-                            {candidatePhotoUrl && <AvatarImage src={candidatePhotoUrl} alt={candidateName} className="object-cover" />}
-                            <AvatarFallback className="bg-[#146c4f]/10 text-sm font-bold text-[#146c4f]">
-                              {candidateName.charAt(0)?.toUpperCase() || 'P'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="text-base font-bold text-gray-900">{candidateName}</p>
-                            <p className="text-xs font-semibold text-[#146c4f]">{positionTitle}</p>
-                          </div>
-                        </div>
-                        <div className="flex shrink-0 flex-col items-end gap-2">
-                          <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-800">
-                            {leader?.status || 'Active'}
-                          </span>
-                          <div className="flex flex-col gap-2">
-                            <Button type="button" variant="outline" size="sm" onClick={() => openEditForm(leader)}>
-                              <Pencil className="mr-2 h-4 w-4" /> Edit
-                            </Button>
-                            <Button type="button" variant="destructive" size="sm" onClick={() => removeElectedGovernor(leader)} disabled={isDeleting}>
-                              <Trash2 className="mr-2 h-4 w-4" /> Delete
-                            </Button>
-                          </div>
+                  <Card key={`${leader?.id ?? 'leader'}-${positionTitle}`} className="h-full min-w-0 overflow-hidden border border-gray-100 shadow-md">
+                    <div className="h-2 bg-gradient-to-r from-[#146c4f] to-emerald-300" />
+                    <CardContent className="p-4 sm:p-8">
+                      <div className="mb-4 flex items-center justify-between gap-2">
+                        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold capitalize text-emerald-700">
+                          {leader?.status || 'Active'}
+                        </span>
+                        <div className="flex shrink-0 gap-1 sm:gap-2">
+                          <Button type="button" variant="outline" size="sm" aria-label={`Edit ${candidateName}`} title="Edit leader" className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => openEditForm(leader)}>
+                            <Pencil className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
+                          </Button>
+                          <Button type="button" variant="destructive" size="sm" aria-label={`Delete ${candidateName}`} title="Delete leader" className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => removeElectedGovernor(leader)} disabled={isDeleting}>
+                            <Trash2 className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Delete</span>
+                          </Button>
                         </div>
                       </div>
 
-                      <div className="space-y-3 text-xs text-gray-600">
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="flex items-center gap-2 rounded-xl bg-gray-50 p-2.5">
-                            <Avatar className="h-8 w-8 shrink-0 border border-gray-200 bg-white">
-                              {partyLogoUrl && <AvatarImage src={partyLogoUrl} alt={`${partyName} logo`} className="object-contain" />}
-                              <AvatarFallback className="bg-gray-101 text-[10px] font-semibold text-gray-600">
-                                {partyName.charAt(0).toUpperCase()}
-                              </AvatarFallback>
+                      <div className="flex flex-col items-center text-center">
+                        <Avatar className="h-28 w-28 border-4 border-white shadow-lg ring-2 ring-[#146c4f]/20">
+                          {candidatePhotoUrl && <AvatarImage src={candidatePhotoUrl} alt={candidateName} className="object-cover" />}
+                          <AvatarFallback className="bg-[#146c4f]/10 text-2xl font-bold text-[#146c4f]">
+                            {candidateName.charAt(0)?.toUpperCase() || 'P'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <p className="mt-5 text-xs font-bold uppercase tracking-[0.16em] text-[#146c4f]">{positionTitle}</p>
+                        <h2 className="mt-2 break-words text-2xl font-bold text-gray-900">{candidateName}</h2>
+                      </div>
+
+                      <div className="mt-7 grid gap-3 text-sm sm:grid-cols-2">
+                        <div className="rounded-xl bg-gray-50 p-4">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Political Party</p>
+                          <div className="mt-2 flex items-center gap-3">
+                            <Avatar className="h-12 w-12 border border-gray-200 bg-white">
+                              {partyLogoUrl && <AvatarImage src={partyLogoUrl} alt={`${partyName} logo`} className="object-contain p-1" />}
+                              <AvatarFallback className="text-sm font-bold text-gray-500">{partyName.charAt(0).toUpperCase() || 'P'}</AvatarFallback>
                             </Avatar>
-                            <div className="min-w-0">
-                              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Party</p>
-                              <p className="truncate font-semibold text-gray-800">{partyName}</p>
-                            </div>
-                          </div>
-
-                          <div className="rounded-xl bg-gray-50 p-2.5">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Election Details</p>
-                            <p className="truncate font-semibold text-gray-800">
-                              {leader?.election?.year
-                                ? leader?.election?.details && leader?.election?.details !== String(leader?.election?.year)
-                                  ? `${leader.election.year} - ${leader.election.details}`
-                                  : leader.election.year
-                                : (leader?.election?.details || 'N/A')}
-                            </p>
+                            <p className="truncate font-semibold text-gray-800">{partyName}</p>
                           </div>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="rounded-xl bg-gray-50 p-2.5">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Tenure Period</p>
-                            <p className="font-semibold text-gray-800">{leader?.tenure || 'N/A'}</p>
-                          </div>
-                          <div className="rounded-xl bg-gray-50 p-2.5">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Start / End Date</p>
-                            <p className="font-medium text-gray-800">
-                              {leader?.start_date ?? 'N/A'} — {leader?.end_date ?? 'N/A'}
-                            </p>
-                          </div>
+                        <div className="rounded-xl bg-gray-50 p-4">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Election</p>
+                          <p className="mt-2 font-semibold text-gray-800">
+                            {leader?.election?.year
+                              ? leader?.election?.details && leader?.election?.details !== String(leader?.election?.year)
+                                ? `${leader.election.year} - ${leader.election.details}`
+                                : leader.election.year
+                              : (leader?.election?.details || 'Not specified')}
+                          </p>
                         </div>
-
+                        <div className="rounded-xl bg-gray-50 p-4">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Tenure</p>
+                          <p className="mt-2 font-semibold text-gray-800">{leader?.tenure || 'Not specified'}</p>
+                        </div>
+                        <div className="rounded-xl bg-gray-50 p-4">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Term Dates</p>
+                          <p className="mt-2 font-semibold text-gray-800">{leader?.start_date ?? 'N/A'} — {leader?.end_date ?? 'N/A'}</p>
+                        </div>
                         {leader?.candidate && (
-                          <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-3 space-y-2">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Candidate Information</p>
-                            <div className="grid grid-cols-2 gap-y-1.5 gap-x-2 text-[11px]">
-                              <div>
-                                <span className="text-gray-400">NIN: </span>
-                                <span className="font-medium text-gray-700">{leader.candidate.nin || 'N/A'}</span>
-                              </div>
-                              <div>
-                                <span className="text-gray-400">Code: </span>
-                                <span className="font-medium text-gray-700">{leader.candidate.code || 'N/A'}</span>
-                              </div>
-                              <div>
-                                <span className="text-gray-400">Phone: </span>
-                                <span className="font-medium text-gray-700">{leader.candidate.phoneNo || 'N/A'}</span>
-                              </div>
-                              <div>
-                                <span className="text-gray-400">Gender: </span>
-                                <span className="font-medium text-gray-700">{leader.candidate.gender || 'N/A'}</span>
-                              </div>
+                          <>
+                            <div className="rounded-xl bg-gray-50 p-4">
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">NIN</p>
+                              <p className="mt-2 break-words font-semibold text-gray-800">{leader.candidate.nin || 'Not specified'}</p>
                             </div>
-                          </div>
+                            <div className="rounded-xl bg-gray-50 p-4">
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Phone</p>
+                              <p className="mt-2 break-words font-semibold text-gray-800">{leader.candidate.phoneNo || 'Not specified'}</p>
+                            </div>
+                            <div className="rounded-xl bg-gray-50 p-4">
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Candidate Code</p>
+                              <p className="mt-2 break-words font-semibold text-gray-800">{leader.candidate.code || 'Not specified'}</p>
+                            </div>
+                            <div className="rounded-xl bg-gray-50 p-4">
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Gender</p>
+                              <p className="mt-2 font-semibold text-gray-800">{leader.candidate.gender || 'Not specified'}</p>
+                            </div>
+                          </>
                         )}
-
-                        <div className="grid grid-cols-2 gap-2 text-[10px]">
-                          <div className="rounded-xl bg-gray-50 p-2">
-                            <span className="font-bold text-gray-400 uppercase">Created At: </span>
-                            <span className="font-medium text-gray-700">
-                              {leader?.created_at ? new Date(leader.created_at).toLocaleDateString() : 'N/A'}
-                            </span>
-                          </div>
-                          <div className="rounded-xl bg-gray-50 p-2">
-                            <span className="font-bold text-gray-400 uppercase">Updated At: </span>
-                            <span className="font-medium text-gray-700">
-                              {leader?.updated_at ? new Date(leader.updated_at).toLocaleDateString() : 'N/A'}
-                            </span>
-                          </div>
+                        <div className="rounded-xl bg-gray-50 p-4">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Created At</p>
+                          <p className="mt-2 font-semibold text-gray-800">{leader?.created_at ? new Date(leader.created_at).toLocaleDateString() : 'N/A'}</p>
                         </div>
-
-                        {leader?.remark && (
-                          <div className="rounded-xl bg-amber-50/60 border border-amber-100 p-2.5">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Remark</p>
-                            <p className="mt-0.5 text-[11px] text-amber-900 line-clamp-2">{leader.remark}</p>
-                          </div>
-                        )}
+                        <div className="rounded-xl bg-gray-50 p-4">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Updated At</p>
+                          <p className="mt-2 font-semibold text-gray-800">{leader?.updated_at ? new Date(leader.updated_at).toLocaleDateString() : 'N/A'}</p>
+                        </div>
+                        <div className="rounded-xl bg-gray-50 p-4 sm:col-span-2">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Remark</p>
+                          <p className="mt-2 whitespace-pre-wrap text-gray-800">{leader?.remark || 'No remark provided'}</p>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 )
               })}
             </div>

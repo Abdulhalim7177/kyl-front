@@ -432,7 +432,7 @@ export default function ElectedFederalHousePage() {
       </Link>
       <Card className="border border-gray-100 shadow-md">
         <CardContent className="p-0">
-          <div className="flex flex-col gap-4 border-b border-gray-100 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 border-b border-gray-100 p-4 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
                 <MapPin className="h-6 w-6 text-blue-600" />
@@ -504,7 +504,7 @@ export default function ElectedFederalHousePage() {
             </div>
           )}
           {!loading && !isSearching && !error && members.length > 0 && (
-            <div className="grid w-full grid-cols-1 gap-4 p-6">
+            <div className="grid w-full grid-cols-1 gap-4 p-4 sm:p-6">
               {members.map((member) => {
                 const name = member.name || 'Elected Member'
                 const photoUrl = getLogoUrl(member.candidatePhoto)
@@ -514,10 +514,11 @@ export default function ElectedFederalHousePage() {
                   ? `${member.election.year}${member.election.details ? ` - ${member.election.details}` : ''}`
                   : member.election?.details ?? 'N/A'
                 return (
-                  <article key={`${member.id}-${member.position}`} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <div className="mb-4 flex items-center justify-between gap-3 border-b border-gray-100 pb-4">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <Avatar className="h-12 w-12 border border-gray-200">
+                  <article key={`${member.id}-${member.position}`} className="min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+                    <div className="-mx-4 -mt-4 mb-4 h-2 bg-gradient-to-r from-[#146c4f] to-emerald-300 sm:-mx-5 sm:-mt-5" />
+                    <div className="relative mb-4 border-b border-gray-100 pb-4">
+                      <div className="flex min-w-0 flex-col items-center gap-3 text-center">
+                        <Avatar className="h-28 w-28 border border-gray-200">
                           {photoUrl && <AvatarImage src={photoUrl} alt={name} className="object-cover" />}
                           <AvatarFallback className="bg-[#146c4f]/10 font-bold text-[#146c4f]">
                             {name.charAt(0)?.toUpperCase() || 'E'}
@@ -528,36 +529,38 @@ export default function ElectedFederalHousePage() {
                           <p className="text-xs font-semibold text-[#146c4f]">{member.position || 'Federal House Representative'}</p>
                         </div>
                       </div>
-                      <div className="flex shrink-0 items-center gap-2">
+                      <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5 sm:absolute sm:right-0 sm:top-0 sm:mt-0 sm:justify-end sm:gap-2">
                         <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-800">
                           {member.status || 'Active'}
                         </span>
-                        <Button type="button" size="sm" variant="outline" onClick={() => openEditMember(member)}>
-                          <Pencil className="mr-2 h-4 w-4" /> Edit
+                        <Button type="button" size="sm" variant="outline" className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => openEditMember(member)}>
+                          <Pencil className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
                         </Button>
                         <Button
                           type="button"
                           size="sm"
                           variant="destructive"
+                          className="h-8 px-2 sm:h-9 sm:px-3"
                           onClick={() => openConfirmation('terminate', member)}
                           disabled={terminatingMemberId !== null || removingMemberId !== null}
                         >
                           {terminatingMemberId === Number(member.id)
-                            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            : <CircleStop className="mr-2 h-4 w-4" />}
-                          Terminate
+                            ? <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" />
+                            : <CircleStop className="h-4 w-4 sm:mr-2" />}
+                          <span className="hidden sm:inline">Terminate</span>
                         </Button>
                         <Button
                           type="button"
                           size="sm"
                           variant="destructive"
+                          className="h-8 px-2 sm:h-9 sm:px-3"
                           onClick={() => openConfirmation('delete', member)}
                           disabled={terminatingMemberId !== null || removingMemberId !== null}
                         >
                           {removingMemberId === Number(member.id)
-                            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            : <Trash2 className="mr-2 h-4 w-4" />}
-                          Delete
+                            ? <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" />
+                            : <Trash2 className="h-4 w-4 sm:mr-2" />}
+                          <span className="hidden sm:inline">Delete</span>
                         </Button>
                       </div>
                     </div>
@@ -565,7 +568,7 @@ export default function ElectedFederalHousePage() {
                       <div className="rounded-xl bg-gray-50 p-3">
                         <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Political Party</p>
                         <div className="mt-1 flex min-w-0 items-center gap-2">
-                          <Avatar className="h-8 w-8 shrink-0 border border-gray-200 bg-white">
+                          <Avatar className="h-14 w-14 shrink-0 border border-gray-200 bg-white">
                             {partyPhotoUrl && <AvatarImage src={partyPhotoUrl} alt={`${partyName} logo`} className="object-contain p-0.5" />}
                             <AvatarFallback className="text-[10px] font-bold text-gray-500">
                               {partyName.charAt(0)?.toUpperCase() || 'P'}

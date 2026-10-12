@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Loader2, MapPin, Pencil, Search, Trash2 } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Loader2, MapPin, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -173,12 +173,6 @@ export default function StateDetailPage() {
       setIsAddOpen(true)
     }
   }, [searchParams])
-
-  useEffect(() => {
-    const openForm = () => setIsAddOpen(true)
-    window.addEventListener('open-governatorial-form', openForm)
-    return () => window.removeEventListener('open-governatorial-form', openForm)
-  }, [])
 
   useEffect(() => {
     if (!isAuthenticated || !id) return
@@ -385,7 +379,7 @@ export default function StateDetailPage() {
         }]
       : elections
 
-  const candidatePageCount = Math.ceil(candidates.length / candidatesPerPage)
+  const candidatePageCount = Math.max(1, Math.ceil(candidates.length / candidatesPerPage))
   const paginatedCandidates = candidates.slice(
     (candidatePage - 1) * candidatesPerPage,
     candidatePage * candidatesPerPage
@@ -472,28 +466,33 @@ export default function StateDetailPage() {
 
       <Card className="border border-gray-100 shadow-md">
         <CardContent className="p-0">
-          <div className="border-b border-gray-100 p-6 md:p-8">
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-4">
+          <div className="border-b border-gray-100 p-4 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-center gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100">
                   <MapPin className="h-6 w-6 text-blue-600" />
                 </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Manage Governatorial</p>
-                  <h1 className="mt-1 text-2xl font-bold text-gray-900">{state.name}</h1>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Manage State Candidates</p>
+                  <h1 className="mt-1 break-words text-xl font-bold text-gray-900 sm:text-2xl">{state.name}</h1>
                 </div>
               </div>
-              <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
-                <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Status</p>
-                <div className="mt-1 flex items-center gap-2 font-semibold text-[#146c4f]">
-                  <CheckCircle2 className="h-4 w-4" />
-                  {state.status === 1 ? 'Active' : 'Inactive'}
+              <div className="flex flex-col gap-3 sm:items-end">
+                <Button type="button" className="w-full bg-[#146c4f] hover:bg-[#10563f] sm:w-auto" onClick={() => setIsAddOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" /> Add Candidate
+                </Button>
+                <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-2 sm:self-end">
+                  <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Status</p>
+                  <div className="mt-1 flex items-center gap-2 font-semibold text-[#146c4f]">
+                    <CheckCircle2 className="h-4 w-4" />
+                    {state.status === 1 ? 'Active' : 'Inactive'}
+                  </div>
                 </div>
               </div>
             </div>
             <p className="mt-4 text-sm text-gray-500">Manage active governatorial candidates for {state.name}.</p>
           </div>
-          <div className="flex flex-col gap-4 border-b border-gray-100 px-6 py-4">
+          <div className="flex flex-col gap-4 border-b border-gray-100 px-4 py-4 sm:px-6">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto] sm:items-end">
               <label className="block">
                 <span className="mb-1 block text-xs font-semibold text-gray-600">Election year</span>
@@ -527,7 +526,7 @@ export default function StateDetailPage() {
             </div>
             {electionSearchError && <p className="text-sm text-red-600" role="alert">{electionSearchError}</p>}
             <p className="text-sm text-gray-500" aria-live="polite">
-              Showing {candidates.length === 0 ? 0 : (candidatePage - 1) * candidatesPerPage + 1}–{Math.min(candidatePage * candidatesPerPage, candidates.length)} of {candidates.length} candidates
+              Showing {candidates.length === 0 ? 0 : (candidatePage - 1) * candidatesPerPage + 1}–{Math.min(candidatePage * candidatesPerPage, candidates.length)} of {candidates.length} candidates · {candidatesPerPage} per page
             </p>
           </div>
           {candidates.length === 0 ? (
@@ -536,7 +535,7 @@ export default function StateDetailPage() {
             </div>
           ) : (
             <>
-            <div className="grid w-full grid-cols-1 gap-4 p-6 sm:grid-cols-2">
+            <div className="grid w-full grid-cols-1 gap-4 p-4 sm:grid-cols-2 sm:p-6">
               {paginatedCandidates.map((candidate) => {
                 const photoUrl = getLogoUrl(candidate.image)
                 const partyLogoUrl = getPartyLogoValue(candidate.party)
@@ -546,115 +545,111 @@ export default function StateDetailPage() {
                 const deleteLabel = isDeputyGovernor ? 'Delete Deputy' : 'Delete Governor'
 
                 return (
-                  <article key={`${candidate.id}-${candidate.office_id}`} className="w-full rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
-                    <div className="mb-4 flex items-center gap-3">
-                      <Avatar className="h-12 w-12 shrink-0 border border-gray-200">
-                        {photoUrl && <AvatarImage src={photoUrl} alt={candidate.full_name} className="object-cover" />}
-                        <AvatarFallback className="bg-[#146c4f]/10 font-semibold text-[#146c4f]">{nameInitial}</AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0">
-                        <p className="truncate font-semibold text-gray-900">{candidate.full_name}</p>
-                      </div>
-                      <div className="ml-auto flex shrink-0 gap-2">
-                        <Button type="button" variant="outline" onClick={() => openEditForm(candidate)}>
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Edit
+                  <Card key={`${candidate.id}-${candidate.office_id}`} className="h-full min-w-0 overflow-hidden border border-gray-100 shadow-md">
+                    <div className="h-2 bg-gradient-to-r from-[#146c4f] to-emerald-300" />
+                    <CardContent className="p-4 sm:p-8">
+                      <div className="mb-4 flex items-center justify-between gap-2">
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${candidate.status === 'Active' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
+                          {candidate.status || 'Active'}
+                        </span>
+                        <div className="flex shrink-0 gap-1 sm:gap-2">
+                        <Button type="button" size="sm" variant="outline" aria-label={`Edit ${candidate.full_name}`} title="Edit candidate" className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => openEditForm(candidate)}>
+                          <Pencil className="h-4 w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Edit</span>
                         </Button>
-                        <Button type="button" variant="destructive" onClick={() => {
+                        <Button type="button" size="sm" variant="destructive" aria-label={`${deleteLabel} ${candidate.full_name}`} title={deleteLabel} className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => {
                           setDeletingCandidate(candidate)
                           setDeleteError('')
                         }}>
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          {deleteLabel}
+                          <Trash2 className="h-4 w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">{deleteLabel}</span>
                         </Button>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="space-y-3 text-sm text-gray-600">
-                      <div className="flex min-w-0 items-center gap-3 rounded-lg bg-gray-50 p-2.5">
-                        <Avatar className="h-9 w-9 shrink-0 border border-gray-200 bg-white">
-                          {partyLogoUrl && <AvatarImage src={partyLogoUrl} alt={`${partyName} logo`} className="object-contain" />}
-                          <AvatarFallback className="bg-gray-100 text-xs font-semibold text-gray-600">
-                            {partyName.charAt(0).toUpperCase() || 'P'}
-                          </AvatarFallback>
+                      <div className="flex flex-col items-center text-center">
+                        <Avatar className="h-28 w-28 border-4 border-white shadow-lg ring-2 ring-[#146c4f]/20">
+                          {photoUrl && <AvatarImage src={photoUrl} alt={candidate.full_name} className="object-cover" />}
+                          <AvatarFallback className="bg-[#146c4f]/10 text-2xl font-bold text-[#146c4f]">{nameInitial}</AvatarFallback>
                         </Avatar>
-                        <div className="min-w-0">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Party</p>
-                          <p className="truncate font-medium text-gray-800">{partyName}</p>
-                        </div>
+                        <p className="mt-5 text-xs font-bold uppercase tracking-[0.16em] text-[#146c4f]">{candidate.office_title || 'Governatorial Candidate'}</p>
+                        <h2 className="mt-2 break-words text-2xl font-bold text-gray-900">{candidate.full_name || 'Candidate'}</h2>
                       </div>
 
-                      <div className="rounded-lg bg-gray-50 p-2.5">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Office</p>
-                        <p className="mt-1 font-medium text-gray-800">{candidate.office_title || 'N/A'}</p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="min-w-0 rounded-lg bg-gray-50 p-2.5">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">NIN</p>
-                          <p className="mt-1 break-words font-medium text-gray-800">{candidate.nin || 'N/A'}</p>
+                      <div className="mt-7 grid gap-3 text-sm sm:grid-cols-2">
+                        <div className="rounded-xl bg-gray-50 p-4">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Political Party</p>
+                          <div className="mt-2 flex items-center gap-3">
+                            <Avatar className="h-12 w-12 border border-gray-200 bg-white">
+                              {partyLogoUrl && <AvatarImage src={partyLogoUrl} alt={`${partyName} logo`} className="object-contain p-1" />}
+                              <AvatarFallback className="text-sm font-bold text-gray-500">{partyName.charAt(0).toUpperCase() || 'P'}</AvatarFallback>
+                            </Avatar>
+                            <p className="truncate font-semibold text-gray-800">{partyName}</p>
+                          </div>
                         </div>
-                        <div className="min-w-0 rounded-lg bg-gray-50 p-2.5">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Phone</p>
-                          <p className="mt-1 break-words font-medium text-gray-800">{candidate.phoneNo || 'N/A'}</p>
+                        <div className="rounded-xl bg-gray-50 p-4">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Election</p>
+                          <p className="mt-2 font-semibold text-gray-800">{candidate.election?.year || candidate.election?.details || 'Not specified'}</p>
                         </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="min-w-0 rounded-lg bg-gray-50 p-2.5">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Email</p>
-                          <p className="mt-1 break-all font-medium text-gray-800">{candidate.email || 'N/A'}</p>
+                        <div className="rounded-xl bg-gray-50 p-4">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">NIN</p>
+                          <p className="mt-2 break-words font-semibold text-gray-800">{candidate.nin || 'Not specified'}</p>
                         </div>
-                        <div className="rounded-lg bg-gray-50 p-2.5">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Date of birth</p>
-                          <p className="mt-1 font-medium text-gray-800">{candidate.dob || 'N/A'}</p>
+                        <div className="rounded-xl bg-gray-50 p-4">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Phone</p>
+                          <p className="mt-2 break-words font-semibold text-gray-800">{candidate.phoneNo || 'Not specified'}</p>
                         </div>
-                      </div>
-
-                      <div className="rounded-lg bg-gray-50 p-2.5">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Address</p>
-                        <p className="mt-1 line-clamp-2 font-medium text-gray-800">{candidate.address || 'N/A'}</p>
-                      </div>
-
-                      {candidate.manifesto && (
-                        <div className="rounded-lg bg-gray-50 p-2.5">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Manifesto</p>
-                          <p className="mt-1 line-clamp-3 whitespace-pre-wrap font-medium text-gray-800">{candidate.manifesto}</p>
+                        <div className="rounded-xl bg-gray-50 p-4">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Email</p>
+                          <p className="mt-2 break-all font-semibold text-gray-800">{candidate.email || 'Not specified'}</p>
                         </div>
-                      )}
-
-                      <div className="flex items-center justify-between border-t border-gray-100 pt-3">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Status</span>
-                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${candidate.status === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'}`}>
-                          {candidate.status || 'Active'}
-                        </span>
+                        <div className="rounded-xl bg-gray-50 p-4">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Date of Birth</p>
+                          <p className="mt-2 font-semibold text-gray-800">{candidate.dob || 'Not specified'}</p>
+                        </div>
+                        <div className="rounded-xl bg-gray-50 p-4 sm:col-span-2">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Address</p>
+                          <p className="mt-2 break-words font-semibold text-gray-800">{candidate.address || 'Not specified'}</p>
+                        </div>
+                        {candidate.manifesto && (
+                          <div className="rounded-xl bg-gray-50 p-4 sm:col-span-2">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Manifesto</p>
+                            <p className="mt-2 whitespace-pre-wrap text-gray-800">{candidate.manifesto}</p>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </article>
+                    </CardContent>
+                  </Card>
                 )
               })}
             </div>
-            {candidatePageCount > 1 && (
-              <div className="flex items-center justify-center gap-4 border-t border-gray-100 px-6 py-4">
+            {candidates.length > 0 && (
+              <div className="flex items-center justify-between gap-3 border-t border-gray-100 px-4 py-4 sm:justify-center sm:gap-6 sm:px-6">
                 <Button
                   type="button"
                   variant="outline"
+                  size="sm"
+                  className="gap-1"
                   onClick={() => setCandidatePage((page) => Math.max(1, page - 1))}
                   disabled={candidatePage === 1}
                   aria-label="Previous candidate page"
                 >
                   <ChevronLeft className="h-4 w-4" />
+                  <span>Previous</span>
                 </Button>
-                <span className="text-sm text-gray-600" aria-live="polite">
+                <span className="whitespace-nowrap text-sm text-gray-600" aria-live="polite">
                   Page {candidatePage} of {candidatePageCount}
                 </span>
                 <Button
                   type="button"
                   variant="outline"
+                  size="sm"
+                  className="gap-1"
                   onClick={() => setCandidatePage((page) => Math.min(candidatePageCount, page + 1))}
                   disabled={candidatePage === candidatePageCount}
                   aria-label="Next candidate page"
                 >
+                  <span>Next</span>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -802,110 +797,177 @@ export default function StateDetailPage() {
           }
         }}
       >
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Add Governatorial Candidate</DialogTitle>
+            <DialogDescription>
+              Verify the candidate first, then complete the governatorial assignment details.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <label htmlFor="governatorial-election" className="block text-sm font-medium text-gray-700">Active Election *</label>
-            <select
-              id="governatorial-election"
-              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-              value={formData.election_id}
-              disabled={isVerifyingCandidate || isSearchingCandidates}
-              onChange={(event) => {
-                setFormData((current) => ({
-                  ...current,
-                  election_id: event.target.value,
-                  candidate_id: '',
-                  party_id: ''
-                }))
-                setCandidateOptions([])
-                setHasSearchedCandidates(false)
-                setSelectedCandidate(null)
-                setCandidateSearchError('')
-                setFormError('')
-              }}
-            >
-              <option value="">Select election</option>
-              {elections.map((election) => (
-                <option key={election.id} value={election.id}>
-                  {election.year}{election.details ? ` - ${election.details}` : ''}
-                </option>
-              ))}
-            </select>
-            <label htmlFor="governatorial-candidate-search" className="block text-sm font-medium text-gray-700">Candidate NIN or phone number *</label>
-            <div className="flex gap-2">
-              <input
-                id="governatorial-candidate-search"
-                className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm"
-                value={selectedCandidate?.full_name || candidateSearch}
-                placeholder="Enter candidate NIN or phone number"
-                readOnly={Boolean(selectedCandidate)}
-                disabled={isVerifyingCandidate}
-                onChange={(event) => {
-                  if (selectedCandidate) return
-                  setCandidateSearch(event.target.value)
-                  setCandidateOptions([])
-                  setCandidateSearchError('')
-                  setHasSearchedCandidates(false)
-                  setFormError('')
-                  setFormData({ ...formData, candidate_id: '', party_id: '' })
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault()
-                    void searchElectionCandidates()
-                  }
-                }}
-              />
-              <Button type="button" onClick={searchElectionCandidates} disabled={isSearchingCandidates || isVerifyingCandidate || Boolean(selectedCandidate)} className="bg-[#146c4f] hover:bg-[#10563f]">
-                <Search className="h-4 w-4" />
-                {isSearchingCandidates ? 'Searching...' : isVerifyingCandidate ? 'Verifying...' : 'Search'}
-              </Button>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className={`rounded-xl border p-3 ${selectedCandidate ? 'border-emerald-200 bg-emerald-50' : 'border-[#146c4f]/30 bg-[#146c4f]/5'}`}>
+                <p className="text-xs font-bold uppercase tracking-wider text-[#146c4f]">Step 1</p>
+                <p className="mt-1 text-sm font-semibold text-gray-900">Verify candidate</p>
+              </div>
+              <div className={`rounded-xl border p-3 ${selectedCandidate ? 'border-[#146c4f]/30 bg-[#146c4f]/5' : 'border-gray-200 bg-gray-50'}`}>
+                <p className={`text-xs font-bold uppercase tracking-wider ${selectedCandidate ? 'text-[#146c4f]' : 'text-gray-400'}`}>Step 2</p>
+                <p className={`mt-1 text-sm font-semibold ${selectedCandidate ? 'text-gray-900' : 'text-gray-400'}`}>Assignment details</p>
+              </div>
             </div>
-            {candidateSearch.trim() && !selectedCandidate && hasSearchedCandidates && candidateOptions.length > 0 && (
-              <div className="space-y-1 rounded-md border border-gray-200 p-2">
-                {candidateOptions.map((candidate) => (
-                    <button
-                      key={candidate.id}
+
+            {!selectedCandidate ? (
+              <div className="space-y-4 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+                <div>
+                  <label htmlFor="governatorial-election" className="mb-1 block text-sm font-medium text-gray-700">Active Election *</label>
+                  <select
+                    id="governatorial-election"
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    value={formData.election_id}
+                    disabled={isVerifyingCandidate || isSearchingCandidates}
+                    onChange={(event) => {
+                      setFormData((current) => ({
+                        ...current,
+                        election_id: event.target.value,
+                        candidate_id: '',
+                        party_id: ''
+                      }))
+                      setCandidateOptions([])
+                      setHasSearchedCandidates(false)
+                      setSelectedCandidate(null)
+                      setCandidateSearchError('')
+                      setFormError('')
+                    }}
+                  >
+                    <option value="">Select election</option>
+                    {elections.map((election) => (
+                      <option key={election.id} value={election.id}>
+                        {election.year}{election.details ? ` - ${election.details}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="governatorial-candidate-search" className="mb-1 block text-sm font-medium text-gray-700">Candidate NIN or phone number *</label>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <input
+                      id="governatorial-candidate-search"
+                      className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm"
+                      value={candidateSearch}
+                      placeholder="Enter candidate NIN or phone number"
+                      disabled={isVerifyingCandidate || isSearchingCandidates}
+                      onChange={(event) => {
+                        setCandidateSearch(event.target.value)
+                        setCandidateOptions([])
+                        setCandidateSearchError('')
+                        setHasSearchedCandidates(false)
+                        setFormError('')
+                        setFormData((current) => ({ ...current, candidate_id: '', party_id: '' }))
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault()
+                          void searchElectionCandidates()
+                        }
+                      }}
+                    />
+                    <Button
                       type="button"
-                      className="block w-full rounded px-2 py-2 text-left text-sm hover:bg-gray-100 disabled:opacity-50"
-                      disabled={isVerifyingCandidate}
-                      onClick={() => void verifyCandidate(candidate)}
+                      className="w-full bg-[#146c4f] hover:bg-[#10563f] sm:w-auto"
+                      onClick={() => void searchElectionCandidates()}
+                      disabled={isSearchingCandidates || isVerifyingCandidate}
                     >
-                      <span className="font-medium">{candidate.full_name}</span>
-                      <span className="ml-2 text-gray-500">{candidate.phoneNo || candidate.nin}</span>
-                    </button>
-                  ))}
+                      <Search className="mr-2 h-4 w-4" />
+                      {isSearchingCandidates ? 'Searching...' : 'Find Candidate'}
+                    </Button>
+                  </div>
+                </div>
+                {candidateSearch.trim() && hasSearchedCandidates && candidateOptions.length > 0 && (
+                  <div className="space-y-1 rounded-md border border-gray-200 bg-white p-2">
+                    <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Select the matching candidate to verify</p>
+                    {candidateOptions.map((candidate) => (
+                      <button
+                        key={candidate.id}
+                        type="button"
+                        className="flex w-full flex-col rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-100 disabled:opacity-50 sm:flex-row sm:items-center sm:justify-between"
+                        disabled={isVerifyingCandidate}
+                        onClick={() => void verifyCandidate(candidate)}
+                      >
+                        <span className="font-medium">{candidate.full_name}</span>
+                        <span className="text-gray-500">{candidate.phoneNo || candidate.nin}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {(isVerifyingCandidate || isSearchingCandidates) && (
+                  <p role="status" className="flex items-center gap-2 text-sm text-gray-500">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {isVerifyingCandidate ? 'Verifying candidate registration...' : 'Searching candidates...'}
+                  </p>
+                )}
+                {candidateSearchError && <p role="alert" className="text-sm text-red-600">{candidateSearchError}</p>}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex flex-col gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 sm:flex-row sm:items-center">
+                  <Avatar className="h-12 w-12 border border-emerald-200">
+                    <AvatarImage src={getLogoUrl(selectedCandidate.image) ?? undefined} alt={selectedCandidate.full_name} className="object-cover" />
+                    <AvatarFallback className="bg-white font-semibold text-[#146c4f]">
+                      {selectedCandidate.full_name?.trim().charAt(0).toUpperCase() || 'C'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">Candidate verified</p>
+                    <p className="break-words font-semibold text-gray-900">{selectedCandidate.full_name}</p>
+                    <p className="text-sm text-gray-600">{selectedCandidate.phoneNo || selectedCandidate.nin || 'Verified candidate'}</p>
+                  </div>
+                  <Button type="button" size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => {
+                    setSelectedCandidate(null)
+                    setFormData((current) => ({ ...current, candidate_id: '', party_id: '' }))
+                    setCandidateSearchError('')
+                    setFormError('')
+                  }}>
+                    Change candidate
+                  </Button>
+                </div>
+
+                <div>
+                  <label htmlFor="governatorial-office" className="mb-1 block text-sm font-medium text-gray-700">Office *</label>
+                  <select
+                    id="governatorial-office"
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    value={formData.office_id}
+                    onChange={(event) => setFormData((current) => ({ ...current, office_id: event.target.value }))}
+                  >
+                    <option value="">{officesError || (offices.length ? 'Select office' : 'No state offices available')}</option>
+                    {offices.map((office) => <option key={office.id} value={office.id}>{office.title}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="governatorial-party" className="mb-1 block text-sm font-medium text-gray-700">Political Party *</label>
+                  <input
+                    id="governatorial-party"
+                    readOnly
+                    className="h-10 w-full rounded-md border border-input bg-gray-50 px-3 text-sm"
+                    value={selectedCandidate.political_party || selectedCandidate.party?.name || ''}
+                    placeholder="Selected candidate's registered party"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="governatorial-manifesto" className="mb-1 block text-sm font-medium text-gray-700">Manifesto</label>
+                  <Textarea
+                    id="governatorial-manifesto"
+                    value={formData.manifesto}
+                    onChange={(event) => setFormData((current) => ({ ...current, manifesto: event.target.value }))}
+                    placeholder="Manifesto"
+                  />
+                </div>
+                {formError && <p role="alert" className="text-sm text-red-600">{formError}</p>}
+                <Button type="button" onClick={addCandidate} disabled={isSaving || isVerifyingCandidate} className="w-full bg-[#146c4f] hover:bg-[#10563f]">
+                  {isSaving ? 'Adding...' : 'Add Governatorial Candidate'}
+                </Button>
               </div>
             )}
-            {candidateSearchError && <p className="text-sm text-red-600">{candidateSearchError}</p>}
-            {selectedCandidate && (
-              <p className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm font-medium text-green-800">
-                Candidate verified for the selected election.
-              </p>
-            )}
-
-            <label className="block text-sm font-medium text-gray-700">Office *</label>
-            <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={formData.office_id} onChange={(event) => setFormData({ ...formData, office_id: event.target.value })}>
-              <option value="">{officesError || (offices.length ? 'Select office' : 'No state offices available')}</option>
-              {offices.map((office) => <option key={office.id} value={office.id}>{office.title}</option>)}
-            </select>
-
-            <label className="block text-sm font-medium text-gray-700">Political Party *</label>
-            <input
-              readOnly
-              className="h-10 w-full rounded-md border border-input bg-gray-50 px-3 text-sm"
-              value={selectedCandidate?.political_party || ''}
-              placeholder="Selected candidate's registered party"
-            />
-
-            <Textarea value={formData.manifesto} onChange={(event) => setFormData({ ...formData, manifesto: event.target.value })} placeholder="Manifesto" />
-            {formError && <p className="text-sm text-red-600">{formError}</p>}
-            <Button type="button" onClick={addCandidate} disabled={isSaving || isVerifyingCandidate} className="w-full bg-[#146c4f] hover:bg-[#10563f]">
-              {isSaving ? 'Adding...' : 'Add Governatorial'}
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
