@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { blogService, Post, PostType } from '@/services/blogs'
+import { blogService, getPostImageUrl, Post, PostType } from '@/services/blogs'
 import { Calendar, ChevronRight, Tag, ArrowRight } from 'lucide-react'
 
 export default function PublicBlogsPage() {
@@ -64,9 +64,9 @@ export default function PublicBlogsPage() {
                 {posts.map(post => (
                   <article key={post.id} className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 group flex flex-col">
                     <div className="h-56 relative overflow-hidden bg-gray-100">
-                      {post.images?.[0]?.url ? (
+                      {getPostImageUrl(post.images?.[0]) ? (
                         <img 
-                          src={post.images[0].url} 
+                          src={getPostImageUrl(post.images?.[0]) || ''}
                           alt={post.title} 
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
@@ -141,5 +141,3 @@ export default function PublicBlogsPage() {
     </div>
   )
 }
-
-

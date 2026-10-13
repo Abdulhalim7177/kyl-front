@@ -28,6 +28,7 @@ import AdminPollsPage from '@/pages/AdminPollsPage'
 import AdminPollFormPage from '@/pages/AdminPollFormPage'
 import AdminBlogsPage from '@/pages/AdminBlogsPage'
 import AdminBlogFormPage from '@/pages/AdminBlogFormPage'
+import AdminBlogDetailPage from '@/pages/AdminBlogDetailPage'
 import PublicPollsPage from '@/pages/PublicPollsPage'
 import PublicBlogsPage from '@/pages/PublicBlogsPage'
 import PublicBlogDetailPage from '@/pages/PublicBlogDetailPage'
@@ -625,6 +626,7 @@ function App() {
             <Route path="/k8s9d7f3-polls-edit/:id" element={<ProtectedRoute><AdminLayout title="Admin / Polls / Edit"><AdminPollFormPage /></AdminLayout></ProtectedRoute>} />
             
             <Route path="/k8s9d7f3-blogs" element={<ProtectedRoute><AdminLayout title="Admin / Blogs"><AdminBlogsPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/k8s9d7f3-blogs-view/:id" element={<ProtectedRoute><AdminLayout title="Admin / Blogs / View"><AdminBlogDetailPage /></AdminLayout></ProtectedRoute>} />
             <Route path="/k8s9d7f3-blogs-add" element={<ProtectedRoute><AdminLayout title="Admin / Blogs / Add"><AdminBlogFormPage /></AdminLayout></ProtectedRoute>} />
             <Route path="/k8s9d7f3-blogs-edit/:id" element={<ProtectedRoute><AdminLayout title="Admin / Blogs / Edit"><AdminBlogFormPage /></AdminLayout></ProtectedRoute>} />
             
@@ -637,7 +639,6 @@ function App() {
 }
 
 export default App
-
 
 
 
