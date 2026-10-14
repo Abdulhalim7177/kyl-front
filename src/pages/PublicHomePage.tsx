@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { visitorService } from '@/services/visitors';
 import { electionService, Election } from '@/services/elections';
 import { pollService, Poll } from '@/services/polls';
-import { blogService, Post } from '@/services/blogs';
+import { blogService, getPostImageUrl, Post } from '@/services/blogs';
 import { Link } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, Calendar, BarChart2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
@@ -208,8 +208,8 @@ export default function PublicHomePage() {
             {blogs.map(post => (
               <div key={post.id} className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col h-full hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-300 group">
                 <div className="w-full h-48 rounded-2xl overflow-hidden mb-6 bg-gray-100 relative">
-                  {post.images && post.images.length > 0 ? (
-                    <img src={post.images[0].url || `http://kyl.test/${(post.images[0] as any).image_path}`} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  {getPostImageUrl(post.images?.[0]) ? (
+                    <img src={getPostImageUrl(post.images?.[0]) || ''} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-400 font-medium">No Image</div>
                   )}
@@ -291,7 +291,6 @@ export default function PublicHomePage() {
     </div>
   );
 }
-
 
 
 

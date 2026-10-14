@@ -2,19 +2,10 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { AnimatedConfirmDialog } from '@/components/AnimatedConfirmDialog'
 import { PaginationControls } from '@/components/PaginationControls'
 import { useClientPagination } from '@/components/useClientPagination'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { cn } from '@/lib/utils'
+import { cn, getLogoUrl } from '@/lib/utils'
 import {
   Select,
   SelectContent,
@@ -26,9 +17,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 
 import { 
   Search, 
-  Download, 
-  List as ListIcon, 
-  LayoutGrid, 
   X, 
   Plus,
   Check,
@@ -193,14 +181,19 @@ export default function CandidatesPage() {
     paginatedData,
     handlePageChange,
     handleItemsPerPageChange
-  } = useClientPagination(filteredCandidates, 20)
+  } = useClientPagination(filteredCandidates, 21)
 
   const toggleSelectAll = () => {
-    if (selectedIds.size === paginatedData.length) {
-      setSelectedIds(new Set())
-    } else {
-      setSelectedIds(new Set(paginatedData.map(c => c.id)))
-    }
+    const pageIds = paginatedData.map(candidate => candidate.id)
+    const allPageCandidatesSelected = pageIds.every(id => selectedIds.has(id))
+    setSelectedIds(current => {
+      const next = new Set(current)
+      pageIds.forEach(id => {
+        if (allPageCandidatesSelected) next.delete(id)
+        else next.add(id)
+      })
+      return next
+    })
   }
 
   const numSelected = selectedIds.size
@@ -308,215 +301,150 @@ export default function CandidatesPage() {
              </SelectContent>
            </Select>
            
-           <div className="h-8 w-px bg-gray-200 mx-1 shrink-0 hidden sm:block" />
-
-           <button className="p-2 text-gray-500 hover:text-gray-800 transition-colors shrink-0 hidden sm:block">
-              <Download className="w-5 h-5" />
-           </button>
-           
-           <div className="flex items-center bg-gray-100 rounded-lg p-1 shrink-0 hidden sm:flex">
-              <button className="p-1 px-3 bg-[#146c4f] text-white rounded shadow-sm"><ListIcon className="w-4 h-4" /></button>
-              <button className="p-1 px-3 text-gray-500 hover:text-gray-800"><LayoutGrid className="w-4 h-4" /></button>
-           </div>
          </div>
       </div>
 
-      {/* Table Container */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto relative">
-         {/* Contextual Action Bar Overlay */}
-         {isSelectionActive && (
-           <div className="absolute inset-x-0 top-0 h-16 min-h-[64px] bg-[#187555] text-white z-20 flex items-center justify-between px-4 sm:px-6 lg:px-8 animate-in slide-in-from-top-2 fade-in duration-200 shadow-md whitespace-nowrap overflow-x-auto hide-scrollbar">
-             <div className="flex items-center gap-3 sm:gap-4 shrink-0 mr-4">
-                <button className="w-8 h-8 rounded shrink-0 bg-white/20 flex items-center justify-center text-white cursor-pointer hover:bg-white/30" onClick={toggleSelectAll}>
-                   <Check className="w-5 h-5" />
-                </button>
-                <div>
-                   <span className="font-semibold block leading-tight text-sm sm:text-base">{numSelected} Selected</span>
-                   <span className="text-[10px] sm:text-xs text-emerald-100 block opacity-90 hidden sm:block">Apply actions to the selected records</span>
-                </div>
-             </div>
-             <div className="flex items-center gap-2 shrink-0">
-                <Button className="bg-red-500 hover:bg-red-600 border border-red-500 text-white rounded-lg h-8 sm:h-9 text-xs sm:text-sm font-medium px-3 sm:px-5" onClick={() => {
-                  setCandidateToDelete(null)
-                  setIsDeleteOpen(true)
-                }}>
-                   <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 opacity-80" />
-                   DELETE
-                </Button>
-                <button className="ml-2 sm:ml-4 p-1.5 text-emerald-200 hover:text-white transition-colors" onClick={() => setSelectedIds(new Set())}>
-                   <X className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-             </div>
-           </div>
-         )}
+      {isSelectionActive && (
+        <div className="flex items-center justify-between gap-3 rounded-xl bg-[#187555] px-4 py-3 text-white shadow-sm sm:px-6">
+          <div className="flex items-center gap-3">
+            <button type="button" className="flex h-8 w-8 items-center justify-center rounded bg-white/20 hover:bg-white/30" onClick={toggleSelectAll} aria-label="Select all candidates on this page">
+              <Check className="h-5 w-5" />
+            </button>
+            <span className="font-semibold">{numSelected} Selected</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button className="h-9 rounded-lg border border-red-500 bg-red-500 px-3 text-sm text-white hover:bg-red-600 sm:px-5" onClick={() => {
+              setCandidateToDelete(null)
+              setIsDeleteOpen(true)
+            }}>
+              <Trash2 className="mr-2 h-4 w-4" />Delete
+            </Button>
+            <button type="button" className="p-1.5 text-emerald-100 hover:text-white" onClick={() => setSelectedIds(new Set())} aria-label="Clear selection">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
 
-         <div className="min-w-[800px]">
-           <Table>
-             <TableHeader>
-               <TableRow className="hover:bg-transparent border-gray-100">
-                  <TableHead className="w-12 px-6">
-                   <Checkbox 
-                     checked={selectedIds.size === (candidates || []).length && (candidates || []).length > 0} 
-                     onCheckedChange={toggleSelectAll} 
-                     className="rounded-[4px] border-gray-300"
-                   />
-                 </TableHead>
-                 <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider">USER ID</TableHead>
-                 <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider">FULL NAME</TableHead>
-                 <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider">POLITICAL PARTY</TableHead>
-                 <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider">SENATORIAL DISTRICT</TableHead>
-                 <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider">STATE</TableHead>
-                 <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider">STATUS</TableHead>
-                 <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider">ACTIONS</TableHead>
-               </TableRow>
-             </TableHeader>
-             <TableBody>
-               {loading ? (
-                 <TableRow>
-                   <TableCell colSpan={7} className="text-center py-8">
-                     <div className="flex items-center justify-center">
-                       <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#146c4f]"></div>
-                     </div>
-                   </TableCell>
-                 </TableRow>
-               ) : error ? (
-                 <TableRow>
-                   <TableCell colSpan={7} className="text-center py-8">
-                     <div className="text-red-600">
-                       <p className="font-medium mb-2">Error Loading Candidates</p>
-                       <p className="text-sm text-gray-600">{error}</p>
-                       {isAuthenticated ? (
-                         <Button 
-                           onClick={loadCandidates}
-                           className="mt-4 bg-[#146c4f] hover:bg-[#115a42] text-white"
-                         >
-                           Try Again
-                         </Button>
-                       ) : (
-                         <Button 
-                           onClick={() => navigate('/k8s9d7f3-auth-login')}
-                           className="mt-4 bg-[#146c4f] hover:bg-[#115a42] text-white"
-                         >
-                           Login
-                         </Button>
-                       )}
-                     </div>
-                   </TableCell>
-                 </TableRow>
-               ) : filteredCandidates.length === 0 ? (
-                 <TableRow>
-                   <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                     No candidates found
-                   </TableCell>
-                 </TableRow>
-               ) : (
-                 paginatedData.map((item) => {
-                   const isSelected = selectedIds.has(item.id)
-                   return (
-                     <TableRow 
-                       key={item.id} 
-                       className={`group transition-colors border-gray-50 ${isSelected ? 'bg-[#dcfce7]/20 border-[#146c4f]/20' : 'hover:bg-gray-50/50'}`}
-                     >
-                        <TableCell className="px-6 py-5">
-                          <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(item.id)} className="rounded-[4px] border-gray-300 data-[state=checked]:bg-[#146c4f] data-[state=checked]:border-[#146c4f]" />
-                        </TableCell>
-                        <TableCell className="font-medium text-gray-400 text-xs tracking-wide">
-                          {item.user_id}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-[#146c4f]/10 flex items-center justify-center text-[#146c4f] font-semibold text-xs">
-                              {item.full_name.charAt(0)}
-                            </div>
-                            <span className="font-medium text-gray-800">{item.full_name}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="border-[#146c4f]/30 text-[#146c4f] bg-[#146c4f]/5 font-medium">
-                            {item.political_party}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-gray-600">
-                          {item.senatorial_district || '-'}
-                        </TableCell>
-                         <TableCell className="text-gray-600">
-                           {item.state || '-'}
-                         </TableCell>
-                        <TableCell className="text-gray-600">
-                          <div className="inline-flex items-center gap-2">
-                            <span className={cn(
-                              'rounded-full px-2 py-1 text-[0.7rem] font-semibold',
-                              item.status === 'Active'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-red-100 text-red-800'
-                            )}
-                            >
-                              {item.status}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleToggleStatus(item.id)}
-                              disabled={togglingIds.has(item.id)}
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                              aria-label={`Toggle status for ${item.full_name}`}
-                            >
-                              <ToggleRight className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-[#146c4f] hover:bg-[#146c4f]/10 hover:text-[#115a42]"
-                              onClick={() => navigate(`/k8s9d7f3-candidates-view/${item.id}`)}
-                              aria-label={`View ${item.full_name}`}
-                              title="View candidate"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                              onClick={() => navigate(`/k8s9d7f3-candidates-edit/${item.id}`)}
-                              aria-label={`Edit ${item.full_name}`}
-                              title="Edit candidate"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700"
-                              onClick={() => handleDelete(item.id)}
-                              aria-label={`Delete ${item.full_name}`}
-                              title="Delete candidate"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                     </TableRow>
-                   )
-                 })
-               )}
-             </TableBody>
-           </Table>
-         </div>
-         <PaginationControls
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={totalItems}
-            itemsPerPage={itemsPerPage}
-            onPageChange={handlePageChange}
-            onItemsPerPageChange={handleItemsPerPageChange}
-         />
-      </div>
+      <section className="space-y-4">
+        {!loading && !error && filteredCandidates.length > 0 && (
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-gray-500">{totalItems} candidate{totalItems === 1 ? '' : 's'}</p>
+            <label className="flex items-center gap-2 text-sm text-gray-600">
+              <Checkbox
+                checked={paginatedData.length > 0 && paginatedData.every(candidate => selectedIds.has(candidate.id))}
+                onCheckedChange={toggleSelectAll}
+                aria-label="Select all candidates on this page"
+              />
+              Select page
+            </label>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="flex items-center justify-center gap-3 rounded-2xl border border-gray-100 bg-white py-16 text-sm text-gray-500 shadow-sm">
+            <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-[#146c4f]" />
+            Loading candidates...
+          </div>
+        ) : error ? (
+          <div className="rounded-2xl border border-red-100 bg-white px-5 py-12 text-center shadow-sm">
+            <p className="mb-2 font-medium text-red-600">Error Loading Candidates</p>
+            <p className="text-sm text-gray-600">{error}</p>
+            <Button
+              onClick={isAuthenticated ? loadCandidates : () => navigate('/k8s9d7f3-auth-login')}
+              className="mt-4 bg-[#146c4f] text-white hover:bg-[#115a42]"
+            >
+              {isAuthenticated ? 'Try Again' : 'Login'}
+            </Button>
+          </div>
+        ) : filteredCandidates.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-5 py-16 text-center text-gray-500">
+            No candidates found
+          </div>
+        ) : (
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            {paginatedData.map(item => {
+              const imageUrl = getLogoUrl(item.image)
+              const isSelected = selectedIds.has(item.id)
+              return (
+                <article key={item.id} className={cn(
+                  'group relative flex flex-col overflow-hidden rounded-2xl border bg-white shadow-[0_4px_20px_rgb(0,0,0,0.03)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_15px_30px_rgb(0,0,0,0.08)]',
+                  isSelected ? 'border-[#146c4f] ring-2 ring-[#146c4f]/20' : 'border-gray-100'
+                )}>
+                  <div className="absolute inset-0 bg-gradient-to-b from-[#146c4f]/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                  <div className="relative z-10 p-6 pb-5 text-center">
+                    <div className="absolute left-4 top-4">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleSelect(item.id)}
+                        aria-label={`Select ${item.full_name}`}
+                        className="border-gray-300 data-[state=checked]:border-[#146c4f] data-[state=checked]:bg-[#146c4f]"
+                      />
+                    </div>
+                    <div className="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-to-tr from-gray-200 to-gray-300 p-1 shadow-sm transition-all group-hover:from-[#146c4f] group-hover:to-emerald-400">
+                      <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-white bg-gray-50">
+                        {imageUrl ? (
+                          <img src={imageUrl} alt={item.full_name} className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="text-3xl font-light uppercase text-gray-400">{item.full_name?.charAt(0) || '?'}</span>
+                        )}
+                      </div>
+                    </div>
+                    <h2 className="line-clamp-2 min-h-14 text-lg font-bold tracking-tight text-gray-900">{item.full_name}</h2>
+                    <span className="mt-2 inline-flex max-w-full rounded-full bg-[#146c4f]/10 px-3 py-1 text-xs font-bold text-[#146c4f]">
+                      <span className="truncate">{item.political_party || item.party?.name || 'Independent'}</span>
+                    </span>
+                    <div className="mt-3 flex items-center justify-center gap-2">
+                      <span className={cn(
+                        'rounded-full px-2.5 py-1 text-xs font-semibold',
+                        item.status === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                      )}>
+                        {item.status}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleStatus(item.id)}
+                        disabled={togglingIds.has(item.id)}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        aria-label={`Toggle status for ${item.full_name}`}
+                        title="Toggle candidate status"
+                      >
+                        <ToggleRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="mt-4 space-y-1 text-sm text-gray-500">
+                      <p>{item.senatorial_district || item.federal_house_district || item.office_title || 'District unavailable'}</p>
+                      <p>{item.state || 'State unavailable'}</p>
+                    </div>
+                  </div>
+                  <div className="relative z-10 mt-auto flex justify-end border-t border-gray-100 bg-gray-50/60 px-4 py-3">
+                    <div className="flex items-center gap-1">
+                      <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-[#146c4f] hover:bg-[#146c4f]/10 hover:text-[#115a42]" onClick={() => navigate(`/k8s9d7f3-candidates-view/${item.id}`)} aria-label={`View ${item.full_name}`} title="View candidate">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-gray-600 hover:bg-gray-100 hover:text-gray-900" onClick={() => navigate(`/k8s9d7f3-candidates-edit/${item.id}`)} aria-label={`Edit ${item.full_name}`} title="Edit candidate">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(item.id)} aria-label={`Delete ${item.full_name}`} title="Delete candidate">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        )}
+
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handleItemsPerPageChange}
+        />
+      </section>
 
       {/* Delete Confirmation Dialog */}
       <AnimatedConfirmDialog

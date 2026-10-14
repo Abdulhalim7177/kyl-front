@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
-import { blogService, Post } from '@/services/blogs'
+import { blogService, getPostImageUrl, Post } from '@/services/blogs'
 import { Calendar, ArrowLeft, Share2 } from 'lucide-react'
 
 export default function PublicBlogDetailPage() {
@@ -54,7 +54,7 @@ export default function PublicBlogDetailPage() {
           <meta name="description" content={(post.content || '').replace(/<[^>]*>?/gm, '').substring(0, 160)} />
           <meta property="og:title" content={post.title} />
           <meta property="og:description" content={(post.content || '').replace(/<[^>]*>?/gm, '').substring(0, 160)} />
-          {post.images && post.images.length > 0 && <meta property="og:image" content={post.images[0].url || "http://kyl.test/" + (post.images[0] as any).image_path} />}
+          {getPostImageUrl(post.images?.[0]) && <meta property="og:image" content={getPostImageUrl(post.images?.[0]) || undefined} />}
         </Helmet>
       )}
     <div className="bg-white min-h-screen pt-24 pb-12">
@@ -85,11 +85,11 @@ export default function PublicBlogDetailPage() {
       </section>
 
       {/* Featured Image */}
-      {post.images?.[0]?.url && (
+      {getPostImageUrl(post.images?.[0]) && (
         <div className="container mx-auto px-4 max-w-5xl -mt-12 relative z-10">
           <div className="rounded-3xl overflow-hidden shadow-2xl bg-white p-2">
             <img 
-              src={post.images[0].url} 
+              src={getPostImageUrl(post.images?.[0]) || ''}
               alt={post.title} 
               className="w-full h-auto max-h-[600px] object-cover rounded-2xl"
             />
@@ -117,8 +117,6 @@ export default function PublicBlogDetailPage() {
     </>
   )
 }
-
-
 
 
 
