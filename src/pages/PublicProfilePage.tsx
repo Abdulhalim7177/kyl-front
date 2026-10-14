@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async';
 import { visitorService } from '@/services/visitors';
+import { getLogoUrl } from '@/lib/utils';
 
-import { Mail, Phone, User } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, User } from 'lucide-react';
 
 export default function PublicProfilePage() {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [education, setEducation] = useState<any[]>([]);
   const [experiences, setExperiences] = useState<any[]>([]);
@@ -14,6 +17,24 @@ export default function PublicProfilePage() {
   const [offices, setOffices] = useState<any[]>([]);
   const [leadership, setLeadership] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const profileImageUrl = getLogoUrl(profile?.image ?? profile?.photo ?? profile?.profile_photo);
+  const navigateBack = () => {
+    const state = location.state as {
+      profileReturnContext?: {
+        governorStateId: number;
+        governorView: 'candidates' | 'elected';
+        candidatePage?: number;
+      };
+    } | null;
+
+    if (state?.profileReturnContext) {
+      navigate('/leaders', { state: { profileReturnContext: state.profileReturnContext } });
+    } else if (location.key === 'default') {
+      navigate('/leaders');
+    } else {
+      navigate(-1);
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -66,6 +87,14 @@ export default function PublicProfilePage() {
       <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4">
         <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Profile Not Found</h1>
         <p className="text-gray-500 mb-8 max-w-md">The candidate or leader profile you are looking for does not exist or is inactive.</p>
+        <button
+          type="button"
+          onClick={navigateBack}
+          className="mb-4 inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 font-semibold text-gray-700 transition-colors hover:border-primary hover:text-primary"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </button>
         <Link to="/candidates" className="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors">
           Return to Directory
         </Link>
@@ -78,14 +107,22 @@ export default function PublicProfilePage() {
       {/* Profile Header Background Cover */}
       <div className="h-64 md:h-80 w-full bg-gradient-to-br from-primary to-emerald-900 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+        <button
+          type="button"
+          onClick={navigateBack}
+          className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-xl border border-white/30 bg-black/20 px-4 py-2.5 font-semibold text-white backdrop-blur-sm transition-colors hover:bg-black/40 sm:left-8 sm:top-8"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </button>
       </div>
 
       <div className="container mx-auto px-4 -mt-24 md:-mt-32 relative z-10">
         {/* Profile Card */}
-        <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-white p-8 mb-12 flex flex-col md:flex-row items-center md:items-end gap-8 relative overflow-hidden">
+        <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-white p-8 mb-12 flex flex-col md:flex-row items-center md:items-end gap-8 relative">
           <div className="w-40 h-40 md:w-56 md:h-56 rounded-full bg-gray-100 border-8 border-white shadow-xl overflow-hidden flex-shrink-0 flex items-center justify-center -mt-20 md:mt-0 relative z-10">
-            {profile.image?.url ? (
-              <img src={profile.image.url} alt="Profile" className="w-full h-full object-cover" />
+            {profileImageUrl ? (
+              <img src={profileImageUrl} alt={profile.fullName ?? 'Profile'} className="w-full h-full object-cover" />
             ) : (
               <span className="text-5xl text-gray-400 uppercase font-light">{profile.fullName?.charAt(0) || '?'}</span>
             )}
@@ -245,5 +282,3 @@ export default function PublicProfilePage() {
     </div>
   );
 }
-
-

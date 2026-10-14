@@ -23,11 +23,11 @@ class VisitorService {
       headers: this.getHeaders()
     })
     
-    if (!response.ok) {
-      throw new Error(`Failed to fetch ${endpoint}`)
-    }
-    
     const data = await response.json()
+    if (!response.ok || data?.success === false) {
+      throw new Error(data?.message || `Failed to fetch ${endpoint} (HTTP ${response.status})`)
+    }
+
     if (data.success && data.data) {
       return data.data
     }
@@ -61,12 +61,12 @@ class VisitorService {
   // --- Elected Leaders ---
   async getActiveElectedPresidency() { return this.fetchApi('get-active-elected-presidency') }
   async getElectedPresidency() { return this.fetchApi('get-elected-presidency') }
-  async getActiveElectedGovernor() { return this.fetchApi('get-active-elected-governor') }
-  async getElectedGovernor() { return this.fetchApi('get-elected-governor') }
-  async getActiveElectedSenator() { return this.fetchApi('get-active-elected-senator') }
-  async getElectedSenator() { return this.fetchApi('get-elected-senator') }
-  async getActiveElectedHouseOfRepMember() { return this.fetchApi('get-active-elected-house-of-rep-member') }
-  async getElectedHouseOfRepMember() { return this.fetchApi('get-elected-house-of-rep-member') }
+  async getActiveElectedGovernor(params?: Record<string, string|number>) { return this.fetchApi('get-active-elected-governor', params) }
+  async getElectedGovernor(params?: Record<string, string|number>) { return this.fetchApi('get-elected-governor', params) }
+  async getActiveElectedSenator(params?: Record<string, string|number>) { return this.fetchApi('get-active-elected-senator', params) }
+  async getElectedSenator(params?: Record<string, string|number>) { return this.fetchApi('get-elected-senator', params) }
+  async getActiveElectedHouseOfRepMember(params?: Record<string, string|number>) { return this.fetchApi('get-active-elected-house-of-rep-member', params) }
+  async getElectedHouseOfRepMember(params?: Record<string, string|number>) { return this.fetchApi('get-elected-house-of-rep-member', params) }
   async getActiveElectedStateAssemblyMember() { return this.fetchApi('get-active-elected-state-assembly-member') }
   async getElectedStateAssemblyMember() { return this.fetchApi('get-elected-state-assembly-member') }
   async getActiveElectedLgaChairman() { return this.fetchApi('get-active-elected-lga-chairman') }
