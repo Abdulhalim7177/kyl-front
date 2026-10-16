@@ -1,22 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
-  Check, Eye, ArrowLeft, CheckCircle, User, MapPin, Phone, Save, ArrowRight, Book, Briefcase, Award, Plus, Trash2
+  Check, Eye, ArrowLeft, CheckCircle, User, MapPin, Phone, Save, ArrowRight
 } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { candidateService, Candidate, CreateCandidateData, Party, LGADistrict, CandidateEducation, CandidateExperience, CandidateAchievement } from '@/services/candidates'
+import { candidateService, Candidate, CreateCandidateData, Party, LGADistrict } from '@/services/candidates'
 
 // Wizard steps configuration
 const WIZARD_STEPS = [
   { number: 1, label: 'Personal Profile', icon: User },
   { number: 2, label: 'Contact', icon: Phone },
   { number: 3, label: 'District', icon: MapPin },
-  { number: 4, label: 'Education', icon: Book },
-  { number: 5, label: 'Experience', icon: Briefcase },
-  { number: 6, label: 'Achievements', icon: Award },
 ]
 
 export default function AddCandidateWizard() {
@@ -24,10 +21,6 @@ export default function AddCandidateWizard() {
   const { id: candidateId } = useParams()
   const isEditMode = Boolean(candidateId)
   const [currentStep, setCurrentStep] = useState(1)
-  const [identityType, setIdentityType] = useState<'nin' | 'phone'>('nin')
-  const [identityValue, setIdentityValue] = useState('')
-  const [identityError, setIdentityError] = useState('')
-  const [isIdentityVerified, setIsIdentityVerified] = useState(Boolean(candidateId))
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoadingCandidate, setIsLoadingCandidate] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -36,13 +29,9 @@ export default function AddCandidateWizard() {
   const [districts, setDistricts] = useState<LGADistrict[]>([])
   const [partySearch, setPartySearch] = useState('')
   const [districtSearch, setDistrictSearch] = useState('')
-  const [lgas, setLgas] = useState<LGADistrict[]>([])
   const [loadingSelectData, setLoadingSelectData] = useState(false)
+  const [selectDataError, setSelectDataError] = useState('')
   
-  const [educations, setEducations] = useState<Partial<CandidateEducation>[]>([])
-  const [experiences, setExperiences] = useState<Partial<CandidateExperience>[]>([])
-  const [achievements, setAchievements] = useState<Partial<CandidateAchievement>[]>([])
-
   const [formData, setFormData] = useState<CreateCandidateData>({
     fullName: '',
     phoneNo: '',
@@ -58,7 +47,7 @@ export default function AddCandidateWizard() {
     party_id: undefined
   })
 
-  // Load parties and states on component mount
+  // Load parties and LGA districts on component mount
   useEffect(() => {
     const fetchSelectData = async () => {
       try {
@@ -71,6 +60,7 @@ export default function AddCandidateWizard() {
         setDistricts(districtsData)
       } catch (error) {
         console.error('Failed to load select data:', error)
+        setSelectDataError(error instanceof Error ? error.message : 'Unable to load parties and LGA districts.')
       } finally {
         setLoadingSelectData(false)
       }
@@ -79,31 +69,7 @@ export default function AddCandidateWizard() {
     fetchSelectData()
   }, [])
 
-  const verifyIdentity = () => {
-    const digits = identityValue.replace(/\D/g, '')
-    if (identityType === 'nin' && digits.length !== 11) {
-      setIdentityError('Enter a valid 11-digit NIN.')
-      return
-    }
-    if (identityType === 'phone' && (digits.length < 10 || digits.length > 15)) {
-      setIdentityError('Enter a valid phone number with 10 to 15 digits.')
-      return
-    }
-
-    setFormData((current) => ({
-      ...current,
-      ...(identityType === 'nin' ? { nin: Number(digits) } : { phoneNo: identityValue.trim() })
-    }))
-    setIdentityError('')
-    setIsIdentityVerified(true)
-  }
-
   const handleNext = () => {
-    if (!isEditMode && !isIdentityVerified) {
-      verifyIdentity()
-      return
-    }
-
     // Validate required fields for current step before proceeding
     if (currentStep === 1) {
       if (!formData.fullName.trim()) {
@@ -114,23 +80,28 @@ export default function AddCandidateWizard() {
         alert('Please enter NIN')
         return
       }
-      if (!formData.religion?.trim()) {
-        alert('Please enter Religion')
+      if (formData.nin.toString().length !== 11) {
+        alert('Please enter a valid 11-digit NIN')
         return
       }
     } else if (currentStep === 2) {
-      if (!formData.phoneNo.trim()) {
-        alert('Please enter Phone Number')
+      const phoneDigits = formData.phoneNo.replace(/\D/g, '')
+      if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+        alert('Please enter a valid phone number with 10 to 15 digits')
         return
       }
     } else if (currentStep === 3) {
+      if (!formData.party_id || formData.party_id === 0) {
+        alert('Please select Political Party')
+        return
+      }
       if (!formData.lga_district_id || formData.lga_district_id === 0) {
         alert('Please select LGA District')
         return
       }
     }
 
-    if (currentStep < 6) {
+    if (currentStep < WIZARD_STEPS.length) {
       setCurrentStep(currentStep + 1)
     } else {
       handleSubmit()
@@ -143,34 +114,12 @@ export default function AddCandidateWizard() {
     }
   }
 
-    const handleSubmit = async () => {
+  const handleSubmit = async () => {
     try {
       setIsSubmitting(true)
-      console.log('Submitting form data:', formData)
       const candidate = isEditMode && candidateId
         ? await candidateService.updateCandidate(Number(candidateId), formData)
         : await candidateService.createCandidate(formData)
-      
-      const savedCandidateId = isEditMode && candidateId ? Number(candidateId) : candidate.id
-
-      // Save related arrays using candidate id
-      if (savedCandidateId) {
-        for (const ed of educations) {
-          if (ed.education_level) {
-            await candidateService.addEducation({ ...ed, candidate_id: savedCandidateId } as CandidateEducation)
-          }
-        }
-        for (const ex of experiences) {
-          if (ex.job_title && ex.start_date) {
-            await candidateService.addExperience({ ...ex, candidate_id: savedCandidateId } as CandidateExperience)
-          }
-        }
-        for (const ach of achievements) {
-          if (ach.title && ach.issuer && ach.achievement_date) {
-            await candidateService.addAchievement({ ...ach, candidate_id: savedCandidateId } as CandidateAchievement)
-          }
-        }
-      }
 
       setSubmittedCandidate(candidate)
       setCurrentStep(7) // Show success page
@@ -225,69 +174,6 @@ export default function AddCandidateWizard() {
   }
 
   const renderStepContent = () => {
-    if (!isEditMode && !isIdentityVerified) {
-      return (
-        <div className="mx-auto max-w-xl space-y-5 py-4">
-          <div>
-            <h3 className="text-base font-semibold text-gray-900">Verify candidate identity</h3>
-            <p className="mt-1 text-sm text-gray-500">Enter the candidate's NIN or phone number to continue to the profile fields.</p>
-          </div>
-          <div className="space-y-2">
-            <span className="text-sm font-medium text-gray-700">Identifier type</span>
-            <div className="grid grid-cols-2 gap-2 rounded-lg bg-gray-100 p-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setIdentityType('nin')
-                  setIdentityError('')
-                }}
-                className={`h-10 rounded-md text-sm font-medium transition-colors ${identityType === 'nin' ? 'bg-white text-[#146c4f] shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
-                aria-pressed={identityType === 'nin'}
-              >
-                NIN
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIdentityType('phone')
-                  setIdentityError('')
-                }}
-                className={`h-10 rounded-md text-sm font-medium transition-colors ${identityType === 'phone' ? 'bg-white text-[#146c4f] shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
-                aria-pressed={identityType === 'phone'}
-              >
-                Phone number
-              </button>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="candidate-identity" className="text-sm font-medium text-gray-700">
-              {identityType === 'nin' ? 'National Identification Number' : 'Phone number'} *
-            </label>
-            <Input
-              id="candidate-identity"
-              type="tel"
-              inputMode="numeric"
-              autoComplete="off"
-              placeholder={identityType === 'nin' ? 'Enter 11-digit NIN' : 'Enter phone number'}
-              value={identityValue}
-              onChange={(event) => {
-                setIdentityValue(event.target.value)
-                setIdentityError('')
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault()
-                  verifyIdentity()
-                }
-              }}
-              className="h-12"
-            />
-            {identityError && <p className="text-sm text-red-600">{identityError}</p>}
-          </div>
-        </div>
-      )
-    }
-
     switch (currentStep) {
       case 1:
         return (
@@ -345,7 +231,7 @@ export default function AddCandidateWizard() {
 
             {/* Religious Affiliation */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Religion *</label>
+              <label className="text-sm font-medium text-gray-700">Religion</label>
               <Input
                 placeholder="Islam"
                 value={formData.religion}
@@ -409,13 +295,14 @@ export default function AddCandidateWizard() {
       case 3:
         return (
           <div className="space-y-4">
+            {selectDataError && <div role="alert" className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">{selectDataError}</div>}
             {/* Party Selection */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Political Party *</label>
               <Select
                 value={formData.party_id?.toString() || ''}
                 onValueChange={(value) => setFormData({ ...formData, party_id: parseInt(value) })}
-                disabled={loadingSelectData}
+                disabled={loadingSelectData || Boolean(selectDataError)}
               >
                 <SelectTrigger className="h-12 rounded-xl border border-gray-200 bg-white shadow-sm hover:border-[#146c4f]/40 focus:ring-2 focus:ring-[#146c4f]/20 focus:border-[#146c4f]">
                   <SelectValue placeholder={loadingSelectData ? "Loading parties..." : "Select Political Party"} />
@@ -464,7 +351,7 @@ export default function AddCandidateWizard() {
               <Select
                 value={formData.lga_district_id?.toString() || ''}
                 onValueChange={(value) => setFormData({ ...formData, lga_district_id: parseInt(value) })}
-                disabled={loadingSelectData}
+                disabled={loadingSelectData || Boolean(selectDataError)}
               >
                 <SelectTrigger className="h-12 rounded-xl border border-gray-200 bg-white shadow-sm hover:border-[#146c4f]/40 focus:ring-2 focus:ring-[#146c4f]/20 focus:border-[#146c4f]">
                   <SelectValue placeholder="Select LGA District" />
@@ -515,113 +402,6 @@ export default function AddCandidateWizard() {
           </div>
         )
 
-            case 4:
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800">Education History</h3>
-              <Button type="button" variant="outline" size="sm" onClick={() => setEducations([...educations, {}])}>
-                <Plus className="w-4 h-4 mr-2" /> Add Education
-              </Button>
-            </div>
-            {educations.map((ed, idx) => (
-              <div key={idx} className="p-4 border rounded-lg space-y-4 bg-gray-50 relative">
-                <Button type="button" variant="ghost" size="sm" className="absolute top-2 right-2 text-red-500" onClick={() => setEducations(educations.filter((_, i) => i !== idx))}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Level *</label>
-                    <Input placeholder="e.g. BSc, MSc" value={ed.education_level || ''} onChange={e => { const newEd = [...educations]; newEd[idx].education_level = e.target.value; setEducations(newEd); }} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Field of Study</label>
-                    <Input placeholder="e.g. Economics" value={ed.field_of_study || ''} onChange={e => { const newEd = [...educations]; newEd[idx].field_of_study = e.target.value; setEducations(newEd); }} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Institution</label>
-                    <Input placeholder="e.g. University of Lagos" value={ed.institution || ''} onChange={e => { const newEd = [...educations]; newEd[idx].institution = e.target.value; setEducations(newEd); }} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Graduation Year</label>
-                    <Input type="number" placeholder="YYYY" value={ed.graduation_year || ''} onChange={e => { const newEd = [...educations]; newEd[idx].graduation_year = parseInt(e.target.value); setEducations(newEd); }} />
-                  </div>
-                </div>
-              </div>
-            ))}
-            {educations.length === 0 && <p className="text-sm text-gray-500 italic">No education history added.</p>}
-          </div>
-        );
-      case 5:
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800">Professional Experience</h3>
-              <Button type="button" variant="outline" size="sm" onClick={() => setExperiences([...experiences, {}])}>
-                <Plus className="w-4 h-4 mr-2" /> Add Experience
-              </Button>
-            </div>
-            {experiences.map((ex, idx) => (
-              <div key={idx} className="p-4 border rounded-lg space-y-4 bg-gray-50 relative">
-                <Button type="button" variant="ghost" size="sm" className="absolute top-2 right-2 text-red-500" onClick={() => setExperiences(experiences.filter((_, i) => i !== idx))}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Job Title *</label>
-                    <Input placeholder="e.g. CEO, Commissioner" value={ex.job_title || ''} onChange={e => { const newEx = [...experiences]; newEx[idx].job_title = e.target.value; setExperiences(newEx); }} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Organization</label>
-                    <Input placeholder="e.g. State Government" value={ex.organization || ''} onChange={e => { const newEx = [...experiences]; newEx[idx].organization = e.target.value; setExperiences(newEx); }} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Start Date *</label>
-                    <Input type="date" value={ex.start_date || ''} onChange={e => { const newEx = [...experiences]; newEx[idx].start_date = e.target.value; setExperiences(newEx); }} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">End Date</label>
-                    <Input type="date" value={ex.end_date || ''} onChange={e => { const newEx = [...experiences]; newEx[idx].end_date = e.target.value; setExperiences(newEx); }} />
-                  </div>
-                </div>
-              </div>
-            ))}
-            {experiences.length === 0 && <p className="text-sm text-gray-500 italic">No professional experience added.</p>}
-          </div>
-        );
-      case 6:
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800">Achievements</h3>
-              <Button type="button" variant="outline" size="sm" onClick={() => setAchievements([...achievements, {}])}>
-                <Plus className="w-4 h-4 mr-2" /> Add Achievement
-              </Button>
-            </div>
-            {achievements.map((ach, idx) => (
-              <div key={idx} className="p-4 border rounded-lg space-y-4 bg-gray-50 relative">
-                <Button type="button" variant="ghost" size="sm" className="absolute top-2 right-2 text-red-500" onClick={() => setAchievements(achievements.filter((_, i) => i !== idx))}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Title *</label>
-                    <Input placeholder="e.g. Award of Excellence" value={ach.title || ''} onChange={e => { const newAch = [...achievements]; newAch[idx].title = e.target.value; setAchievements(newAch); }} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Issuer *</label>
-                    <Input placeholder="e.g. Federal Government" value={ach.issuer || ''} onChange={e => { const newAch = [...achievements]; newAch[idx].issuer = e.target.value; setAchievements(newAch); }} />
-                  </div>
-                  <div className="space-y-2 col-span-2">
-                    <label className="text-sm font-medium">Date *</label>
-                    <Input type="date" value={ach.achievement_date || ''} onChange={e => { const newAch = [...achievements]; newAch[idx].achievement_date = e.target.value; setAchievements(newAch); }} />
-                  </div>
-                </div>
-              </div>
-            ))}
-            {achievements.length === 0 && <p className="text-sm text-gray-500 italic">No achievements added.</p>}
-          </div>
-        );
       case 7:
         // Success Page
         return (
@@ -634,13 +414,13 @@ export default function AddCandidateWizard() {
               <p className="text-gray-600 text-sm mb-1">
                 Candidate <span className="font-semibold text-[#146c4f]">{submittedCandidate?.full_name || formData.fullName || 'Candidate'}</span> was {isEditMode ? 'updated' : 'created'} successfully.
               </p>
-              <p className="text-[12px] text-gray-400 mb-5">
-                ID: {submittedCandidate?.id} | Status: {submittedCandidate?.status || 'Pending'}
-              </p>
               <div className="flex flex-col gap-2">
-                <Button className="bg-[#146c4f] hover:bg-[#115a42] text-white" onClick={() => navigate('/k8s9d7f3-candidates')}>
+                <Button
+                  className="bg-[#146c4f] hover:bg-[#115a42] text-white"
+                  onClick={() => navigate(`/k8s9d7f3-candidates-view/${submittedCandidate?.id}`)}
+                >
                   <Eye className="w-4 h-4 mr-2" />
-                  View Candidates
+                  View Candidate
                 </Button>
                 <Button variant="outline" onClick={() => navigate('/k8s9d7f3-candidates')}>
                   Return to Candidates
@@ -697,7 +477,7 @@ export default function AddCandidateWizard() {
       </div>
 
       {/* Step Indicator */}
-      {(isEditMode || isIdentityVerified) && <div className="bg-white border-b border-gray-200 px-3 py-1">
+      <div className="bg-white border-b border-gray-200 px-3 py-1">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between gap-2">
             {WIZARD_STEPS.map((step, index) => {
@@ -731,7 +511,7 @@ export default function AddCandidateWizard() {
             })}
           </div>
         </div>
-      </div>}
+      </div>
 
       {/* Content Area */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
@@ -754,17 +534,14 @@ export default function AddCandidateWizard() {
         {currentStep < 7 && (
           <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mt-5 pt-3 border-t border-gray-100">
             <div className="w-full sm:w-auto">
-              {currentStep === 1 && (isEditMode || isIdentityVerified) ? (
+              {currentStep === 1 && isEditMode ? (
                 <Button 
                   variant="outline" 
-                  onClick={() => {
-                    if (!isEditMode) setIsIdentityVerified(false)
-                    else handleSaveDraft()
-                  }}
+                  onClick={handleSaveDraft}
                   className="flex items-center gap-2"
                 >
-                  {isEditMode ? <Save className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
-                  {isEditMode ? 'Save as Draft' : 'Change identifier'}
+                  <Save className="w-4 h-4" />
+                  Save as Draft
                 </Button>
               ) : currentStep === 1 ? (
                 <span />
@@ -780,7 +557,7 @@ export default function AddCandidateWizard() {
               )}
             </div>
             <div className="w-full sm:w-auto">
-              {currentStep === 6 ? (
+              {currentStep === WIZARD_STEPS.length ? (
                 <Button 
                   className="bg-[#146c4f] hover:bg-[#115a42] text-white flex items-center gap-2 w-full sm:w-auto"
                   onClick={handleNext}
@@ -794,7 +571,7 @@ export default function AddCandidateWizard() {
                   className="bg-[#146c4f] hover:bg-[#115a42] text-white flex items-center gap-2 w-full sm:w-auto"
                   onClick={handleNext}
                 >
-                  {!isEditMode && !isIdentityVerified ? 'Check & Continue' : 'Next Step'}
+                  Next Step
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               )}
@@ -805,6 +582,3 @@ export default function AddCandidateWizard() {
     </div>
   )
 }
-
-
-

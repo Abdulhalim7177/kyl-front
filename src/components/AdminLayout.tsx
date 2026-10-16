@@ -43,7 +43,7 @@ const SIDEBAR_ITEMS = [
     ]
   },
   { name: 'Polls', icon: BarChart, path: '/k8s9d7f3-polls' },
-  { name: 'Blogs', icon: FileText, path: '/k8s9d7f3-blogs' },
+  { name: 'Blog', icon: FileText, path: '/k8s9d7f3-blogs' },
   { name: 'Activity Logs', icon: Activity, path: '/k8s9d7f3-activity-logs' },
 ]
 

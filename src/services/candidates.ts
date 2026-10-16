@@ -304,6 +304,9 @@ export interface SingleCandidateResponse<T = Candidate> {
 }
 
 class CandidateService {
+  private lgaDistrictsCache: { districts: LGADistrict[]; expiresAt: number } | null = null
+  private lgaDistrictsRequest: Promise<LGADistrict[]> | null = null
+
   private getAuthHeaders() {
     const token = localStorage.getItem('auth_token')
     return {
@@ -1754,61 +1757,90 @@ class CandidateService {
   }
 
   async getAllLGADistricts(): Promise<LGADistrict[]> {
-    try {
-      console.log('🔍 Fetching all LGA districts from /districts/get-lga-districts')
-      const response = await fetch(`${API_BASE_URL}/districts/get-lga-districts`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
-      })
+    if (this.lgaDistrictsCache && this.lgaDistrictsCache.expiresAt > Date.now()) {
+      return this.lgaDistrictsCache.districts
+    }
+    if (this.lgaDistrictsRequest) return this.lgaDistrictsRequest
 
-      console.log('📨 LGA Districts API Response Status:', response.status, response.statusText)
+    this.lgaDistrictsRequest = (async () => {
+      const endpoint = `${API_BASE_URL}/districts/get-lga-districts`
+      const fetchPage = async (page: number): Promise<{ districts: LGADistrict[]; lastPage: number }> => {
+        const url = new URL(endpoint, window.location.origin)
+        url.searchParams.set('page', String(page))
+        url.searchParams.set('per_page', '1000')
 
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => '')
-        console.error('❌ Failed to fetch LGA districts:', response.status, response.statusText, errorText)
-        return []
+        for (let attempt = 0; ; attempt += 1) {
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: this.getAuthHeaders()
+          })
+
+          if (response.status === 429 && attempt < 3) {
+            const retryAfter = Number(response.headers.get('Retry-After'))
+            const delayMs = Number.isFinite(retryAfter) && retryAfter > 0
+              ? retryAfter * 1000
+              : 1000 * (2 ** attempt)
+            await new Promise(resolve => setTimeout(resolve, delayMs))
+            continue
+          }
+
+          if (!response.ok) {
+            const errorText = await response.text().catch(() => '')
+            let message = errorText
+            try {
+              message = JSON.parse(errorText)?.message || errorText
+            } catch {
+              // Keep the response text when the server does not return JSON.
+            }
+            throw new Error(`Failed to fetch LGA districts: ${response.status} ${response.statusText}${message ? ` - ${message}` : ''}`)
+          }
+
+          const result = await response.json()
+          const pagination = result?.data
+          if (!result?.success || !Array.isArray(pagination?.data)) {
+            throw new Error(result?.message || 'The LGA districts response has an unexpected format.')
+          }
+
+          return {
+            districts: pagination.data as LGADistrict[],
+            lastPage: Number(pagination.last_page) || 1
+          }
+        }
       }
 
-      const data = await response.json()
-      console.log('📊 LGA Districts API Response Data:', data)
+      const firstPage = await fetchPage(1)
+      const districts = [...firstPage.districts]
 
-      const districtList = unwrapApiArray(data)
-      console.log('✅ Returning LGA districts:', districtList.length, 'items')
-      return districtList
+      for (let page = 2; page <= firstPage.lastPage; page += 1) {
+        await new Promise(resolve => setTimeout(resolve, 300))
+        const pageResult = await fetchPage(page)
+        districts.push(...pageResult.districts)
+      }
+
+      this.lgaDistrictsCache = { districts, expiresAt: Date.now() + 15 * 60 * 1000 }
+      return districts
+    })()
+
+    try {
+      return await this.lgaDistrictsRequest
     } catch (error) {
       console.error('❌ Error fetching LGA districts:', error)
-      return []
+      throw error
+    } finally {
+      this.lgaDistrictsRequest = null
     }
   }
 
   async addEducation(data: CandidateEducation): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/candidates/create-candidate-education`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    if (!response.ok) throw new Error('Failed to add education');
-    return await response.json();
+    return this.createCandidateEducation(data)
   }
 
   async addExperience(data: CandidateExperience): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/candidates/create-candidate-experience`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    if (!response.ok) throw new Error('Failed to add experience');
-    return await response.json();
+    return this.createCandidateExperience(data)
   }
 
   async addAchievement(data: CandidateAchievement): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/candidates/create-candidate-achievement`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    if (!response.ok) throw new Error('Failed to add achievement');
-    return await response.json();
+    return this.createCandidateAchievement(data)
   }
 }
 
