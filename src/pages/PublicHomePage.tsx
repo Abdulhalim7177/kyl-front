@@ -6,6 +6,20 @@ import { blogService, getPostImageUrl, Post } from '@/services/blogs';
 import { Link } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, Calendar, BarChart2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent } from '@/components/ui/card';
+import { getLogoUrl } from '@/lib/utils';
+
+const getLeaderName = (leader: any) =>
+  leader.candidate?.fullName ?? leader.candidate?.full_name ?? leader.name ?? 'Name not available';
+
+const formatLeaderDate = (date?: string | null) => {
+  if (!date) return 'Not specified';
+  const parsedDate = new Date(`${date.slice(0, 10)}T00:00:00`);
+  return Number.isNaN(parsedDate.getTime())
+    ? date
+    : parsedDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+};
 
 export default function PublicHomePage() {
   const [presidency, setPresidency] = useState<any[]>([]);
@@ -242,37 +256,100 @@ export default function PublicHomePage() {
       <section className="py-24 px-4 container mx-auto flex-1 relative z-10 border-t border-gray-100">
         <div className="text-center mb-16">
           <h2 className="text-sm font-bold text-primary tracking-[0.2em] uppercase mb-3">Executive Office</h2>
-          <h3 className="text-4xl font-bold text-gray-900 tracking-tight">Current Presidency</h3>
+          <h3 className="text-4xl font-bold text-gray-900 tracking-tight">Elected Leaders</h3>
           <div className="w-24 h-1 bg-gradient-to-r from-primary to-emerald-300 mx-auto mt-6 rounded-full"></div>
         </div>
         
         {loading ? (
           <div className="flex justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div></div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 gap-6 max-w-6xl mx-auto lg:grid-cols-2">
             {presidency && presidency.length > 0 ? (
-              presidency.map((leader: any) => (
-                <div key={leader.id} className="group bg-white/80 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 overflow-hidden hover:-translate-y-2 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-500">
-                  <div className="p-8 text-center relative">
-                    <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-primary/5 to-transparent"></div>
-                    <div className="relative w-28 h-28 mx-auto rounded-full p-1 bg-gradient-to-tr from-primary to-emerald-300 mb-6 shadow-xl group-hover:scale-105 transition-transform duration-500">
-                      <div className="w-full h-full rounded-full bg-white overflow-hidden border-2 border-white">
-                        <img 
-                          src={leader.candidate?.image?.url || `https://i.pravatar.cc/150?u=${leader.candidate_id || leader.id}`} 
-                          alt="Avatar" 
-                          className="w-full h-full object-cover" 
-                        />
-                      </div>
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-1 tracking-tight">{leader.candidate?.fullName}</h3>
-                    <p className="text-emerald-600 font-medium tracking-wide uppercase text-xs mb-6">{leader.office?.title || leader.position || 'President'}</p>
-                    
-                    <Link to={`/profile/${leader.candidate_id}`} className="inline-flex items-center justify-center w-full bg-gray-50 group-hover:bg-primary group-hover:text-white text-gray-700 font-semibold py-3 px-4 rounded-xl transition-colors duration-300">
-                      View Profile <span className="ml-2 group-hover:translate-x-1 transition-transform">&rarr;</span>
-                    </Link>
-                  </div>
-                </div>
-              ))
+              presidency.map((leader: any) => {
+                const candidate = leader.candidate;
+                const candidateName = getLeaderName(leader);
+                const imageUrl = getLogoUrl(candidate?.image ?? leader.candidatePhoto ?? leader.candidate_photo);
+                const party = leader.party ?? candidate?.party;
+                const partyLogo = getLogoUrl(party?.logopath ?? leader.partyLogo ?? leader.party_logo);
+                const profileId = leader.candidate_id ?? candidate?.id ?? leader.candidateId;
+
+                return (
+                  <Card key={leader.id} className="h-full overflow-hidden border border-gray-100 shadow-md">
+                      <div className="h-2 bg-gradient-to-r from-[#146c4f] to-emerald-300" />
+                      <CardContent className="p-6 sm:p-8">
+                        <div className="mb-4 flex items-start justify-between">
+                          <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold capitalize text-emerald-700">
+                            {leader.status || 'Active'}
+                          </span>
+                        </div>
+                        <div className="flex flex-col items-center text-center">
+                          <Avatar className="h-28 w-28 border-4 border-white shadow-lg ring-2 ring-[#146c4f]/20">
+                            {imageUrl && <AvatarImage src={imageUrl} alt={candidateName} className="object-cover" />}
+                            <AvatarFallback className="bg-[#146c4f]/10 text-2xl font-bold text-[#146c4f]">
+                              {candidateName.slice(0, 1).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <p className="mt-5 text-xs font-bold uppercase tracking-[0.16em] text-[#146c4f]">
+                            {leader.office?.title ?? leader.position ?? 'President'}
+                          </p>
+                          <h2 className="mt-2 text-2xl font-bold text-gray-900">{candidateName}</h2>
+                        </div>
+
+                        <div className="mt-7 grid gap-3 text-sm sm:grid-cols-2">
+                          <div className="rounded-xl bg-gray-50 p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Political Party</p>
+                            <div className="mt-2 flex items-center gap-2">
+                              <Avatar className="h-12 w-12 border border-gray-200 bg-white">
+                                {partyLogo && <AvatarImage src={partyLogo} alt={`${party?.name ?? 'Party'} logo`} className="object-contain p-1" />}
+                                <AvatarFallback className="text-sm font-bold text-gray-500">{party?.name?.slice(0, 1) ?? 'P'}</AvatarFallback>
+                              </Avatar>
+                              <p className="truncate font-semibold text-gray-800">{party?.name ?? leader.partyName ?? 'Not specified'}</p>
+                            </div>
+                          </div>
+                          <div className="rounded-xl bg-gray-50 p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Election</p>
+                            <p className="mt-2 font-semibold text-gray-800">
+                              {leader.election?.year ?? leader.election?.details ?? 'Not specified'}
+                            </p>
+                          </div>
+                          <div className="rounded-xl bg-gray-50 p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Phone</p>
+                            <p className="mt-2 truncate font-semibold text-gray-800">
+                              {candidate?.phoneNo ?? candidate?.phone_no ?? 'Not specified'}
+                            </p>
+                          </div>
+                          <div className="rounded-xl bg-gray-50 p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Email</p>
+                            <p className="mt-2 truncate font-semibold text-gray-800">{candidate?.email ?? 'Not specified'}</p>
+                          </div>
+                          <div className="rounded-xl bg-gray-50 p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Term</p>
+                            <p className="mt-2 font-semibold text-gray-800">{leader.tenure || 'Not specified'}</p>
+                          </div>
+                          <div className="rounded-xl bg-gray-50 p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Term Dates</p>
+                            <p className="mt-2 font-semibold text-gray-800">
+                              {formatLeaderDate(leader.start_date)} – {formatLeaderDate(leader.end_date)}
+                            </p>
+                          </div>
+                          <div className="rounded-xl bg-gray-50 p-4 sm:col-span-2">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Remark</p>
+                            <p className="mt-2 whitespace-pre-wrap text-gray-800">{leader.remark || 'No remark provided'}</p>
+                          </div>
+                        </div>
+
+                        {profileId && (
+                          <Link
+                            to={`/profile/${profileId}`}
+                            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#146c4f] px-4 py-3 font-semibold text-white transition-colors hover:bg-[#10563f]"
+                          >
+                            View Profile <ChevronRight className="h-4 w-4" />
+                          </Link>
+                        )}
+                      </CardContent>
+                  </Card>
+                );
+              })
             ) : (
               <div className="col-span-full text-center text-gray-500 py-12 bg-white/50 backdrop-blur-md rounded-2xl border border-dashed border-gray-300">
                 No active presidency data available.
@@ -291,9 +368,3 @@ export default function PublicHomePage() {
     </div>
   );
 }
-
-
-
-
-
-
