@@ -31,7 +31,13 @@ export interface Post {
   content: string
   status: number
   created_at: string
+  author?: {
+    id?: number | string
+    name?: string
+    email?: string
+  }
   type?: PostType
+  post_type?: PostType
   images?: PostImage[]
   image?: PostImage
 }

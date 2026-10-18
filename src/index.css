@@ -26,3 +26,86 @@
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
+
+.article-content {
+  color: #4b5563;
+  font-size: 1.0625rem;
+  line-height: 1.85;
+}
+
+.article-content > * + * {
+  margin-top: 1.4rem;
+}
+
+.article-content h1,
+.article-content h2,
+.article-content h3,
+.article-content h4 {
+  color: #111827;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.article-content h1 {
+  font-size: 2rem;
+}
+
+.article-content h2 {
+  margin-top: 2.4rem;
+  font-size: 1.6rem;
+}
+
+.article-content h3 {
+  margin-top: 2rem;
+  font-size: 1.3rem;
+}
+
+.article-content a {
+  color: #146c4f;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.article-content strong {
+  color: #1f2937;
+  font-weight: 700;
+}
+
+.article-content ul,
+.article-content ol {
+  padding-left: 1.5rem;
+}
+
+.article-content ul {
+  list-style: disc;
+}
+
+.article-content ol {
+  list-style: decimal;
+}
+
+.article-content li + li {
+  margin-top: 0.5rem;
+}
+
+.article-content blockquote {
+  border-left: 4px solid #146c4f;
+  color: #374151;
+  font-size: 1.15rem;
+  font-style: italic;
+  padding: 0.25rem 0 0.25rem 1.25rem;
+}
+
+.article-content img {
+  border-radius: 1rem;
+  height: auto;
+  max-width: 100%;
+}
+
+.article-content hr {
+  border: 0;
+  border-top: 1px solid #e5e7eb;
+  margin: 2.5rem 0;
+}
