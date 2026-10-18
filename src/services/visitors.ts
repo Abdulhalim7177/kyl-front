@@ -60,7 +60,7 @@ class VisitorService {
 
   // --- Elected Leaders ---
   async getActiveElectedPresidency() { return this.fetchApi('get-active-elected-presidency') }
-  async getElectedPresidency() { return this.fetchApi('get-elected-presidency') }
+  async getElectedPresidency(params?: Record<string, string|number>) { return this.fetchApi('get-elected-presidency', params) }
   async getActiveElectedGovernor(params?: Record<string, string|number>) { return this.fetchApi('get-active-elected-governor', params) }
   async getElectedGovernor(params?: Record<string, string|number>) { return this.fetchApi('get-elected-governor', params) }
   async getActiveElectedSenator(params?: Record<string, string|number>) { return this.fetchApi('get-active-elected-senator', params) }
@@ -68,11 +68,11 @@ class VisitorService {
   async getActiveElectedHouseOfRepMember(params?: Record<string, string|number>) { return this.fetchApi('get-active-elected-house-of-rep-member', params) }
   async getElectedHouseOfRepMember(params?: Record<string, string|number>) { return this.fetchApi('get-elected-house-of-rep-member', params) }
   async getActiveElectedStateAssemblyMember() { return this.fetchApi('get-active-elected-state-assembly-member') }
-  async getElectedStateAssemblyMember() { return this.fetchApi('get-elected-state-assembly-member') }
+  async getElectedStateAssemblyMember(params?: Record<string, string|number>) { return this.fetchApi('get-elected-state-assembly-member', params) }
   async getActiveElectedLgaChairman() { return this.fetchApi('get-active-elected-lga-chairman') }
-  async getElectedLgaChairman() { return this.fetchApi('get-elected-lga-chairman') }
+  async getElectedLgaChairman(params?: Record<string, string|number>) { return this.fetchApi('get-elected-lga-chairman', params) }
   async getActiveElectedWardCouncillor() { return this.fetchApi('get-active-elected-ward-councillor') }
-  async getElectedWardCouncillor() { return this.fetchApi('get-elected-ward-councillor') }
+  async getElectedWardCouncillor(params?: Record<string, string|number>) { return this.fetchApi('get-elected-ward-councillor', params) }
 
   // --- Profile ---
   async getCandidateProfile(id: number) { return this.fetchApi(`get-candidate-profile/${id}`) }
