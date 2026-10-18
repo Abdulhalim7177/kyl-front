@@ -1,46 +1,247 @@
-import { useEffect, useState } from 'react';
-import { useParams, Link, useLocation, useNavigate } from 'react-router-dom'
-import { Helmet } from 'react-helmet-async';
-import { visitorService } from '@/services/visitors';
-import { getLogoUrl } from '@/lib/utils';
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
+import {
+  ArrowLeft,
+  ArrowRight,
+  BriefcaseBusiness,
+  CheckCircle2,
+  GraduationCap,
+  Landmark,
+  Mail,
+  MapPin,
+  Phone,
+  Trophy,
+  UserRound,
+  UsersRound,
+} from 'lucide-react'
+import { visitorService } from '@/services/visitors'
+import { getLogoUrl } from '@/lib/utils'
 
-import { ArrowLeft, Mail, Phone, User } from 'lucide-react';
+type ImageValue = string | Record<string, unknown> | null
+
+interface PartyRef {
+  name?: string
+  description?: string
+  logopath?: ImageValue
+}
+
+interface OfficeRef {
+  title?: string
+  name?: string
+  remark?: string
+}
+
+interface DistrictRef {
+  name?: string
+}
+
+interface StateRef {
+  name?: string
+}
+
+interface CandidateOffice {
+  id?: number | string
+  title?: string
+  name?: string
+  role?: string
+  start_date?: string | null
+  end_date?: string | null
+  status?: string | number
+  tenure?: string
+  office?: OfficeRef
+  party?: PartyRef
+  state?: StateRef
+  senetorialDistrict?: DistrictRef
+  federalHouseDistrict?: DistrictRef
+  stateHouseDistrict?: DistrictRef
+  lgaDistrict?: DistrictRef & { state?: StateRef }
+  ward?: DistrictRef
+  election?: { year?: string | number }
+}
+
+interface CandidateProfile {
+  id?: number
+  fullName?: string
+  full_name?: string
+  bio?: string | null
+  gender?: string | null
+  dob?: string | null
+  email?: string | null
+  phoneNo?: string | null
+  phone_no?: string | null
+  address?: string | null
+  image?: ImageValue
+  photo?: ImageValue
+  profile_photo?: ImageValue
+  party?: PartyRef
+  state?: StateRef
+  lgaDistrict?: DistrictRef & { state?: StateRef }
+  offices?: CandidateOffice[]
+}
+
+interface EducationRecord {
+  degree?: string
+  education_level?: string
+  field_of_study?: string
+  institution?: string
+  country?: string
+  start_year?: string | number | null
+  graduation_year?: string | number | null
+  year_of_graduation?: string | number | null
+  description?: string
+}
+
+interface ExperienceRecord {
+  title?: string
+  job_title?: string
+  organization?: string
+  start_date?: string | null
+  end_date?: string | null
+  current?: boolean
+  is_current?: number | boolean
+  description?: string
+}
+
+interface AchievementRecord {
+  title?: string
+  description?: string
+}
+
+interface LeadershipRecord extends CandidateOffice {
+  role?: string
+  organization?: string
+}
+
+interface ProfileReturnState {
+  profileReturnContext?: {
+    governorStateId: number
+    governorView: 'candidates' | 'elected'
+    candidatePage?: number
+  }
+}
+
+const asArray = <T,>(value: unknown): T[] => {
+  if (Array.isArray(value)) return value as T[]
+  if (value && typeof value === 'object') {
+    const data = (value as { data?: unknown }).data
+    if (Array.isArray(data)) return data as T[]
+  }
+  return []
+}
+
+const formatDate = (value?: string | null) => {
+  if (!value) return ''
+  const parsed = new Date(value.length <= 10 ? `${value}T00:00:00` : value)
+  if (Number.isNaN(parsed.getTime())) return value
+  return parsed.toLocaleDateString('en-NG', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+const formatPeriod = (start?: string | null, end?: string | null, current?: boolean) => {
+  const from = formatDate(start)
+  const to = current ? 'Present' : formatDate(end)
+  if (from && to) return `${from} – ${to}`
+  if (from) return `From ${from}`
+  if (to) return `Until ${to}`
+  return 'Dates not listed'
+}
+
+const getOfficeArea = (office?: CandidateOffice) => {
+  if (!office) return ''
+  if (office.state?.name) return `${office.state.name} State`
+  return office.senetorialDistrict?.name
+    ?? office.federalHouseDistrict?.name
+    ?? office.stateHouseDistrict?.name
+    ?? office.lgaDistrict?.name
+    ?? office.ward?.name
+    ?? office.lgaDistrict?.state?.name
+    ?? ''
+}
+
+const getOfficeTitle = (office?: CandidateOffice) =>
+  office?.office?.title ?? office?.title ?? office?.name ?? office?.role ?? ''
+
+function SectionHeading({
+  eyebrow,
+  title,
+  icon: Icon,
+}: {
+  eyebrow: string
+  title: string
+  icon: typeof UserRound
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-[#146c4f]">
+        <Icon className="h-5 w-5" aria-hidden="true" />
+      </span>
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#146c4f]">{eyebrow}</p>
+        <h2 className="text-xl font-extrabold tracking-tight text-gray-900">{title}</h2>
+      </div>
+    </div>
+  )
+}
+
+function EmptyNote({ children }: { children: string }) {
+  return (
+    <p className="mt-6 rounded-2xl border border-dashed border-gray-200 bg-[#f7f8f5] px-4 py-5 text-sm text-gray-500">
+      {children}
+    </p>
+  )
+}
+
+function ProfileSkeleton() {
+  return (
+    <div className="bg-[#f7f8f5]">
+      <div className="h-80 animate-pulse bg-[#072b20]" />
+      <div className="container mx-auto max-w-6xl px-4 py-12">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+          <div className="space-y-6">
+            <div className="h-56 animate-pulse rounded-3xl border border-gray-100 bg-white" />
+            <div className="h-72 animate-pulse rounded-3xl border border-gray-100 bg-white" />
+          </div>
+          <div className="space-y-6">
+            <div className="h-64 animate-pulse rounded-3xl border border-gray-100 bg-white" />
+            <div className="h-52 animate-pulse rounded-3xl border border-gray-100 bg-white" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function PublicProfilePage() {
-  const { id } = useParams<{ id: string }>();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [profile, setProfile] = useState<any>(null);
-  const [education, setEducation] = useState<any[]>([]);
-  const [experiences, setExperiences] = useState<any[]>([]);
-  const [achievements, setAchievements] = useState<any[]>([]);
-  const [offices, setOffices] = useState<any[]>([]);
-  const [leadership, setLeadership] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const profileImageUrl = getLogoUrl(profile?.image ?? profile?.photo ?? profile?.profile_photo);
+  const { id } = useParams<{ id: string }>()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [profile, setProfile] = useState<CandidateProfile | null>(null)
+  const [education, setEducation] = useState<EducationRecord[]>([])
+  const [experiences, setExperiences] = useState<ExperienceRecord[]>([])
+  const [achievements, setAchievements] = useState<AchievementRecord[]>([])
+  const [offices, setOffices] = useState<CandidateOffice[]>([])
+  const [leadership, setLeadership] = useState<LeadershipRecord[]>([])
+  const [loading, setLoading] = useState(true)
+
   const navigateBack = () => {
-    const state = location.state as {
-      profileReturnContext?: {
-        governorStateId: number;
-        governorView: 'candidates' | 'elected';
-        candidatePage?: number;
-      };
-    } | null;
+    const state = location.state as ProfileReturnState | null
 
     if (state?.profileReturnContext) {
-      navigate('/leaders', { state: { profileReturnContext: state.profileReturnContext } });
+      navigate('/leaders', { state: { profileReturnContext: state.profileReturnContext } })
     } else if (location.key === 'default') {
-      navigate('/leaders');
+      navigate('/leaders')
     } else {
-      navigate(-1);
+      navigate(-1)
     }
-  };
+  }
 
   useEffect(() => {
-    if (!id) return;
-    
+    if (!id) return
+
+    let cancelled = false
+
     const fetchProfileData = async () => {
-      setLoading(true);
+      setLoading(true)
       try {
         const [
           profileData,
@@ -48,237 +249,373 @@ export default function PublicProfilePage() {
           experiencesData,
           achievementsData,
           officesData,
-          leadershipData
+          leadershipData,
         ] = await Promise.all([
           visitorService.getCandidateProfile(Number(id)).catch(() => null),
-          visitorService.getCandidateEducation(Number(id)).catch(() => []),
-          visitorService.getCandidateExperiences(Number(id)).catch(() => []),
-          visitorService.getCandidateAchievements(Number(id)).catch(() => []),
-          visitorService.getCandidateOffices(Number(id)).catch(() => []),
-          visitorService.getCandidateLeadershipHistory(Number(id)).catch(() => [])
-        ]);
+          visitorService.getCandidateEducation(Number(id)).catch(() => null),
+          visitorService.getCandidateExperiences(Number(id)).catch(() => null),
+          visitorService.getCandidateAchievements(Number(id)).catch(() => null),
+          visitorService.getCandidateOffices(Number(id)).catch(() => null),
+          visitorService.getCandidateLeadershipHistory(Number(id)).catch(() => null),
+        ])
 
-        setProfile(profileData);
-        setEducation(Array.isArray(educationData) ? educationData : (educationData?.data || []));
-        setExperiences(Array.isArray(experiencesData) ? experiencesData : (experiencesData?.data || []));
-        setAchievements(Array.isArray(achievementsData) ? achievementsData : (achievementsData?.data || []));
-        setOffices(Array.isArray(officesData) ? officesData : (officesData?.data || []));
-        setLeadership(Array.isArray(leadershipData) ? leadershipData : (leadershipData?.data || []));
-      } catch (err) {
-        console.error('Error fetching profile data:', err);
+        if (cancelled) return
+
+        setProfile(profileData as CandidateProfile | null)
+        setEducation(asArray<EducationRecord>(educationData))
+        setExperiences(asArray<ExperienceRecord>(experiencesData))
+        setAchievements(asArray<AchievementRecord>(achievementsData))
+        setOffices(asArray<CandidateOffice>(officesData))
+        setLeadership(asArray<LeadershipRecord>(leadershipData))
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
-    };
-    
-    fetchProfileData();
-  }, [id]);
+    }
+
+    void fetchProfileData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [id])
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50/50">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <ProfileSkeleton />
   }
 
   if (!profile) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4">
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Profile Not Found</h1>
-        <p className="text-gray-500 mb-8 max-w-md">The candidate or leader profile you are looking for does not exist or is inactive.</p>
-        <button
-          type="button"
-          onClick={navigateBack}
-          className="mb-4 inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 font-semibold text-gray-700 transition-colors hover:border-primary hover:text-primary"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back
-        </button>
-        <Link to="/candidates" className="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors">
-          Return to Directory
-        </Link>
+      <div className="flex min-h-[65vh] flex-col items-center justify-center bg-[#f7f8f5] px-4 text-center">
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+          <UserRound className="h-7 w-7" aria-hidden="true" />
+        </span>
+        <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-gray-900">Profile not found</h1>
+        <p className="mt-2 max-w-md text-sm leading-relaxed text-gray-500">
+          The candidate or leader profile you are looking for does not exist or is inactive.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <button
+            type="button"
+            onClick={navigateBack}
+            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-bold text-gray-700 transition hover:border-[#146c4f]/40 hover:text-[#146c4f]"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back
+          </button>
+          <Link
+            to="/leaders"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#146c4f] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#10563f]"
+          >
+            Return to directory
+          </Link>
+        </div>
       </div>
-    );
+    )
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50/50 pb-20">
-      {/* Profile Header Background Cover */}
-      <div className="h-64 md:h-80 w-full bg-gradient-to-br from-primary to-emerald-900 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
-        <button
-          type="button"
-          onClick={navigateBack}
-          className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-xl border border-white/30 bg-black/20 px-4 py-2.5 font-semibold text-white backdrop-blur-sm transition-colors hover:bg-black/40 sm:left-8 sm:top-8"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back
-        </button>
-      </div>
+  const candidateName = profile.fullName ?? profile.full_name ?? 'Profile'
+  const profileImageUrl = getLogoUrl(profile.image ?? profile.photo ?? profile.profile_photo)
+  const partyLogoUrl = getLogoUrl(profile.party?.logopath)
+  const officeRecords = offices.length > 0 ? offices : (profile.offices ?? [])
+  const primaryOffice = officeRecords[0] ?? leadership[0]
+  const rawOfficeTitle = getOfficeTitle(primaryOffice)
+  const officeArea = getOfficeArea(primaryOffice)
+  const officeLabel = officeArea && !rawOfficeTitle.toLowerCase().includes('president')
+    ? `${rawOfficeTitle} (${officeArea})`
+    : rawOfficeTitle
+  const partyName = profile.party?.name ?? 'Independent Candidate'
+  const phone = profile.phoneNo ?? profile.phone_no
+  const locationName = profile.state?.name ?? profile.lgaDistrict?.state?.name ?? profile.lgaDistrict?.name
 
-      <div className="container mx-auto px-4 -mt-24 md:-mt-32 relative z-10">
-        {/* Profile Card */}
-        <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-white p-8 mb-12 flex flex-col md:flex-row items-center md:items-end gap-8 relative">
-          <div className="w-40 h-40 md:w-56 md:h-56 rounded-full bg-gray-100 border-8 border-white shadow-xl overflow-hidden flex-shrink-0 flex items-center justify-center -mt-20 md:mt-0 relative z-10">
-            {profileImageUrl ? (
-              <img src={profileImageUrl} alt={profile.fullName ?? 'Profile'} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-5xl text-gray-400 uppercase font-light">{profile.fullName?.charAt(0) || '?'}</span>
-            )}
-          </div>
-          
-          <div className="flex-1 text-center md:text-left mb-2">
-            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight mb-2">{profile.fullName}</h1>
-            {(() => {
-              const activeOffice = profile?.offices?.[0];
-              let officeTitle = '';
-              if (activeOffice) {
-                const oName = activeOffice.office?.title || '';
-                let oArea = '';
-                if (activeOffice.state) oArea = activeOffice.state.name + ' State';
-                else if (activeOffice.senetorialDistrict) oArea = activeOffice.senetorialDistrict.name;
-                else if (activeOffice.federalHouseDistrict) oArea = activeOffice.federalHouseDistrict.name;
-                else if (activeOffice.stateHouseDistrict) oArea = activeOffice.stateHouseDistrict.name;
-                else if (activeOffice.lgaDistrict) oArea = activeOffice.lgaDistrict.name;
-                else if (activeOffice.ward) oArea = activeOffice.ward.name;
-                else if (profile?.lgaDistrict?.state && !oName.toLowerCase().includes('president')) oArea = profile.lgaDistrict.state.name + ' State';
-                
-                officeTitle = oArea && !oName.toLowerCase().includes('president') ? `${oName} (${oArea})` : oName;
-              }
-              
-              return (
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-6">
-                  {officeTitle && (
-                    <span className="text-sm md:text-base text-gray-800 font-bold tracking-wide uppercase bg-gray-100 border border-gray-200 inline-block px-4 py-1.5 rounded-full shadow-sm">
-                      {officeTitle}
-                    </span>
-                  )}
-                  <span className="text-sm md:text-base text-primary font-bold tracking-widest uppercase bg-primary/10 inline-block px-4 py-1.5 rounded-full">
-                    {profile.party?.name || 'Independent Candidate'}
+  const contactItems = [
+    profile.gender ? { label: profile.gender, icon: UserRound } : null,
+    phone ? { label: phone, icon: Phone } : null,
+    profile.email ? { label: profile.email, icon: Mail } : null,
+  ].filter((item): item is { label: string; icon: typeof UserRound } => item !== null)
+
+  const timelineExperiences = experiences
+  const officeHistory = officeRecords
+  const leadershipHistory = leadership
+
+  return (
+    <div className="bg-[#f7f8f5]">
+      <Helmet>
+        <title>{candidateName} | Know Your Leaders</title>
+        <meta
+          name="description"
+          content={`Public profile for ${candidateName}${officeLabel ? `, ${officeLabel}` : ''}${partyName ? ` (${partyName})` : ''}.`}
+        />
+      </Helmet>
+
+      <section className="relative overflow-hidden bg-[#072b20] text-white">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(255,255,255,0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.7) 1px, transparent 1px)',
+            backgroundSize: '52px 52px',
+          }}
+          aria-hidden="true"
+        />
+        <div className="pointer-events-none absolute -left-24 top-0 h-80 w-80 rounded-full bg-emerald-400/20 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -right-20 bottom-0 h-96 w-96 rounded-full bg-teal-300/10 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -bottom-14 right-4 text-[12rem] font-black leading-none text-white/[0.03] sm:text-[15rem]" aria-hidden="true">
+          PROFILE
+        </div>
+
+        <div className="container relative mx-auto max-w-6xl px-4 py-8 sm:py-10">
+          <button
+            type="button"
+            onClick={navigateBack}
+            className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-emerald-50/80 backdrop-blur transition hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back
+          </button>
+
+          <div className="mt-8 flex flex-col gap-6 pb-4 sm:mt-10 sm:flex-row sm:items-end">
+            <div className="flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white/15 bg-white/10 shadow-2xl ring-1 ring-white/20 sm:h-40 sm:w-40">
+              {profileImageUrl ? (
+                <img src={profileImageUrl} alt={candidateName} className="h-full w-full object-cover" />
+              ) : (
+                <span className="text-4xl font-extrabold text-emerald-100 sm:text-5xl">
+                  {candidateName.charAt(0).toUpperCase()}
+                </span>
+              )}
+            </div>
+
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                {officeLabel && (
+                  <span className="rounded-full border border-emerald-300/30 bg-emerald-400/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-100">
+                    {officeLabel}
                   </span>
+                )}
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-50/80">
+                  {partyLogoUrl ? (
+                    <img src={partyLogoUrl} alt="" className="h-3.5 w-3.5 rounded-full object-contain" />
+                  ) : (
+                    <UsersRound className="h-3 w-3 text-emerald-300" aria-hidden="true" />
+                  )}
+                  {partyName}
+                </span>
+              </div>
+
+              <h1 className="mt-4 text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl">
+                {candidateName}
+              </h1>
+
+              {locationName && (
+                <p className="mt-3 flex items-center gap-2 text-sm text-emerald-50/70">
+                  <MapPin className="h-4 w-4 text-emerald-300" aria-hidden="true" />
+                  {locationName}
+                </p>
+              )}
+
+              {contactItems.length > 0 && (
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {contactItems.map((item) => {
+                    const Icon = item.icon
+                    return (
+                      <span
+                        key={`${item.label}-${item.icon.name}`}
+                        className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-3 py-1.5 text-xs font-medium text-emerald-50/75"
+                      >
+                        <Icon className="h-3.5 w-3.5 text-emerald-300" aria-hidden="true" />
+                        {item.label}
+                      </span>
+                    )
+                  })}
                 </div>
-              );
-            })()}
-            
-            <div className="flex flex-wrap justify-center md:justify-start gap-6 text-sm text-gray-600">
-              {profile.gender && <div className="flex items-center gap-2"><span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"><User className="w-4 h-4" /></span> {profile.gender}</div>}
+              )}
             </div>
           </div>
         </div>
+      </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Biography */}
-            <section className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 p-8">
-              <h2 className="text-sm font-bold text-gray-400 tracking-widest uppercase mb-6">Biography</h2>
-              <p className="text-gray-700 leading-relaxed whitespace-pre-line text-lg font-light">
-                {profile.bio || 'No biography available.'}
+      <section className="container mx-auto max-w-6xl px-4 py-12 sm:py-16">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+          <div className="space-y-6">
+            <article className="rounded-3xl border border-gray-100 bg-white p-7 shadow-[0_4px_24px_rgb(0,0,0,0.04)] sm:p-9">
+              <SectionHeading eyebrow="Who they are" title="Biography" icon={UserRound} />
+              <p className="mt-6 whitespace-pre-line text-base leading-relaxed text-gray-600 sm:text-lg">
+                {profile.bio || 'No biography has been provided for this profile.'}
               </p>
-            </section>
+            </article>
 
-            {/* Experience */}
-            <section className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 p-8">
-              <h2 className="text-sm font-bold text-gray-400 tracking-widest uppercase mb-8">Professional Experience</h2>
-              {experiences.length > 0 ? (
-                <div className="space-y-8">
-                  {experiences.map((exp, idx) => (
-                    <div key={idx} className="relative pl-8 border-l border-gray-200 before:content-[''] before:absolute before:w-4 before:h-4 before:bg-primary before:border-4 before:border-white before:rounded-full before:-left-[8.5px] before:top-1.5 shadow-sm p-4 rounded-r-xl bg-gray-50/50">
-                      <h3 className="font-bold text-xl text-gray-900">{exp.title}</h3>
-                      <p className="text-primary font-semibold mb-2">{exp.organization}</p>
-                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-3">
-                        {exp.start_date} &mdash; {exp.current ? 'Present' : exp.end_date}
+            <article className="rounded-3xl border border-gray-100 bg-white p-7 shadow-[0_4px_24px_rgb(0,0,0,0.04)] sm:p-9">
+              <SectionHeading eyebrow="Career" title="Professional experience" icon={BriefcaseBusiness} />
+              {timelineExperiences.length > 0 ? (
+                <div className="mt-7 space-y-6">
+                  {timelineExperiences.map((experience, index) => (
+                    <div key={`${experience.job_title ?? experience.title ?? 'experience'}-${index}`} className="relative border-l border-gray-200 pl-6">
+                      <span className="absolute -left-[7px] top-1.5 h-3.5 w-3.5 rounded-full border-4 border-white bg-[#146c4f] shadow-sm" aria-hidden="true" />
+                      <h3 className="text-lg font-extrabold tracking-tight text-gray-900">
+                        {experience.job_title || experience.title || 'Untitled role'}
+                      </h3>
+                      {experience.organization && (
+                        <p className="mt-1 text-sm font-bold text-[#146c4f]">{experience.organization}</p>
+                      )}
+                      <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">
+                        {formatPeriod(
+                          experience.start_date,
+                          experience.end_date,
+                          experience.current ?? Boolean(experience.is_current),
+                        )}
                       </p>
-                      <p className="text-gray-600 leading-relaxed text-sm">{exp.description}</p>
+                      {experience.description && (
+                        <p className="mt-3 text-sm leading-relaxed text-gray-600">{experience.description}</p>
+                      )}
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-400 italic">No experience records found.</p>
+                <EmptyNote>No professional experience records are available.</EmptyNote>
               )}
-            </section>
+            </article>
 
-            {/* Education */}
-            <section className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 p-8">
-              <h2 className="text-sm font-bold text-gray-400 tracking-widest uppercase mb-8">Education</h2>
+            <article className="rounded-3xl border border-gray-100 bg-white p-7 shadow-[0_4px_24px_rgb(0,0,0,0.04)] sm:p-9">
+              <SectionHeading eyebrow="Academic record" title="Education" icon={GraduationCap} />
               {education.length > 0 ? (
-                <div className="space-y-6">
-                  {education.map((edu, idx) => (
-                    <div key={idx} className="relative pl-8 border-l border-gray-200 before:content-[''] before:absolute before:w-4 before:h-4 before:bg-emerald-500 before:border-4 before:border-white before:rounded-full before:-left-[8.5px] before:top-1.5">
-                      <h3 className="font-bold text-lg text-gray-900">{edu.degree}</h3>
-                      <p className="text-gray-600 font-medium">{edu.institution}</p>
-                      <p className="text-xs text-gray-500 mt-1">Graduated: {edu.year_of_graduation}</p>
+                <div className="mt-7 space-y-5">
+                  {education.map((record, index) => {
+                    const educationTitle = [record.education_level, record.field_of_study]
+                      .filter(Boolean)
+                      .join(' · ') || record.degree || 'Qualification'
+                    const graduationYear = record.graduation_year ?? record.year_of_graduation
+                    return (
+                      <div key={`${educationTitle}-${index}`} className="rounded-2xl border border-gray-100 bg-[#f7f8f5] p-4">
+                        <h3 className="font-extrabold text-gray-900">{educationTitle}</h3>
+                        <p className="mt-1 text-sm font-medium text-gray-600">{record.institution || 'Institution not listed'}</p>
+                        {(graduationYear || record.country) && (
+                          <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">
+                            {graduationYear ? `Graduated ${graduationYear}` : ''}
+                            {graduationYear && record.country ? ' · ' : ''}
+                            {record.country ?? ''}
+                          </p>
+                        )}
+                        {record.description && (
+                          <p className="mt-2 text-sm leading-relaxed text-gray-600">{record.description}</p>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <EmptyNote>No education records are available.</EmptyNote>
+              )}
+            </article>
+          </div>
+
+          <aside className="space-y-6">
+            <section className="rounded-3xl border border-gray-100 bg-white p-7 shadow-[0_4px_24px_rgb(0,0,0,0.04)]">
+              <SectionHeading eyebrow="Public office" title="Political offices" icon={Landmark} />
+              {officeHistory.length > 0 ? (
+                <div className="mt-6 space-y-3">
+                  {officeHistory.map((office, index) => {
+                    const title = getOfficeTitle(office) || 'Public office'
+                    const area = getOfficeArea(office)
+                    return (
+                      <div key={`${title}-${index}`} className="rounded-2xl border border-gray-100 bg-[#f7f8f5] p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <h3 className="font-extrabold leading-snug text-gray-900">{title}</h3>
+                          {office.status === 'active' || office.status === 1 ? (
+                            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[#146c4f]">
+                              <CheckCircle2 className="h-2.5 w-2.5" aria-hidden="true" /> Active
+                            </span>
+                          ) : null}
+                        </div>
+                        {area && <p className="mt-1 text-sm text-gray-500">{area}</p>}
+                        <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">
+                          {formatPeriod(office.start_date, office.end_date)}
+                        </p>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <EmptyNote>No political offices are recorded for this profile.</EmptyNote>
+              )}
+            </section>
+
+            <section className="rounded-3xl border border-gray-100 bg-white p-7 shadow-[0_4px_24px_rgb(0,0,0,0.04)]">
+              <SectionHeading eyebrow="Track record" title="Leadership history" icon={UsersRound} />
+              {leadershipHistory.length > 0 ? (
+                <div className="mt-6 space-y-4">
+                  {leadershipHistory.map((record, index) => {
+                    const title = getOfficeTitle(record) || record.role || 'Leadership role'
+                    return (
+                      <div key={`${title}-${index}`} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                        <h3 className="font-extrabold leading-snug text-gray-900">{title}</h3>
+                        <p className="mt-1 text-sm text-gray-600">
+                          {record.party?.name || record.organization || 'Public service'}
+                          {record.election?.year ? ` · ${record.election.year}` : ''}
+                        </p>
+                        <p className="mt-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">
+                          {record.tenure ? `${record.tenure} tenure · ` : ''}
+                          {formatPeriod(record.start_date, record.end_date)}
+                        </p>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <EmptyNote>No leadership history is recorded for this profile.</EmptyNote>
+              )}
+            </section>
+
+            <section className="rounded-3xl border border-gray-100 bg-white p-7 shadow-[0_4px_24px_rgb(0,0,0,0.04)]">
+              <SectionHeading eyebrow="Recognition" title="Achievements" icon={Trophy} />
+              {achievements.length > 0 ? (
+                <div className="mt-6 space-y-4">
+                  {achievements.map((achievement, index) => (
+                    <div key={`${achievement.title ?? 'achievement'}-${index}`} className="flex items-start gap-3">
+                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-[#146c4f]">
+                        <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                      </span>
+                      <div>
+                        <h3 className="text-sm font-extrabold leading-snug text-gray-900">
+                          {achievement.title || 'Achievement'}
+                        </h3>
+                        {achievement.description && (
+                          <p className="mt-1 text-sm leading-relaxed text-gray-600">{achievement.description}</p>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-400 italic">No education records found.</p>
-              )}
-            </section>
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-8">
-            {/* Political Offices */}
-            <section className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 p-8">
-              <h2 className="text-sm font-bold text-gray-400 tracking-widest uppercase mb-6">Political Offices</h2>
-              {offices.length > 0 ? (
-                <ul className="space-y-4">
-                  {offices.map((office, idx) => (
-                    <li key={idx} className="bg-gray-50 p-4 rounded-xl border border-gray-100 hover:border-primary/30 transition-colors">
-                      <h4 className="font-bold text-gray-900 mb-1">{office.title || office.name}</h4>
-                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">{office.start_date} &mdash; {office.end_date || 'Present'}</p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-gray-400 italic text-sm">No offices recorded.</p>
+                <EmptyNote>No achievements are recorded for this profile.</EmptyNote>
               )}
             </section>
 
-            {/* Leadership History */}
-            <section className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 p-8">
-              <h2 className="text-sm font-bold text-gray-400 tracking-widest uppercase mb-6">Leadership History</h2>
-              {leadership.length > 0 ? (
-                <ul className="space-y-4">
-                  {leadership.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">L</div>
-                      <div>
-                        <h4 className="font-bold text-gray-900">{item.role}</h4>
-                        <p className="text-sm text-gray-600">{item.organization}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-gray-400 italic text-sm">No leadership history recorded.</p>
-              )}
+            <section className="rounded-3xl border border-gray-100 bg-white p-7 shadow-[0_4px_24px_rgb(0,0,0,0.04)]">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#146c4f]">Keep exploring</p>
+              <h2 className="mt-1 text-xl font-extrabold tracking-tight text-gray-900">Follow the record</h2>
+              <div className="mt-5 space-y-2">
+                <Link
+                  to="/leaders"
+                  className="group flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-[#f7f8f5] px-4 py-3 text-sm font-bold text-gray-800 transition hover:border-[#146c4f]/25 hover:text-[#146c4f]"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <UsersRound className="h-4 w-4 text-[#146c4f]" aria-hidden="true" /> Elected leaders
+                  </span>
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                </Link>
+                <Link
+                  to="/parties"
+                  className="group flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-[#f7f8f5] px-4 py-3 text-sm font-bold text-gray-800 transition hover:border-[#146c4f]/25 hover:text-[#146c4f]"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Landmark className="h-4 w-4 text-[#146c4f]" aria-hidden="true" /> Political parties
+                  </span>
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                </Link>
+              </div>
             </section>
-
-            {/* Achievements */}
-            <section className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 p-8">
-              <h2 className="text-sm font-bold text-gray-400 tracking-widest uppercase mb-6">Achievements</h2>
-              {achievements.length > 0 ? (
-                <ul className="space-y-5">
-                  {achievements.map((achievement, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <span className="text-emerald-500 text-xl leading-none">&check;</span>
-                      <div>
-                        <span className="font-bold text-gray-900 block mb-1">{achievement.title}</span>
-                        <span className="text-sm text-gray-600 leading-relaxed">{achievement.description}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-gray-400 italic text-sm">No achievements recorded.</p>
-              )}
-            </section>
-          </div>
+          </aside>
         </div>
-      </div>
+      </section>
     </div>
-  );
+  )
 }
