@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -24,6 +25,8 @@ import { User } from '@/services/auth'
 import { ArrowLeft, Globe, ToggleRight } from 'lucide-react' 
 import UploadPartyLogoDialog from '@/components/UploadPartyLogoDialog'
 import AddChairmanDialog from '@/components/AddChairmanDialog'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 import { getLogoUrl } from '@/lib/utils'
 
 function toAbbreviation(name: string) {
@@ -628,7 +631,7 @@ export default function PartyProfilePage() {
   if (error || !party) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-center">
-        <p className="text-sm text-red-600">{error || 'Party profile not found.'}</p>
+        <p role="alert" className="text-sm text-red-600">{error || 'Party profile not found.'}</p>
         <Button variant="outline" onClick={() => navigate('/k8s9d7f3-parties')}>
           Back to Parties
         </Button>
@@ -670,45 +673,55 @@ export default function PartyProfilePage() {
 
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => navigate('/k8s9d7f3-parties')}>
-            <ArrowLeft className="w-4 h-4" /> Back
+            <ArrowLeft aria-hidden="true" className="w-4 h-4" /> Back
           </Button>
           {activeTab !== 'Users' && (
-            <UploadPartyLogoDialog
-              partyId={party.id}
-              onUploadSuccess={async () => {
-                const updated = await partyService.getPartyById(party.id)
-                setParty(updated)
-              }}
-            />
+            <Can permission={Permissions.UPDATE_PARTY}>
+              <UploadPartyLogoDialog
+                partyId={party.id}
+                onUploadSuccess={async () => {
+                  const updated = await partyService.getPartyById(party.id)
+                  setParty(updated)
+                }}
+              />
+            </Can>
           )}
           {activeTab === 'Party Chairman' ? (
             partyId ? (
-              <AddChairmanDialog
-                partyId={partyId}
-                partyName={party.name}
-                onChairmanAssigned={async () => {
-                  // Refresh chairman data after assignment
-                  const chairmanResult = await partyService.getPartyChairman(partyId)
-                  setChairmanData(chairmanResult)
-                }}
-              />
+              <Can permission={Permissions.CREATE_PARTY_CHAIRMAN}>
+                <AddChairmanDialog
+                  partyId={partyId}
+                  partyName={party.name}
+                  onChairmanAssigned={async () => {
+                    // Refresh chairman data after assignment
+                    const chairmanResult = await partyService.getPartyChairman(partyId)
+                    setChairmanData(chairmanResult)
+                  }}
+                />
+              </Can>
             ) : (
-              <Button disabled>Add Chairman</Button>
+              <Can permission={Permissions.CREATE_PARTY_CHAIRMAN}>
+                <Button disabled>Add Chairman</Button>
+              </Can>
             )
           ) : activeTab === 'Users' ? (
-            <Button
-              onClick={() => {
-                resetAddUserDialog()
-                setIsAddUserDialogOpen(true)
-              }}
-              className="bg-[#146c4f] text-white hover:bg-[#115a42]"
-            >
-              Add User
-            </Button>
+            <Can permission={Permissions.CREATE_PARTY_USER}>
+              <Button
+                onClick={() => {
+                  resetAddUserDialog()
+                  setIsAddUserDialogOpen(true)
+                }}
+                className="bg-[#146c4f] text-white hover:bg-[#115a42]"
+              >
+                Add User
+              </Button>
+            </Can>
           ) : (
-            <Button variant={isEditDialogOpen ? 'secondary' : 'default'} onClick={() => setIsEditDialogOpen(true)}>
-              {isEditDialogOpen ? 'Cancel Edit' : 'Edit Details'}
-            </Button>
+            <Can permission={Permissions.UPDATE_PARTY}>
+              <Button variant={isEditDialogOpen ? 'secondary' : 'default'} onClick={() => setIsEditDialogOpen(true)}>
+                {isEditDialogOpen ? 'Cancel Edit' : 'Edit Details'}
+              </Button>
+            </Can>
           )}
         </div>
       </div>
@@ -731,34 +744,34 @@ export default function PartyProfilePage() {
 
           <div className="grid gap-4 py-4">
             {formError && (
-              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {formError}
               </div>
             )}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Party Name</label>
-                <Input value={formData.name} onChange={(e) => handleFormChange('name', e.target.value)} />
+                <label htmlFor="edit-party-name" className="text-sm font-medium text-slate-700">Party Name</label>
+                <Input id="edit-party-name" value={formData.name} onChange={(e) => handleFormChange('name', e.target.value)} />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Slogan</label>
-                <Input value={formData.slogan} onChange={(e) => handleFormChange('slogan', e.target.value)} />
+                <label htmlFor="edit-party-slogan" className="text-sm font-medium text-slate-700">Slogan</label>
+                <Input id="edit-party-slogan" value={formData.slogan} onChange={(e) => handleFormChange('slogan', e.target.value)} />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-slate-700">Description</label>
-                <Textarea value={formData.description} onChange={(e) => handleFormChange('description', e.target.value)} />
+                <label htmlFor="edit-party-description" className="text-sm font-medium text-slate-700">Description</label>
+                <Textarea id="edit-party-description" value={formData.description} onChange={(e) => handleFormChange('description', e.target.value)} />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-slate-700">Philosophy</label>
-                <Textarea value={formData.philosophy} onChange={(e) => handleFormChange('philosophy', e.target.value)} />
+                <label htmlFor="edit-party-philosophy" className="text-sm font-medium text-slate-700">Philosophy</label>
+                <Textarea id="edit-party-philosophy" value={formData.philosophy} onChange={(e) => handleFormChange('philosophy', e.target.value)} />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Address</label>
-                <Input value={formData.address} onChange={(e) => handleFormChange('address', e.target.value)} />
+                <label htmlFor="edit-party-address" className="text-sm font-medium text-slate-700">Address</label>
+                <Input id="edit-party-address" value={formData.address} onChange={(e) => handleFormChange('address', e.target.value)} />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Registered Year</label>
-                <Input type="number" value={formData.registrationYear} onChange={(e) => handleFormChange('registrationYear', e.target.value)} />
+                <label htmlFor="edit-party-registration-year" className="text-sm font-medium text-slate-700">Registered Year</label>
+                <Input id="edit-party-registration-year" type="number" value={formData.registrationYear} onChange={(e) => handleFormChange('registrationYear', e.target.value)} />
               </div>
             </div>
           </div>
@@ -786,7 +799,7 @@ export default function PartyProfilePage() {
           {viewingUserLoading ? (
             <div className="py-8 text-center text-slate-500">Loading user details…</div>
           ) : viewingUserError ? (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
+            <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
               {viewingUserError}
             </div>
           ) : selectedPartyUser ? (
@@ -844,27 +857,33 @@ export default function PartyProfilePage() {
             </Button>
             {selectedPartyUser && (
               <>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsViewUserDialogOpen(false)
-                    resetAddUserDialog()
-                    setIsAddUserDialogOpen(true)
-                  }}
-                >
-                  Add
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => handleDeletePartyUserFromView(selectedPartyUser.id)}
-                  disabled={deletingPartyUserId === selectedPartyUser.id}
-                  className="text-red-600 border-red-200 hover:bg-red-50"
-                >
-                  {deletingPartyUserId === selectedPartyUser.id ? 'Deleting...' : 'Delete'}
-                </Button>
-                <Button onClick={() => handleEditPartyUserFromView(selectedPartyUser)}>
-                  Edit
-                </Button>
+                <Can permission={Permissions.CREATE_PARTY_USER}>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsViewUserDialogOpen(false)
+                      resetAddUserDialog()
+                      setIsAddUserDialogOpen(true)
+                    }}
+                  >
+                    Add
+                  </Button>
+                </Can>
+                <Can permission={Permissions.DELETE_USER}>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDeletePartyUserFromView(selectedPartyUser.id)}
+                    disabled={deletingPartyUserId === selectedPartyUser.id}
+                    className="text-red-600 border-red-200 hover:bg-red-50"
+                  >
+                    {deletingPartyUserId === selectedPartyUser.id ? 'Deleting...' : 'Delete'}
+                  </Button>
+                </Can>
+                <Can permission={Permissions.UPDATE_USER}>
+                  <Button onClick={() => handleEditPartyUserFromView(selectedPartyUser)}>
+                    Edit
+                  </Button>
+                </Can>
               </>
             )}
           </DialogFooter>
@@ -882,7 +901,7 @@ export default function PartyProfilePage() {
 
           <div className="space-y-2 py-1">
             {addUserError && (
-              <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                 {addUserError}
               </div>
             )}
@@ -892,8 +911,9 @@ export default function PartyProfilePage() {
               </div>
             )}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Full Name *</label>
+              <label htmlFor="add-user-name" className="text-sm font-medium text-slate-700">Full Name *</label>
               <Input
+                id="add-user-name"
                 placeholder="Enter full name"
                 value={addUserForm.name}
                 onChange={(e) => setAddUserForm((prev) => ({ ...prev, name: e.target.value }))}
@@ -902,8 +922,9 @@ export default function PartyProfilePage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Email Address *</label>
+                <label htmlFor="add-user-email" className="text-sm font-medium text-slate-700">Email Address *</label>
                 <Input
+                  id="add-user-email"
                   type="email"
                   placeholder="user@example.com"
                   value={addUserForm.email}
@@ -912,8 +933,9 @@ export default function PartyProfilePage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Phone Number *</label>
+                <label htmlFor="add-user-phone" className="text-sm font-medium text-slate-700">Phone Number *</label>
                 <Input
+                  id="add-user-phone"
                   placeholder="Enter phone number"
                   value={addUserForm.phoneNo}
                   onChange={(e) => setAddUserForm((prev) => ({ ...prev, phoneNo: e.target.value }))}
@@ -924,7 +946,7 @@ export default function PartyProfilePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Party Role *</label>
+                <label htmlFor="add-user-party-role" className="text-sm font-medium text-slate-700">Party Role *</label>
                 <Select
                   value={addUserForm.role_id?.toString()}
                   onValueChange={(value) => {
@@ -932,7 +954,7 @@ export default function PartyProfilePage() {
                     handleRoleChange(selectedRoleId)
                   }}
                 >
-                  <SelectTrigger className="h-8">
+                  <SelectTrigger id="add-user-party-role" className="h-8">
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
@@ -945,7 +967,7 @@ export default function PartyProfilePage() {
                   <p className="text-xs text-slate-500 mt-1">Loading party roles…</p>
                 )}
                 {partyRolesError && (
-                  <p className="text-xs text-red-600 mt-1">{partyRolesError}</p>
+                  <p role="alert" className="text-xs text-red-600 mt-1">{partyRolesError}</p>
                 )}
                 {addUserForm.role_id ? (
                   <div className="mt-2">
@@ -960,7 +982,7 @@ export default function PartyProfilePage() {
                     </div>
 
                     {rolePermissionsError && (
-                      <p className="text-xs text-red-600 mt-1">{rolePermissionsError}</p>
+                      <p role="alert" className="text-xs text-red-600 mt-1">{rolePermissionsError}</p>
                     )}
 
                     {showPermissionsDropdown && (
@@ -994,8 +1016,8 @@ export default function PartyProfilePage() {
                 ) : null}
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Party</label>
-                <Input value={party?.name || ''} disabled className="h-8 bg-slate-100" />
+                <label htmlFor="add-user-party" className="text-sm font-medium text-slate-700">Party</label>
+                <Input id="add-user-party" value={party?.name || ''} disabled className="h-8 bg-slate-100" />
               </div>
             </div>
           </div>
@@ -1158,6 +1180,7 @@ export default function PartyProfilePage() {
                     >
                       Clear Selection
                     </Button>
+                    <Can permission={Permissions.DELETE_PARTY_CHAIRMAN}>
                     <Button
                       variant="destructive"
                       size="sm"
@@ -1166,6 +1189,7 @@ export default function PartyProfilePage() {
                     >
                       Delete Selected
                     </Button>
+                    </Can>
                   </div>
                 </div>
               )}
@@ -1247,22 +1271,26 @@ export default function PartyProfilePage() {
                     <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">
                       {selectedPartyUserIds.size} selected
                     </span>
-                    <Button
-                      variant="outline"
-                      onClick={handleToggleSelectedPartyUsers}
-                      disabled={partyUserTogglingIds.size > 0 || deletingSelectedPartyUsers}
-                      className="gap-2"
-                    >
-                      Toggle selected
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={handleDeleteSelectedPartyUsers}
-                      disabled={deletingSelectedPartyUsers || partyUserTogglingIds.size > 0}
-                      className="text-red-600 border-red-200 hover:bg-red-50 gap-2"
-                    >
-                      {deletingSelectedPartyUsers ? 'Deleting...' : 'Delete selected'}
-                    </Button>
+                    <Can permission={Permissions.TOGGLE_USER_STATUS}>
+                      <Button
+                        variant="outline"
+                        onClick={handleToggleSelectedPartyUsers}
+                        disabled={partyUserTogglingIds.size > 0 || deletingSelectedPartyUsers}
+                        className="gap-2"
+                      >
+                        Toggle selected
+                      </Button>
+                    </Can>
+                    <Can permission={Permissions.DELETE_USER}>
+                      <Button
+                        variant="outline"
+                        onClick={handleDeleteSelectedPartyUsers}
+                        disabled={deletingSelectedPartyUsers || partyUserTogglingIds.size > 0}
+                        className="text-red-600 border-red-200 hover:bg-red-50 gap-2"
+                      >
+                        {deletingSelectedPartyUsers ? 'Deleting...' : 'Delete selected'}
+                      </Button>
+                    </Can>
                   </div>
                 )}
                 <Button variant="outline" onClick={() => navigate('/k8s9d7f3-users')}>
@@ -1280,6 +1308,7 @@ export default function PartyProfilePage() {
             )}
             <div className="min-w-[800px]">
               <Table>
+                <TableCaption className="sr-only">Party users</TableCaption>
                 <TableHeader>
                   <TableRow className="border-gray-100">
                     <TableHead className="w-12 px-6">
@@ -1338,15 +1367,17 @@ export default function PartyProfilePage() {
                               <span className={`w-2.5 h-2.5 rounded-full ${status === 'Active' ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
                               <span className={status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}>{status}</span>
                             </span>
-                            <button
-                              type="button"
-                              onClick={() => handleTogglePartyUser(user.id)}
-                              disabled={partyUserTogglingIds.has(user.id)}
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                              aria-label={`Toggle status for ${user.name}`}
-                            >
-                              <ToggleRight className="w-4 h-4" />
-                            </button>
+                            <Can permission={Permissions.TOGGLE_USER_STATUS}>
+                              <button
+                                type="button"
+                                onClick={() => handleTogglePartyUser(user.id)}
+                                disabled={partyUserTogglingIds.has(user.id)}
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                aria-label={`Toggle status for ${user.name}`}
+                              >
+                                <ToggleRight aria-hidden="true" className="w-4 h-4" />
+                              </button>
+                            </Can>
                           </div>
                         </TableCell>
                         <TableCell className="flex gap-2">

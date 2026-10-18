@@ -105,6 +105,7 @@ export function AnimatedConfirmDialog({
                 </div>
                 <button 
                   onClick={() => onOpenChange(false)}
+                  aria-label="Close dialog"
                   className="text-gray-400 hover:text-gray-500 absolute top-4 right-4 focus:outline-none focus:ring-2 focus:ring-primary rounded"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
@@ -135,7 +136,7 @@ export function AnimatedConfirmDialog({
                     confirmDisabled && "opacity-50 cursor-not-allowed"
                   )}
                 >
-                  {variant === 'danger' && <Trash2 className="w-4 h-4" />}
+                  {variant === 'danger' && <Trash2 aria-hidden="true" className="w-4 h-4" />}
                   {confirmText}
                 </AlertDialogPrimitive.Action>
               </div>

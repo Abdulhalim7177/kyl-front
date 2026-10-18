@@ -14,6 +14,7 @@ import { User } from '@/services/auth'
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -33,6 +34,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 import { 
   Search, 
   Download, 
@@ -195,12 +198,14 @@ export default function UsersManagementPage() {
       {/* Header Actions */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-2 sm:mt-4">
          <p className="text-sm text-gray-500 max-w-2xl">Manage system users, assign specific permissions, and control access levels across National and State hierarchies within the KYL database.</p>
-         <Link to="/k8s9d7f3-users-add">
-           <Button className="bg-[#146c4f] hover:bg-[#115a42] text-white rounded-lg px-4 py-2 h-10 flex items-center justify-center shadow w-full sm:w-auto">
-               <Plus className="w-4 h-4 mr-2" />
-               Add User
-           </Button>
-         </Link>
+         <Can any={[Permissions.CREATE_USER, Permissions.CREATE_PARTY_USER, Permissions.CREATE_STATE_USER]}>
+           <Link to="/k8s9d7f3-users-add">
+             <Button className="bg-[#146c4f] hover:bg-[#115a42] text-white rounded-lg px-4 py-2 h-10 flex items-center justify-center shadow w-full sm:w-auto">
+                 <Plus aria-hidden="true" className="w-4 h-4 mr-2" />
+                 Add User
+             </Button>
+           </Link>
+         </Can>
       </div>
 
       {/* Filter Bar - Scrollable on mobile */}
@@ -209,6 +214,7 @@ export default function UsersManagementPage() {
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <Input 
               type="text" 
+              aria-label="Search users by name or email"
               placeholder="Search by name or email..." 
               className="pl-9 bg-gray-50/50 border-gray-200 shadow-none rounded-xl h-10 w-full"
               value={filters.search}
@@ -218,7 +224,7 @@ export default function UsersManagementPage() {
          
          <div className="flex items-center gap-3 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0 hide-scrollbar">
            <Select value={filters.role} onValueChange={(v) => setFilters({ ...filters, role: v })}>
-             <SelectTrigger className="w-[130px] shrink-0 h-10 rounded-xl bg-gray-50/50 border-gray-200">
+             <SelectTrigger aria-label="Filter by role" className="w-[130px] shrink-0 h-10 rounded-xl bg-gray-50/50 border-gray-200">
                <span className="text-gray-500 mr-1">Role:</span> <SelectValue />
              </SelectTrigger>
              <SelectContent>
@@ -228,7 +234,7 @@ export default function UsersManagementPage() {
            </Select>
 
            <Select value={filters.party} onValueChange={(v) => setFilters({ ...filters, party: v, state: 'all' })}>
-             <SelectTrigger className="w-[140px] shrink-0 h-10 rounded-xl bg-gray-50/50 border-gray-200">
+             <SelectTrigger aria-label="Filter by party" className="w-[140px] shrink-0 h-10 rounded-xl bg-gray-50/50 border-gray-200">
                <span className="text-gray-500 mr-1">Party:</span> <SelectValue />
              </SelectTrigger>
              <SelectContent>
@@ -238,7 +244,7 @@ export default function UsersManagementPage() {
            </Select>
 
            <Select value={filters.state} onValueChange={(v) => setFilters({ ...filters, state: v, party: 'all' })}>
-             <SelectTrigger className="w-[140px] shrink-0 h-10 rounded-xl bg-gray-50/50 border-gray-200">
+             <SelectTrigger aria-label="Filter by level" className="w-[140px] shrink-0 h-10 rounded-xl bg-gray-50/50 border-gray-200">
                <span className="text-gray-500 mr-1">Level:</span> <SelectValue />
              </SelectTrigger>
              <SelectContent>
@@ -248,7 +254,7 @@ export default function UsersManagementPage() {
            </Select>
 
            <Select value={filters.status} onValueChange={(v) => setFilters({ ...filters, status: v })}>
-             <SelectTrigger className="w-[120px] shrink-0 h-10 rounded-xl bg-gray-50/50 border-gray-200">
+             <SelectTrigger aria-label="Filter by status" className="w-[120px] shrink-0 h-10 rounded-xl bg-gray-50/50 border-gray-200">
                <span className="text-gray-500 mr-1">Status:</span> <SelectValue />
              </SelectTrigger>
              <SelectContent>
@@ -260,19 +266,19 @@ export default function UsersManagementPage() {
            
            <div className="h-8 w-px bg-gray-200 mx-1 shrink-0 hidden sm:block" />
 
-           <button className="p-2 text-gray-500 hover:text-gray-800 transition-colors shrink-0 hidden sm:block">
-              <Download className="w-5 h-5" />
+           <button aria-label="Download users" className="p-2 text-gray-500 hover:text-gray-800 transition-colors shrink-0 hidden sm:block">
+              <Download aria-hidden="true" className="w-5 h-5" />
            </button>
            
            <div className="flex items-center bg-gray-100 rounded-lg p-1 shrink-0 hidden sm:flex">
-              <button className="p-1 px-3 bg-[#146c4f] text-white rounded shadow-sm"><ListIcon className="w-4 h-4" /></button>
-              <button className="p-1 px-3 text-gray-500 hover:text-gray-800"><LayoutGrid className="w-4 h-4" /></button>
+              <button aria-label="Table view" className="p-1 px-3 bg-[#146c4f] text-white rounded shadow-sm"><ListIcon aria-hidden="true" className="w-4 h-4" /></button>
+              <button aria-label="Grid view" className="p-1 px-3 text-gray-500 hover:text-gray-800"><LayoutGrid aria-hidden="true" className="w-4 h-4" /></button>
            </div>
          </div>
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 text-sm font-medium">
+        <div role="alert" className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 text-sm font-medium">
           {error}
           <button onClick={fetchUsers} className="ml-4 underline">Try Again</button>
         </div>
@@ -290,36 +296,43 @@ export default function UsersManagementPage() {
          {isSelectionActive && (
            <div className="absolute inset-x-0 top-0 h-16 min-h-[64px] bg-[#187555] text-white z-20 flex items-center justify-between px-4 sm:px-6 lg:px-8 animate-in slide-in-from-top-2 fade-in duration-200 shadow-md whitespace-nowrap overflow-x-auto hide-scrollbar">
              <div className="flex items-center gap-3 sm:gap-4 shrink-0 mr-4">
-                <button className="w-8 h-8 rounded shrink-0 bg-white/20 flex items-center justify-center text-white cursor-pointer hover:bg-white/30" onClick={toggleSelectAll}>
-                   <Check className="w-5 h-5" />
-                </button>
+                 <button aria-label="Select all users" className="w-8 h-8 rounded shrink-0 bg-white/20 flex items-center justify-center text-white cursor-pointer hover:bg-white/30" onClick={toggleSelectAll}>
+                    <Check aria-hidden="true" className="w-5 h-5" />
+                 </button>
                 <div>
                    <span className="font-semibold block leading-tight text-sm sm:text-base">{numSelected} Selected</span>
                    <span className="text-[10px] sm:text-xs text-emerald-100 block opacity-90 hidden sm:block">Apply actions to the selected records</span>
                 </div>
              </div>
-             <div className="flex items-center gap-2 shrink-0">
-                <Button variant="outline" className="bg-white/10 hover:bg-white/20 border-white/20 text-white rounded-lg h-8 sm:h-9 text-xs sm:text-sm font-medium px-3 sm:px-4" onClick={() => setIsDeactivateOpen(true)}>
-                   <UserMinus className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 opacity-70" />
-                   DEACTIVATE
-                </Button>
-                <Button variant="outline" className="bg-white/10 hover:bg-white/20 border-white/20 text-white rounded-lg h-8 sm:h-9 text-xs sm:text-sm font-medium px-3 sm:px-4" onClick={() => setIsRoleOpen(true)}>
-                   <ShieldAlert className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-emerald-200" />
-                   CHANGE ROLE
-                </Button>
-                <Button className="bg-red-500 hover:bg-red-600 border border-red-500 text-white rounded-lg h-8 sm:h-9 text-xs sm:text-sm font-medium px-3 sm:px-5" onClick={() => setIsDeleteOpen(true)}>
-                   <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 opacity-80" />
-                   DELETE
-                </Button>
-                <button className="ml-2 sm:ml-4 p-1.5 text-emerald-200 hover:text-white transition-colors" onClick={() => setSelectedIds(new Set())}>
-                   <X className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-             </div>
+              <div className="flex items-center gap-2 shrink-0">
+                 <Can permission={Permissions.TOGGLE_USER_STATUS}>
+                   <Button variant="outline" className="bg-white/10 hover:bg-white/20 border-white/20 text-white rounded-lg h-8 sm:h-9 text-xs sm:text-sm font-medium px-3 sm:px-4" onClick={() => setIsDeactivateOpen(true)}>
+                      <UserMinus aria-hidden="true" className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 opacity-70" />
+                      DEACTIVATE
+                   </Button>
+                 </Can>
+                 <Can permission={Permissions.UPDATE_USER}>
+                   <Button variant="outline" className="bg-white/10 hover:bg-white/20 border-white/20 text-white rounded-lg h-8 sm:h-9 text-xs sm:text-sm font-medium px-3 sm:px-4" onClick={() => setIsRoleOpen(true)}>
+                      <ShieldAlert aria-hidden="true" className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-emerald-200" />
+                      CHANGE ROLE
+                   </Button>
+                 </Can>
+                 <Can permission={Permissions.DELETE_USER}>
+                   <Button className="bg-red-500 hover:bg-red-600 border border-red-500 text-white rounded-lg h-8 sm:h-9 text-xs sm:text-sm font-medium px-3 sm:px-5" onClick={() => setIsDeleteOpen(true)}>
+                      <Trash2 aria-hidden="true" className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 opacity-80" />
+                      DELETE
+                   </Button>
+                 </Can>
+                 <button aria-label="Clear selection" className="ml-2 sm:ml-4 p-1.5 text-emerald-200 hover:text-white transition-colors" onClick={() => setSelectedIds(new Set())}>
+                    <X aria-hidden="true" className="w-4 h-4 sm:w-5 sm:h-5" />
+                 </button>
+              </div>
            </div>
          )}
 
          <div className="min-w-[800px]">
            <Table>
+             <TableCaption className="sr-only">Users list</TableCaption>
              <TableHeader>
                <TableRow className="hover:bg-transparent border-gray-100">
                  <TableHead className="w-12 px-6">
@@ -397,22 +410,28 @@ export default function UsersManagementPage() {
                            )}
                            <DropdownMenu>
                              <DropdownMenuTrigger asChild>
-                               <button className="text-gray-400 hover:text-gray-700 p-1 rounded-md ml-auto"><MoreVertical className="w-4 h-4" /></button>
+                               <button aria-label={`Open actions for ${item.name}`} className="text-gray-400 hover:text-gray-700 p-1 rounded-md ml-auto"><MoreVertical aria-hidden="true" className="w-4 h-4" /></button>
                              </DropdownMenuTrigger>
                              <DropdownMenuContent align="end">
                                <DropdownMenuItem onClick={() => navigate(`/k8s9d7f3-users-view/${item.id}`)}>View Details</DropdownMenuItem>
-                               <DropdownMenuItem onClick={() => navigate(`/k8s9d7f3-users-edit/${item.id}`)}>Edit Profile</DropdownMenuItem>
-                               <DropdownMenuItem onClick={() => {
-                                 setTargetUserId(item.id)
-                                 setIsPasswordOpen(true)
-                               }}>Reset Password</DropdownMenuItem>
-                               <DropdownMenuItem onClick={() => handleToggleStatus(item.id)} className={status === 'Active' ? 'text-amber-600' : 'text-emerald-600'}>
-                                 {status === 'Active' ? 'Suspend User' : 'Activate User'}
-                               </DropdownMenuItem>
-                               <DropdownMenuItem className="text-red-500 focus:text-red-600" onClick={() => {
-                                 setSelectedIds(new Set([item.id]))
-                                 setIsDeleteOpen(true)
-                               }}>Delete User</DropdownMenuItem>
+                               <Can permission={Permissions.UPDATE_USER}>
+                                 <DropdownMenuItem onClick={() => navigate(`/k8s9d7f3-users-edit/${item.id}`)}>Edit Profile</DropdownMenuItem>
+                                 <DropdownMenuItem onClick={() => {
+                                   setTargetUserId(item.id)
+                                   setIsPasswordOpen(true)
+                                 }}>Reset Password</DropdownMenuItem>
+                               </Can>
+                               <Can permission={Permissions.TOGGLE_USER_STATUS}>
+                                 <DropdownMenuItem onClick={() => handleToggleStatus(item.id)} className={status === 'Active' ? 'text-amber-600' : 'text-emerald-600'}>
+                                   {status === 'Active' ? 'Suspend User' : 'Activate User'}
+                                 </DropdownMenuItem>
+                               </Can>
+                               <Can permission={Permissions.DELETE_USER}>
+                                 <DropdownMenuItem className="text-red-500 focus:text-red-600" onClick={() => {
+                                   setSelectedIds(new Set([item.id]))
+                                   setIsDeleteOpen(true)
+                                 }}>Delete User</DropdownMenuItem>
+                               </Can>
                              </DropdownMenuContent>
                            </DropdownMenu>
                          </div>
@@ -458,8 +477,9 @@ export default function UsersManagementPage() {
            </div>
            
            <div className="space-y-2 mt-6">
-             <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">To confirm, please type 'DELETE' in the field below:</label>
+             <label htmlFor="delete-confirm-input" className="text-xs font-bold text-gray-500 uppercase tracking-wide">To confirm, please type 'DELETE' in the field below:</label>
              <Input 
+               id="delete-confirm-input"
                value={deleteInput} 
                onChange={(e) => setDeleteInput(e.target.value)} 
                placeholder="DELETE" 
@@ -498,9 +518,9 @@ export default function UsersManagementPage() {
            
            <div className="space-y-4 mt-4 sm:mt-6">
              <div className="space-y-1.5">
-                <label className="text-xs text-gray-500">Reason for Deactivation</label>
-                <Select>
-                  <SelectTrigger><SelectValue placeholder="Select a reason" /></SelectTrigger>
+                 <label htmlFor="deactivate-reason" className="text-xs text-gray-500">Reason for Deactivation</label>
+                 <Select>
+                   <SelectTrigger id="deactivate-reason"><SelectValue placeholder="Select a reason" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="security">Security Protocol</SelectItem>
                     <SelectItem value="leave">Temporary Leave</SelectItem>
@@ -534,9 +554,9 @@ export default function UsersManagementPage() {
            </div>
            
            <div className="space-y-2 mt-4 pt-2">
-             <label className="text-sm font-semibold text-gray-700">Select New Role</label>
+             <label htmlFor="new-role" className="text-sm font-semibold text-gray-700">Select New Role</label>
              <Select defaultValue="party">
-               <SelectTrigger className="h-12"><SelectValue placeholder="Select a role" /></SelectTrigger>
+               <SelectTrigger id="new-role" className="h-12"><SelectValue placeholder="Select a role" /></SelectTrigger>
                <SelectContent>
                  <SelectItem value="super">Super Admin</SelectItem>
                  <SelectItem value="party">Party Admin</SelectItem>
@@ -573,8 +593,9 @@ export default function UsersManagementPage() {
       >
         <div className="space-y-4">
            <div className="space-y-2">
-             <label className="text-sm font-semibold text-gray-700">New Password</label>
+             <label htmlFor="new-password" className="text-sm font-semibold text-gray-700">New Password</label>
              <Input 
+               id="new-password"
                type="password"
                value={passwordData.password} 
                onChange={(e) => setPasswordData({ ...passwordData, password: e.target.value })} 
@@ -583,8 +604,9 @@ export default function UsersManagementPage() {
              />
            </div>
            <div className="space-y-2">
-             <label className="text-sm font-semibold text-gray-700">Confirm Password</label>
+             <label htmlFor="confirm-password" className="text-sm font-semibold text-gray-700">Confirm Password</label>
              <Input 
+               id="confirm-password"
                type="password"
                value={passwordData.confirm} 
                onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })} 
@@ -593,7 +615,7 @@ export default function UsersManagementPage() {
              />
            </div>
            {passwordData.password !== passwordData.confirm && passwordData.confirm !== '' && (
-             <p className="text-xs text-red-500 font-medium">Passwords do not match</p>
+             <p role="alert" className="text-xs text-red-500 font-medium">Passwords do not match</p>
            )}
         </div>
       </AnimatedConfirmDialog>

@@ -88,7 +88,7 @@ export default function RolesManagementPage() {
           Define administrative roles and manage granular permissions across different system modules.
         </p>
         <Button className="bg-[#146c4f] hover:bg-[#115a42] text-white">
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus aria-hidden="true" className="w-4 h-4 mr-2" />
           Create New Role
         </Button>
       </div>
@@ -110,14 +110,14 @@ export default function RolesManagementPage() {
               >
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg ${selectedRole?.id === role.id ? 'bg-[#146c4f] text-white' : 'bg-gray-100 text-gray-500'}`}>
-                    <Shield className="w-5 h-5" />
+                    <Shield aria-hidden="true" className="w-5 h-5" />
                   </div>
                   <div>
                     <span className="font-semibold text-gray-900 block">{role.name}</span>
                     <span className="text-xs text-gray-500">{role.description || 'System access role'}</span>
                   </div>
                 </div>
-                <ChevronRight className={`w-4 h-4 ${selectedRole?.id === role.id ? 'text-[#146c4f]' : 'text-gray-300'}`} />
+                <ChevronRight aria-hidden="true" className={`w-4 h-4 ${selectedRole?.id === role.id ? 'text-[#146c4f]' : 'text-gray-300'}`} />
               </button>
             ))}
           </div>
@@ -140,7 +140,7 @@ export default function RolesManagementPage() {
                   disabled={saving}
                   className="bg-[#146c4f] hover:bg-[#115a42] text-white"
                 >
-                  {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                  {saving && <Loader2 aria-hidden="true" className="w-4 h-4 animate-spin mr-2" />}
                   Save Changes
                 </Button>
               </CardHeader>

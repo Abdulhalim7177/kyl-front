@@ -25,6 +25,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { AnimatedConfirmDialog } from '@/components/AnimatedConfirmDialog'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 import { blogService, getPostImageUrl, Post, PostType } from '@/services/blogs'
 
 type Tab = 'posts' | 'types'
@@ -166,16 +168,20 @@ export default function AdminBlogsPage() {
               <option value="">All post types</option>
               {postTypes.map(type => <option key={type.id} value={type.id}>{type.name}</option>)}
             </select>
-            <Link to="/k8s9d7f3-blogs-add">
-              <Button className={`${primaryButtonClass} w-full rounded-xl sm:w-auto`}>
-                <Plus className="mr-2 h-4 w-4" /> Create post
-              </Button>
-            </Link>
+            <Can permission={Permissions.CREATE_POST}>
+              <Link to="/k8s9d7f3-blogs-add">
+                <Button className={`${primaryButtonClass} w-full rounded-xl sm:w-auto`}>
+                  <Plus aria-hidden="true" className="mr-2 h-4 w-4" /> Create post
+                </Button>
+              </Link>
+            </Can>
           </div>
         ) : (
-          <Button onClick={() => openTypeDialog()} className={`${primaryButtonClass} rounded-xl`}>
-            <Plus className="mr-2 h-4 w-4" /> New post type
-          </Button>
+          <Can permission={Permissions.CREATE_POST_TYPE}>
+            <Button onClick={() => openTypeDialog()} className={`${primaryButtonClass} rounded-xl`}>
+              <Plus aria-hidden="true" className="mr-2 h-4 w-4" /> New post type
+            </Button>
+          </Can>
         )}
       </header>
 
@@ -216,7 +222,7 @@ export default function AdminBlogsPage() {
               <div className="mb-5">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <Input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search posts..." className="rounded-xl pl-9" />
+                  <Input aria-label="Search posts" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search posts..." className="rounded-xl pl-9" />
                 </div>
               </div>
               {loading ? (
@@ -267,9 +273,13 @@ export default function AdminBlogsPage() {
                           </Link>
                           <p className="mt-2 line-clamp-3 flex-1 whitespace-pre-wrap text-sm leading-5 text-gray-600">{post.content}</p>
                           <div className="mt-4 flex justify-end gap-1 border-t border-gray-100 pt-3">
-                            <Link to={`/k8s9d7f3-blogs-view/${post.id}`} aria-label={`View ${post.title}`} title="View post"><Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-gray-500 hover:text-[#146c4f]"><Eye className="h-4 w-4" /></Button></Link>
-                            <Link to={`/k8s9d7f3-blogs-edit/${post.id}`} aria-label={`Edit ${post.title}`} title="Edit post"><Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-gray-500 hover:text-blue-700"><Pencil className="h-4 w-4" /></Button></Link>
-                            <Button type="button" variant="ghost" size="icon" aria-label={`Delete ${post.title}`} title="Delete post" onClick={() => setDeleteTarget({ kind: 'post', id: post.id, label: post.title })} className="h-9 w-9 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600"><Trash2 className="h-4 w-4" /></Button>
+                            <Link to={`/k8s9d7f3-blogs-view/${post.id}`} aria-label={`View ${post.title}`} title="View post"><Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-gray-500 hover:text-[#146c4f]"><Eye aria-hidden="true" className="h-4 w-4" /></Button></Link>
+                            <Can permission={Permissions.UPDATE_POST}>
+                              <Link to={`/k8s9d7f3-blogs-edit/${post.id}`} aria-label={`Edit ${post.title}`} title="Edit post"><Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-gray-500 hover:text-blue-700"><Pencil aria-hidden="true" className="h-4 w-4" /></Button></Link>
+                            </Can>
+                            <Can permission={Permissions.DELETE_POST}>
+                              <Button type="button" variant="ghost" size="icon" aria-label={`Delete ${post.title}`} title="Delete post" onClick={() => setDeleteTarget({ kind: 'post', id: post.id, label: post.title })} className="h-9 w-9 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600"><Trash2 aria-hidden="true" className="h-4 w-4" /></Button>
+                            </Can>
                           </div>
                         </div>
                       </article>
@@ -301,9 +311,13 @@ export default function AdminBlogsPage() {
                     <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">
                       <button type="button" onClick={() => { setTab('posts'); setSelectedTypeId(String(type.id)) }} className="text-sm font-medium text-[#146c4f] hover:underline">View posts</button>
                       <div className="flex gap-1">
-                        <Button type="button" variant="ghost" size="icon" aria-label={`View ${type.name}`} title="View post type" onClick={() => void openTypeDetails(type.id)} className="h-8 w-8 text-gray-500"><ArrowUpRight className="h-4 w-4" /></Button>
-                        <Button type="button" variant="ghost" size="icon" aria-label={`Edit ${type.name}`} title="Edit post type" onClick={() => openTypeDialog(type)} className="h-8 w-8 text-gray-500"><Pencil className="h-4 w-4" /></Button>
-                        <Button type="button" variant="ghost" size="icon" aria-label={`Delete ${type.name}`} title="Delete post type" onClick={() => setDeleteTarget({ kind: 'type', id: type.id, label: type.name })} className="h-8 w-8 text-gray-500 hover:bg-red-50 hover:text-red-600"><Trash2 className="h-4 w-4" /></Button>
+                        <Button type="button" variant="ghost" size="icon" aria-label={`View ${type.name}`} title="View post type" onClick={() => void openTypeDetails(type.id)} className="h-8 w-8 text-gray-500"><ArrowUpRight aria-hidden="true" className="h-4 w-4" /></Button>
+                        <Can permission={Permissions.UPDATE_POST_TYPE}>
+                          <Button type="button" variant="ghost" size="icon" aria-label={`Edit ${type.name}`} title="Edit post type" onClick={() => openTypeDialog(type)} className="h-8 w-8 text-gray-500"><Pencil aria-hidden="true" className="h-4 w-4" /></Button>
+                        </Can>
+                        <Can permission={Permissions.DELETE_POST_TYPE}>
+                          <Button type="button" variant="ghost" size="icon" aria-label={`Delete ${type.name}`} title="Delete post type" onClick={() => setDeleteTarget({ kind: 'type', id: type.id, label: type.name })} className="h-8 w-8 text-gray-500 hover:bg-red-50 hover:text-red-600"><Trash2 aria-hidden="true" className="h-4 w-4" /></Button>
+                        </Can>
                       </div>
                     </div>
                   </article>

@@ -6,12 +6,15 @@ import { Input } from '@/components/ui/input'
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
 import { pollService } from '@/services/polls'
+import Can from '@/components/Can'
+import { Roles } from '@/lib/permissions'
 
 export default function AdminPollsPage() {
   const [polls, setPolls] = useState<any[]>([])
@@ -68,11 +71,13 @@ export default function AdminPollsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Polls Management</h1>
           <p className="text-sm text-gray-500 mt-1">Manage public opinion polls.</p>
         </div>
-        <Link to="/k8s9d7f3-polls-add">
-          <Button className="bg-[#146c4f] hover:bg-[#115a42] text-white flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Create Poll
-          </Button>
-        </Link>
+        <Can role={[Roles.SUPER_ADMIN, Roles.SUPPORT_ADMIN]}>
+          <Link to="/k8s9d7f3-polls-add">
+            <Button className="bg-[#146c4f] hover:bg-[#115a42] text-white flex items-center gap-2">
+              <Plus aria-hidden="true" className="w-4 h-4" /> Create Poll
+            </Button>
+          </Link>
+        </Can>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"><div className="p-6">
@@ -80,6 +85,7 @@ export default function AdminPollsPage() {
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
+                aria-label="Search polls"
                 placeholder="Search polls..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -91,10 +97,11 @@ export default function AdminPollsPage() {
           {loading ? (
             <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div></div>
           ) : error ? (
-            <div className="text-red-500 py-4">{error}</div>
+            <div role="alert" className="text-red-500 py-4">{error}</div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
+                <TableCaption className="sr-only">Polls list</TableCaption>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent border-gray-100 bg-gray-50/50">
                     <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider h-11 px-6">Question</TableHead>
@@ -121,19 +128,24 @@ export default function AdminPollsPage() {
                       <TableCell className="px-6 py-4 text-sm text-gray-600">{new Date(poll.ends_at).toLocaleDateString()}</TableCell>
                       <TableCell className="px-6 py-4 text-right text-sm">
                         <div className="flex justify-end gap-2">
-                          <Link to={`/k8s9d7f3-polls-edit/${poll.id}`}>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
-                              <Edit2 className="w-4 h-4" />
+                          <Can role={[Roles.SUPER_ADMIN, Roles.SUPPORT_ADMIN]}>
+                            <Link to={`/k8s9d7f3-polls-edit/${poll.id}`} aria-label={`Edit ${poll.question}`}>
+                              <Button variant="ghost" size="icon" aria-label={`Edit ${poll.question}`} className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                                <Edit2 aria-hidden="true" className="w-4 h-4" />
+                              </Button>
+                            </Link>
+                          </Can>
+                          <Can role={[Roles.SUPER_ADMIN, Roles.SUPPORT_ADMIN]}>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => handleDelete(poll.id)}
+                              aria-label={`Delete ${poll.question}`}
+                              className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 aria-hidden="true" className="w-4 h-4" />
                             </Button>
-                          </Link>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleDelete(poll.id)}
-                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          </Can>
                         </div>
                       </TableCell>
                     </TableRow>

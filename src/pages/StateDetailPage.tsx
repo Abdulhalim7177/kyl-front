@@ -12,6 +12,8 @@ import { candidateService, Candidate, UpdateGovernatorialCandidateData } from '@
 import { electionService, Election, StateOffice } from '@/services/elections'
 import { partyService, Party } from '@/services/parties'
 import { useAuth } from '@/contexts/AuthContext'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 
 const normalizeCandidateIdentifier = (value: string | number | undefined) =>
   String(value ?? '').toLowerCase().replace(/[\s()+-]/g, '')
@@ -447,7 +449,7 @@ export default function StateDetailPage() {
     return (
       <div className="space-y-4 p-4 md:p-0">
         <Link to="/k8s9d7f3-districts/states" className="inline-flex items-center gap-2 text-sm font-medium text-[#146c4f] hover:underline">
-          <ArrowLeft className="h-4 w-4" /> Back to states
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to states
         </Link>
         <Card>
           <CardContent className="py-12 text-center text-gray-500">
@@ -461,7 +463,7 @@ export default function StateDetailPage() {
   return (
     <div className="space-y-6 p-4 md:p-0">
       <Link to="/k8s9d7f3-districts/states" className="inline-flex items-center gap-2 text-sm font-medium text-[#146c4f] hover:underline">
-        <ArrowLeft className="h-4 w-4" /> Back to states
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to states
       </Link>
 
       <Card className="border border-gray-100 shadow-md">
@@ -478,9 +480,11 @@ export default function StateDetailPage() {
                 </div>
               </div>
               <div className="flex flex-col gap-3 sm:items-end">
-                <Button type="button" className="w-full bg-[#146c4f] hover:bg-[#10563f] sm:w-auto" onClick={() => setIsAddOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" /> Add Candidate
-                </Button>
+                <Can permission={Permissions.CREATE_CANDIDATE}>
+                  <Button type="button" className="w-full bg-[#146c4f] hover:bg-[#10563f] sm:w-auto" onClick={() => setIsAddOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> Add Candidate
+                  </Button>
+                </Can>
                 <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-2 sm:self-end">
                   <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Status</p>
                   <div className="mt-1 flex items-center gap-2 font-semibold text-[#146c4f]">
@@ -494,9 +498,10 @@ export default function StateDetailPage() {
           </div>
           <div className="flex flex-col gap-4 border-b border-gray-100 px-4 py-4 sm:px-6">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto] sm:items-end">
-              <label className="block">
+              <label htmlFor="state-detail-election-year" className="block">
                 <span className="mb-1 block text-xs font-semibold text-gray-600">Election year</span>
                 <input
+                  id="state-detail-election-year"
                   type="text"
                   value={electionYearSearch}
                   onChange={(event) => setElectionYearSearch(event.target.value)}
@@ -504,9 +509,10 @@ export default function StateDetailPage() {
                   className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#146c4f] focus:outline-none focus:ring-2 focus:ring-[#146c4f]/20"
                 />
               </label>
-              <label className="block">
+              <label htmlFor="state-detail-party" className="block">
                 <span className="mb-1 block text-xs font-semibold text-gray-600">Party (optional)</span>
                 <input
+                  id="state-detail-party"
                   type="text"
                   value={electionPartySearch}
                   onChange={(event) => setElectionPartySearch(event.target.value)}
@@ -515,7 +521,7 @@ export default function StateDetailPage() {
                 />
               </label>
               <Button type="button" onClick={searchGovernatorialCandidates} disabled={isSearchingElectionCandidates}>
-                {isSearchingElectionCandidates && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSearchingElectionCandidates && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
                 Search
               </Button>
               {hasSearchedElectionCandidates && (
@@ -553,17 +559,21 @@ export default function StateDetailPage() {
                           {candidate.status || 'Active'}
                         </span>
                         <div className="flex shrink-0 gap-1 sm:gap-2">
-                        <Button type="button" size="sm" variant="outline" aria-label={`Edit ${candidate.full_name}`} title="Edit candidate" className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => openEditForm(candidate)}>
-                          <Pencil className="h-4 w-4 sm:mr-2" />
-                          <span className="hidden sm:inline">Edit</span>
-                        </Button>
-                        <Button type="button" size="sm" variant="destructive" aria-label={`${deleteLabel} ${candidate.full_name}`} title={deleteLabel} className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => {
-                          setDeletingCandidate(candidate)
-                          setDeleteError('')
-                        }}>
-                          <Trash2 className="h-4 w-4 sm:mr-2" />
-                          <span className="hidden sm:inline">{deleteLabel}</span>
-                        </Button>
+                        <Can permission={Permissions.UPDATE_CANDIDATE}>
+                          <Button type="button" size="sm" variant="outline" aria-label={`Edit ${candidate.full_name}`} title="Edit candidate" className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => openEditForm(candidate)}>
+                            <Pencil className="h-4 w-4 sm:mr-2" aria-hidden="true" />
+                            <span className="hidden sm:inline">Edit</span>
+                          </Button>
+                        </Can>
+                        <Can permission={Permissions.DELETE_CANDIDATE}>
+                          <Button type="button" size="sm" variant="destructive" aria-label={`${deleteLabel} ${candidate.full_name}`} title={deleteLabel} className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => {
+                            setDeletingCandidate(candidate)
+                            setDeleteError('')
+                          }}>
+                            <Trash2 className="h-4 w-4 sm:mr-2" aria-hidden="true" />
+                            <span className="hidden sm:inline">{deleteLabel}</span>
+                          </Button>
+                        </Can>
                         </div>
                       </div>
 
@@ -634,7 +644,7 @@ export default function StateDetailPage() {
                   disabled={candidatePage === 1}
                   aria-label="Previous candidate page"
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                   <span>Previous</span>
                 </Button>
                 <span className="whitespace-nowrap text-sm text-gray-600" aria-live="polite">
@@ -650,7 +660,7 @@ export default function StateDetailPage() {
                   aria-label="Next candidate page"
                 >
                   <span>Next</span>
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </div>
             )}
@@ -751,9 +761,11 @@ export default function StateDetailPage() {
             {editError && <p role="alert" className="text-sm text-red-600">{editError}</p>}
             <div className="flex justify-end gap-3">
               <Button type="button" variant="outline" onClick={() => setEditingCandidate(null)} disabled={isUpdating}>Cancel</Button>
-              <Button type="button" onClick={updateCandidate} disabled={isUpdating} className="bg-[#146c4f] hover:bg-[#10563f]">
-                {isUpdating ? 'Updating...' : 'Save Changes'}
-              </Button>
+              <Can permission={Permissions.UPDATE_CANDIDATE}>
+                <Button type="button" onClick={updateCandidate} disabled={isUpdating} className="bg-[#146c4f] hover:bg-[#10563f]">
+                  {isUpdating ? 'Updating...' : 'Save Changes'}
+                </Button>
+              </Can>
             </div>
           </div>
         </DialogContent>
@@ -778,9 +790,11 @@ export default function StateDetailPage() {
           {deleteError && <p role="alert" className="text-sm text-red-600">{deleteError}</p>}
           <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={() => setDeletingCandidate(null)} disabled={isDeleting}>Cancel</Button>
-            <Button type="button" variant="destructive" onClick={removeCandidate} disabled={isDeleting}>
-              {isDeleting ? 'Deleting...' : 'Confirm Delete'}
-            </Button>
+            <Can permission={Permissions.DELETE_CANDIDATE}>
+              <Button type="button" variant="destructive" onClick={removeCandidate} disabled={isDeleting}>
+                {isDeleting ? 'Deleting...' : 'Confirm Delete'}
+              </Button>
+            </Can>
           </div>
         </DialogContent>
       </Dialog>
@@ -877,7 +891,7 @@ export default function StateDetailPage() {
                       onClick={() => void searchElectionCandidates()}
                       disabled={isSearchingCandidates || isVerifyingCandidate}
                     >
-                      <Search className="mr-2 h-4 w-4" />
+                      <Search className="mr-2 h-4 w-4" aria-hidden="true" />
                       {isSearchingCandidates ? 'Searching...' : 'Find Candidate'}
                     </Button>
                   </div>
@@ -886,16 +900,17 @@ export default function StateDetailPage() {
                   <div className="space-y-1 rounded-md border border-gray-200 bg-white p-2">
                     <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Select the matching candidate to verify</p>
                     {candidateOptions.map((candidate) => (
-                      <button
-                        key={candidate.id}
-                        type="button"
-                        className="flex w-full flex-col rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-100 disabled:opacity-50 sm:flex-row sm:items-center sm:justify-between"
-                        disabled={isVerifyingCandidate}
-                        onClick={() => void verifyCandidate(candidate)}
-                      >
-                        <span className="font-medium">{candidate.full_name}</span>
-                        <span className="text-gray-500">{candidate.phoneNo || candidate.nin}</span>
-                      </button>
+                      <Can key={candidate.id} permission={Permissions.TOGGLE_CANDIDATE_STATUS}>
+                        <button
+                          type="button"
+                          className="flex w-full flex-col rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-100 disabled:opacity-50 sm:flex-row sm:items-center sm:justify-between"
+                          disabled={isVerifyingCandidate}
+                          onClick={() => void verifyCandidate(candidate)}
+                        >
+                          <span className="font-medium">{candidate.full_name}</span>
+                          <span className="text-gray-500">{candidate.phoneNo || candidate.nin}</span>
+                        </button>
+                      </Can>
                     ))}
                   </div>
                 )}
@@ -963,9 +978,11 @@ export default function StateDetailPage() {
                   />
                 </div>
                 {formError && <p role="alert" className="text-sm text-red-600">{formError}</p>}
-                <Button type="button" onClick={addCandidate} disabled={isSaving || isVerifyingCandidate} className="w-full bg-[#146c4f] hover:bg-[#10563f]">
-                  {isSaving ? 'Adding...' : 'Add Governatorial Candidate'}
-                </Button>
+                <Can permission={Permissions.CREATE_CANDIDATE}>
+                  <Button type="button" onClick={addCandidate} disabled={isSaving || isVerifyingCandidate} className="w-full bg-[#146c4f] hover:bg-[#10563f]">
+                    {isSaving ? 'Adding...' : 'Add Governatorial Candidate'}
+                  </Button>
+                </Can>
               </div>
             )}
           </div>

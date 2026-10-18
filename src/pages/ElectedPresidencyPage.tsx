@@ -12,6 +12,8 @@ import { candidateService, Candidate } from '@/services/candidates'
 import { Election, electionService, StateOffice } from '@/services/elections'
 import { AddElectedPresidencyData, ElectedLeader, leadersService, UpdateElectedPresidencyData } from '@/services/leaders'
 import { Party, partyService } from '@/services/parties'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 
 const leadershipRoles = [
   { title: 'President', matches: ['president'] },
@@ -65,46 +67,52 @@ function LeaderCard({
               {leader.status || 'Active'}
             </span>
             <div className="flex flex-wrap justify-end gap-1 sm:gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                aria-label={`Edit ${candidateName}`}
-                title="Edit leader"
-                className="h-8 px-2 sm:h-9 sm:px-3"
-                onClick={() => onEdit(leader)}
-              >
-                <Pencil className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Edit</span>
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                aria-label={`Terminate ${candidateName}`}
-                title="Terminate leader"
-                className="h-8 px-2 sm:h-9 sm:px-3"
-                onClick={() => onTerminate(leader)}
-                disabled={isTerminating}
-              >
-                {isTerminating
-                  ? <Loader2 className="h-4 w-4 animate-spin" />
-                  : <><Ban className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Terminate</span></>}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="destructive"
-                aria-label={`Delete ${candidateName}`}
-                title="Delete leader"
-                className="h-8 px-2 sm:h-9 sm:px-3"
-                onClick={() => onDelete(leader)}
-                disabled={isDeleting}
-              >
-                {isDeleting
-                  ? <Loader2 className="h-4 w-4 animate-spin" />
-                  : <><Trash2 className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Delete</span></>}
-              </Button>
+              <Can permission={Permissions.UPDATE_LEADER}>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  aria-label={`Edit ${candidateName}`}
+                  title="Edit leader"
+                  className="h-8 px-2 sm:h-9 sm:px-3"
+                  onClick={() => onEdit(leader)}
+                >
+                  <Pencil className="h-4 w-4 sm:mr-2" aria-hidden="true" />
+                  <span className="hidden sm:inline">Edit</span>
+                </Button>
+              </Can>
+              <Can permission={Permissions.DELETE_LEADER}>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  aria-label={`Terminate ${candidateName}`}
+                  title="Terminate leader"
+                  className="h-8 px-2 sm:h-9 sm:px-3"
+                  onClick={() => onTerminate(leader)}
+                  disabled={isTerminating}
+                >
+                  {isTerminating
+                    ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    : <><Ban className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Terminate</span></>}
+                </Button>
+              </Can>
+              <Can permission={Permissions.DELETE_LEADER}>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="destructive"
+                  aria-label={`Delete ${candidateName}`}
+                  title="Delete leader"
+                  className="h-8 px-2 sm:h-9 sm:px-3"
+                  onClick={() => onDelete(leader)}
+                  disabled={isDeleting}
+                >
+                  {isDeleting
+                    ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    : <><Trash2 className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Delete</span></>}
+                </Button>
+              </Can>
             </div>
           </div>
         )}
@@ -617,7 +625,7 @@ export default function ElectedPresidencyPage() {
   return (
     <div className="space-y-6 p-4 md:p-0">
       <Link to="/k8s9d7f3-districts/presidency" className="inline-flex items-center gap-2 text-sm font-medium text-[#146c4f] hover:underline">
-        <ArrowLeft className="h-4 w-4" /> Back to Presidency
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Presidency
       </Link>
 
       <Card className="border border-gray-100 shadow-md">
@@ -638,9 +646,11 @@ export default function ElectedPresidencyPage() {
               </div>
             </div>
             <div className="flex flex-col gap-3 sm:items-end">
-              <Button type="button" className="bg-[#146c4f] hover:bg-[#10563f]" onClick={() => void openAddDialog()}>
-                <Plus className="mr-2 h-4 w-4" /> Add Elected Leader
-              </Button>
+              <Can permission={Permissions.CREATE_LEADER}>
+                <Button type="button" className="bg-[#146c4f] hover:bg-[#10563f]" onClick={() => void openAddDialog()}>
+                  <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> Add Elected Leader
+                </Button>
+              </Can>
               <div className="flex flex-wrap items-end justify-end gap-2">
                 <label className="space-y-1 text-xs font-medium text-gray-600">
                   Election year
@@ -665,15 +675,15 @@ export default function ElectedPresidencyPage() {
                   />
                 </label>
                 <Button type="button" size="sm" variant="outline" onClick={() => void searchElectedPresidency()} disabled={isSearching}>
-                  {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Search className="mr-2 h-4 w-4" /> Search</>}
+                  {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Search className="mr-2 h-4 w-4" aria-hidden="true" /> Search</>}
                 </Button>
                 <Button type="button" size="sm" variant="ghost" onClick={showActivePresidency} disabled={isSearching}>
-                  <X className="mr-2 h-4 w-4" /> Show Active
+                  <X className="mr-2 h-4 w-4" aria-hidden="true" /> Show Active
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setReloadKey((key) => key + 1)} disabled={loading}>
                   {loading
                     ? <Loader2 className="h-4 w-4 animate-spin" />
-                    : <><RefreshCw className="mr-2 h-4 w-4" /> Refresh</>}
+                    : <><RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" /> Refresh</>}
                 </Button>
               </div>
             </div>
@@ -689,7 +699,7 @@ export default function ElectedPresidencyPage() {
             <div className="flex flex-col items-center gap-4 p-12 text-center">
               <p role="alert" className="text-sm text-red-600">{error}</p>
               <Button type="button" variant="outline" onClick={() => setReloadKey((key) => key + 1)}>
-                <RefreshCw className="mr-2 h-4 w-4" /> Try again
+                <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" /> Try again
               </Button>
             </div>
           ) : (
@@ -783,15 +793,17 @@ export default function ElectedPresidencyPage() {
                       placeholder="Enter candidate NIN or phone number"
                       disabled={!electionId || isVerifying}
                     />
-                    <Button
-                      type="button"
-                      onClick={() => void findCandidate()}
-                      disabled={isVerifying || !electionId}
-                    >
-                      {isVerifying
-                        ? <><Loader2 className="h-4 w-4 animate-spin" /> Checking</>
-                        : <><Search className="h-4 w-4" /> Verify</>}
-                    </Button>
+                    <Can permission={Permissions.UPDATE_LEADER}>
+                      <Button
+                        type="button"
+                        onClick={() => void findCandidate()}
+                        disabled={isVerifying || !electionId}
+                      >
+                        {isVerifying
+                          ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Checking</>
+                          : <><Search className="h-4 w-4" aria-hidden="true" /> Verify</>}
+                      </Button>
+                    </Can>
                   </div>
                   {verificationError && <p role="alert" className="mt-2 text-sm text-red-600">{verificationError}</p>}
                 </div>
@@ -889,14 +901,16 @@ export default function ElectedPresidencyPage() {
                     >
                       Back
                     </Button>
-                    <Button
-                      type="button"
-                      onClick={() => void addElectedLeader()}
-                      disabled={isSaving}
-                      className="bg-[#146c4f] hover:bg-[#10563f]"
-                    >
-                      {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding...</> : 'Add Elected Leader'}
-                    </Button>
+                    <Can permission={Permissions.CREATE_LEADER}>
+                      <Button
+                        type="button"
+                        onClick={() => void addElectedLeader()}
+                        disabled={isSaving}
+                        className="bg-[#146c4f] hover:bg-[#10563f]"
+                      >
+                        {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> Adding...</> : 'Add Elected Leader'}
+                      </Button>
+                    </Can>
                   </DialogFooter>
                 </>
               )}
@@ -1012,14 +1026,16 @@ export default function ElectedPresidencyPage() {
                 <Button type="button" variant="outline" onClick={() => setEditingLeader(null)} disabled={isUpdating}>
                   Cancel
                 </Button>
-                <Button
-                  type="button"
-                  onClick={() => void updateElectedLeader()}
-                  disabled={isUpdating || isLoadingEditOptions}
-                  className="bg-[#146c4f] hover:bg-[#10563f]"
-                >
-                  {isUpdating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : 'Save changes'}
-                </Button>
+                <Can permission={Permissions.UPDATE_LEADER}>
+                  <Button
+                    type="button"
+                    onClick={() => void updateElectedLeader()}
+                    disabled={isUpdating || isLoadingEditOptions}
+                    className="bg-[#146c4f] hover:bg-[#10563f]"
+                  >
+                    {isUpdating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> Saving...</> : 'Save changes'}
+                  </Button>
+                </Can>
               </DialogFooter>
             </div>
           )}
@@ -1055,16 +1071,18 @@ export default function ElectedPresidencyPage() {
             >
               Cancel
             </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => void removeElectedLeader()}
-              disabled={deletingLeaderId !== null}
-            >
-              {deletingLeaderId !== null
-                ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Removing...</>
-                : <><Trash2 className="mr-2 h-4 w-4" /> Remove elected leader</>}
-            </Button>
+            <Can permission={Permissions.DELETE_LEADER}>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => void removeElectedLeader()}
+                disabled={deletingLeaderId !== null}
+              >
+                {deletingLeaderId !== null
+                  ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> Removing...</>
+                  : <><Trash2 className="mr-2 h-4 w-4" aria-hidden="true" /> Remove elected leader</>}
+              </Button>
+            </Can>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1090,10 +1108,12 @@ export default function ElectedPresidencyPage() {
             <Button type="button" variant="outline" onClick={() => setTerminatingLeader(null)} disabled={isTerminating}>
               Cancel
             </Button>
-            <Button type="button" variant="destructive" onClick={() => void terminateElectedLeader()} disabled={isTerminating}>
-              {isTerminating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isTerminating ? 'Terminating...' : 'Terminate'}
-            </Button>
+            <Can permission={Permissions.DELETE_LEADER}>
+              <Button type="button" variant="destructive" onClick={() => void terminateElectedLeader()} disabled={isTerminating}>
+                {isTerminating && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                {isTerminating ? 'Terminating...' : 'Terminate'}
+              </Button>
+            </Can>
           </div>
         </DialogContent>
       </Dialog>

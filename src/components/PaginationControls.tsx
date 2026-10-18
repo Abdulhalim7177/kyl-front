@@ -39,7 +39,7 @@ export function PaginationControls({
             value={`${itemsPerPage}`}
             onValueChange={(value) => onItemsPerPageChange(Number(value))}
           >
-            <SelectTrigger className="h-8 w-[70px] bg-white text-gray-900 border-gray-300">
+            <SelectTrigger aria-label="Rows per page" className="h-8 w-[70px] bg-white text-gray-900 border-gray-300">
               <SelectValue placeholder={itemsPerPage} />
             </SelectTrigger>
             <SelectContent side="top">
@@ -60,36 +60,40 @@ export function PaginationControls({
             className="hidden h-8 w-8 p-0 lg:flex"
             onClick={() => onPageChange(1)}
             disabled={currentPage === 1}
+            aria-label="Go to first page"
           >
             <span className="sr-only">Go to first page</span>
-            <ChevronsLeft className="h-4 w-4" />
+            <ChevronsLeft aria-hidden="true" className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
             className="h-8 w-8 p-0"
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1}
+            aria-label="Go to previous page"
           >
             <span className="sr-only">Go to previous page</span>
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft aria-hidden="true" className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
             className="h-8 w-8 p-0"
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage >= totalPages}
+            aria-label="Go to next page"
           >
             <span className="sr-only">Go to next page</span>
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight aria-hidden="true" className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
             className="hidden h-8 w-8 p-0 lg:flex"
             onClick={() => onPageChange(totalPages)}
             disabled={currentPage >= totalPages}
+            aria-label="Go to last page"
           >
             <span className="sr-only">Go to last page</span>
-            <ChevronsRight className="h-4 w-4" />
+            <ChevronsRight aria-hidden="true" className="h-4 w-4" />
           </Button>
         </div>
       </div>

@@ -42,7 +42,7 @@ export default function LgaDetailPage() {
     return (
       <div className="space-y-4 p-4 md:p-0">
         <Link to="/k8s9d7f3-districts/lgas" className="inline-flex items-center gap-2 text-sm font-medium text-[#146c4f] hover:underline">
-          <ArrowLeft className="h-4 w-4" /> Back to LGAs
+          <ArrowLeft aria-hidden="true" className="h-4 w-4" /> Back to LGAs
         </Link>
         <Card>
           <CardContent className="py-12 text-center text-gray-500">

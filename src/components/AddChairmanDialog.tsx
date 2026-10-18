@@ -199,7 +199,7 @@ export default function AddChairmanDialog({ partyId, partyName = '', onChairmanA
     }}>
       <DialogTrigger asChild>
         <Button className="bg-green-700 hover:bg-green-800 text-white">
-          <UserCheck className="w-4 h-4 mr-2" />
+          <UserCheck aria-hidden="true" className="w-4 h-4 mr-2" />
           Add Chairman
         </Button>
       </DialogTrigger>
@@ -230,7 +230,7 @@ export default function AddChairmanDialog({ partyId, partyName = '', onChairmanA
                   placeholder="Enter candidate NIN"
                   className={searchError ? 'border-red-500' : ''}
                 />
-                {searchError && <p className="mt-2 text-sm text-red-600">{searchError}</p>}
+                {searchError && <p role="alert" className="mt-2 text-sm text-red-600">{searchError}</p>}
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
@@ -315,7 +315,7 @@ export default function AddChairmanDialog({ partyId, partyName = '', onChairmanA
                 </div>
               </div>
 
-              {submitError && <p className="mt-4 text-sm text-red-600">{submitError}</p>}
+              {submitError && <p role="alert" className="mt-4 text-sm text-red-600">{submitError}</p>}
 
               <div className="mt-8 flex justify-end gap-3">
                 <Button
@@ -335,7 +335,7 @@ export default function AddChairmanDialog({ partyId, partyName = '', onChairmanA
                   onClick={handleConfirmProfile}
                   className="bg-green-600 hover:bg-green-700 text-white px-6 flex items-center gap-2"
                 >
-                  <CheckCircle className="w-4 h-4" />
+                  <CheckCircle aria-hidden="true" className="w-4 h-4" />
                   Confirm & Proceed
                 </Button>
               </div>
@@ -358,8 +358,9 @@ export default function AddChairmanDialog({ partyId, partyName = '', onChairmanA
             <div className="p-6 space-y-4">
               {/* Candidate Name (Disabled) */}
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">Candidate Name</label>
+                <label htmlFor="chairman-candidate-name" className="text-sm font-medium text-slate-700 mb-2 block">Candidate Name</label>
                 <Input
+                  id="chairman-candidate-name"
                   value={candidate.fullName || ''}
                   disabled
                   className="bg-slate-50"
@@ -368,8 +369,9 @@ export default function AddChairmanDialog({ partyId, partyName = '', onChairmanA
 
               {/* Party Name (Disabled) */}
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">Party Name</label>
+                <label htmlFor="chairman-party-name" className="text-sm font-medium text-slate-700 mb-2 block">Party Name</label>
                 <Input
+                  id="chairman-party-name"
                   value={partyName}
                   disabled
                   className="bg-slate-50"
@@ -428,7 +430,7 @@ export default function AddChairmanDialog({ partyId, partyName = '', onChairmanA
                 />
               </div>
 
-              {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+              {submitError && <p role="alert" className="text-sm text-red-600">{submitError}</p>}
               {successMessage && <p className="text-sm text-green-600 font-medium">{successMessage}</p>}
 
               <div className="mt-8 flex justify-end gap-3">
@@ -453,7 +455,7 @@ export default function AddChairmanDialog({ partyId, partyName = '', onChairmanA
                     </>
                   ) : (
                     <>
-                      <CheckCircle className="w-4 h-4" />
+                      <CheckCircle aria-hidden="true" className="w-4 h-4" />
                       Submit
                     </>
                   )}
@@ -518,7 +520,7 @@ export default function AddChairmanDialog({ partyId, partyName = '', onChairmanA
                 </div>
               )}
 
-              {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+              {submitError && <p role="alert" className="text-sm text-red-600">{submitError}</p>}
               {successMessage && <p className="text-sm text-green-600 font-medium">{successMessage}</p>}
 
               <div className="flex justify-end gap-3">

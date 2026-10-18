@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 // Select components removed as they are no longer needed
 import { ArrowLeft, Save, Loader2 } from 'lucide-react'
 import { electionService, isElectionCompleted } from '@/services/elections'
@@ -106,6 +108,7 @@ export default function ElectionFormPage() {
         <Button 
           variant="ghost" 
           size="icon" 
+          aria-label="Go back"
           onClick={() => navigate(-1)}
           className="text-gray-500 hover:text-gray-900"
         >
@@ -123,7 +126,7 @@ export default function ElectionFormPage() {
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
         {error && (
-          <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100">
+          <div role="alert" className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100">
             {error}
           </div>
         )}
@@ -165,23 +168,25 @@ export default function ElectionFormPage() {
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              className="bg-[#146c4f] hover:bg-[#115a42] text-white rounded-xl min-w-[120px]"
-              disabled={saving}
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  {isEditMode ? 'Update Election' : 'Create Election'}
-                </>
-              )}
-            </Button>
+            <Can any={[Permissions.CREATE_ELECTION, Permissions.UPDATE_ELECTION]}>
+              <Button 
+                type="submit" 
+                className="bg-[#146c4f] hover:bg-[#115a42] text-white rounded-xl min-w-[120px]"
+                disabled={saving}
+              >
+                {saving ? (
+                  <>
+                    <Loader2 aria-hidden="true" className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save aria-hidden="true" className="w-4 h-4 mr-2" />
+                    {isEditMode ? 'Update Election' : 'Create Election'}
+                  </>
+                )}
+              </Button>
+            </Can>
           </div>
         </form>
       </div>

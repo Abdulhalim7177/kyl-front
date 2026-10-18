@@ -28,6 +28,8 @@ import {
 } from 'lucide-react'
 import { candidateService, Candidate, Party, State } from '@/services/candidates'
 import { useAuth } from '@/contexts/AuthContext'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 
 export default function CandidatesPage() {
   const navigate = useNavigate()
@@ -214,16 +216,18 @@ export default function CandidatesPage() {
              disabled={loading}
              className="flex items-center gap-2"
            >
-             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+             <RefreshCw aria-hidden="true" className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
              Refresh
            </Button>
-           <Button 
-             className="bg-[#146c4f] hover:bg-[#115a42] text-white rounded-lg px-4 py-2 h-10 flex items-center justify-center shadow w-full sm:w-auto"
-             onClick={() => navigate('/k8s9d7f3-candidates-add')}
-           >
-             <Plus className="w-4 h-4 mr-2" />
-             Add Candidate
-           </Button>
+           <Can permission={Permissions.CREATE_CANDIDATE}>
+             <Button 
+               className="bg-[#146c4f] hover:bg-[#115a42] text-white rounded-lg px-4 py-2 h-10 flex items-center justify-center shadow w-full sm:w-auto"
+               onClick={() => navigate('/k8s9d7f3-candidates-add')}
+             >
+               <Plus aria-hidden="true" className="w-4 h-4 mr-2" />
+               Add Candidate
+             </Button>
+           </Can>
          </div>
       </div>
 
@@ -234,6 +238,7 @@ export default function CandidatesPage() {
             <Input 
               type="text" 
               placeholder="Search by name, state, or district..." 
+              aria-label="Search candidates"
               className="pl-9 bg-gray-50/50 border-gray-200 shadow-none rounded-xl h-10 w-full"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -242,7 +247,7 @@ export default function CandidatesPage() {
          
          <div className="flex items-center gap-3 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0 hide-scrollbar">
            <Select value={stateFilter} onValueChange={setStateFilter}>
-             <SelectTrigger className="w-[130px] shrink-0 h-10 rounded-xl bg-gray-50/50 border-gray-200">
+             <SelectTrigger aria-label="Filter by state" className="w-[130px] shrink-0 h-10 rounded-xl bg-gray-50/50 border-gray-200">
                <span className="text-gray-500 mr-1">State:</span> <SelectValue />
              </SelectTrigger>
              <SelectContent
@@ -262,7 +267,7 @@ export default function CandidatesPage() {
            </Select>
 
            <Select value={partyFilter} onValueChange={setPartyFilter}>
-             <SelectTrigger className="w-[130px] shrink-0 h-10 rounded-xl bg-gray-50/50 border-gray-200">
+             <SelectTrigger aria-label="Filter by party" className="w-[130px] shrink-0 h-10 rounded-xl bg-gray-50/50 border-gray-200">
                <span className="text-gray-500 mr-1">Party:</span> <SelectValue />
              </SelectTrigger>
              <SelectContent
@@ -282,7 +287,7 @@ export default function CandidatesPage() {
            </Select>
 
            <Select value={districtFilter} onValueChange={setDistrictFilter}>
-             <SelectTrigger className="w-[160px] shrink-0 h-10 rounded-xl bg-gray-50/50 border-gray-200">
+             <SelectTrigger aria-label="Filter by district" className="w-[160px] shrink-0 h-10 rounded-xl bg-gray-50/50 border-gray-200">
                <span className="text-gray-500 mr-1">District:</span> <SelectValue />
              </SelectTrigger>
              <SelectContent
@@ -308,19 +313,21 @@ export default function CandidatesPage() {
         <div className="flex items-center justify-between gap-3 rounded-xl bg-[#187555] px-4 py-3 text-white shadow-sm sm:px-6">
           <div className="flex items-center gap-3">
             <button type="button" className="flex h-8 w-8 items-center justify-center rounded bg-white/20 hover:bg-white/30" onClick={toggleSelectAll} aria-label="Select all candidates on this page">
-              <Check className="h-5 w-5" />
+              <Check aria-hidden="true" className="h-5 w-5" />
             </button>
             <span className="font-semibold">{numSelected} Selected</span>
           </div>
           <div className="flex items-center gap-2">
-            <Button className="h-9 rounded-lg border border-red-500 bg-red-500 px-3 text-sm text-white hover:bg-red-600 sm:px-5" onClick={() => {
-              setCandidateToDelete(null)
-              setIsDeleteOpen(true)
-            }}>
-              <Trash2 className="mr-2 h-4 w-4" />Delete
-            </Button>
+            <Can permission={Permissions.DELETE_CANDIDATE}>
+              <Button className="h-9 rounded-lg border border-red-500 bg-red-500 px-3 text-sm text-white hover:bg-red-600 sm:px-5" onClick={() => {
+                setCandidateToDelete(null)
+                setIsDeleteOpen(true)
+              }}>
+                <Trash2 aria-hidden="true" className="mr-2 h-4 w-4" />Delete
+              </Button>
+            </Can>
             <button type="button" className="p-1.5 text-emerald-100 hover:text-white" onClick={() => setSelectedIds(new Set())} aria-label="Clear selection">
-              <X className="h-5 w-5" />
+              <X aria-hidden="true" className="h-5 w-5" />
             </button>
           </div>
         </div>
@@ -347,7 +354,7 @@ export default function CandidatesPage() {
             Loading candidates...
           </div>
         ) : error ? (
-          <div className="rounded-2xl border border-red-100 bg-white px-5 py-12 text-center shadow-sm">
+          <div role="alert" className="rounded-2xl border border-red-100 bg-white px-5 py-12 text-center shadow-sm">
             <p className="mb-2 font-medium text-red-600">Error Loading Candidates</p>
             <p className="text-sm text-gray-600">{error}</p>
             <Button
@@ -401,16 +408,18 @@ export default function CandidatesPage() {
                       )}>
                         {item.status}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => handleToggleStatus(item.id)}
-                        disabled={togglingIds.has(item.id)}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                        aria-label={`Toggle status for ${item.full_name}`}
-                        title="Toggle candidate status"
-                      >
-                        <ToggleRight className="h-4 w-4" />
-                      </button>
+                      <Can permission={Permissions.TOGGLE_CANDIDATE_STATUS}>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(item.id)}
+                          disabled={togglingIds.has(item.id)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          aria-label={`Toggle status for ${item.full_name}`}
+                          title="Toggle candidate status"
+                        >
+                          <ToggleRight aria-hidden="true" className="h-4 w-4" />
+                        </button>
+                      </Can>
                     </div>
                     <div className="mt-4 space-y-1 text-sm text-gray-500">
                       <p>{item.senatorial_district || item.federal_house_district || item.office_title || 'District unavailable'}</p>
@@ -420,14 +429,18 @@ export default function CandidatesPage() {
                   <div className="relative z-10 mt-auto flex justify-end border-t border-gray-100 bg-gray-50/60 px-4 py-3">
                     <div className="flex items-center gap-1">
                       <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-[#146c4f] hover:bg-[#146c4f]/10 hover:text-[#115a42]" onClick={() => navigate(`/k8s9d7f3-candidates-view/${item.id}`)} aria-label={`View ${item.full_name}`} title="View candidate">
-                        <Eye className="h-4 w-4" />
+                        <Eye aria-hidden="true" className="h-4 w-4" />
                       </Button>
-                      <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-gray-600 hover:bg-gray-100 hover:text-gray-900" onClick={() => navigate(`/k8s9d7f3-candidates-edit/${item.id}`)} aria-label={`Edit ${item.full_name}`} title="Edit candidate">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(item.id)} aria-label={`Delete ${item.full_name}`} title="Delete candidate">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <Can permission={Permissions.UPDATE_CANDIDATE}>
+                        <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-gray-600 hover:bg-gray-100 hover:text-gray-900" onClick={() => navigate(`/k8s9d7f3-candidates-edit/${item.id}`)} aria-label={`Edit ${item.full_name}`} title="Edit candidate">
+                          <Edit aria-hidden="true" className="h-4 w-4" />
+                        </Button>
+                      </Can>
+                      <Can permission={Permissions.DELETE_CANDIDATE}>
+                        <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(item.id)} aria-label={`Delete ${item.full_name}`} title="Delete candidate">
+                          <Trash2 aria-hidden="true" className="h-4 w-4" />
+                        </Button>
+                      </Can>
                     </div>
                   </div>
                 </article>

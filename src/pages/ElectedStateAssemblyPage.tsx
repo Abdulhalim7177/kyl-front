@@ -12,6 +12,8 @@ import { District, districtsService } from '@/services/districts'
 import { electionService, Election, StateOffice } from '@/services/elections'
 import { candidateService, Candidate } from '@/services/candidates'
 import { getLogoUrl } from '@/lib/utils'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 
 export default function ElectedStateAssemblyPage() {
   const { id } = useParams<{ id: string }>()
@@ -378,7 +380,7 @@ export default function ElectedStateAssemblyPage() {
   return (
     <div className="space-y-6 p-4 md:p-0">
       <Link to="/k8s9d7f3-districts/state-house" className="inline-flex items-center gap-2 text-sm font-medium text-[#146c4f] hover:underline">
-        <ArrowLeft className="h-4 w-4" /> Back to State Constituencies
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to State Constituencies
       </Link>
       <Card className="border border-gray-100 shadow-md">
         <CardContent className="p-0">
@@ -425,9 +427,11 @@ export default function ElectedStateAssemblyPage() {
                   Show Active
                 </Button>
               </div>
-              <Button type="button" size="sm" className="bg-[#146c4f] hover:bg-[#10563f]" onClick={openAddDialog}>
-                <Plus className="mr-2 h-4 w-4" /> Add Elected Member
-              </Button>
+              <Can permission={Permissions.CREATE_LEADER}>
+                <Button type="button" size="sm" className="bg-[#146c4f] hover:bg-[#10563f]" onClick={openAddDialog}>
+                  <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> Add Elected Member
+                </Button>
+              </Can>
             </div>
           </div>
           {searchError && <div role="alert" className="px-6 pt-4 text-sm text-red-600">{searchError}</div>}
@@ -477,25 +481,32 @@ export default function ElectedStateAssemblyPage() {
                         <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-800">
                           {member.status || 'Active'}
                         </span>
-                        <Button type="button" size="sm" variant="outline" className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => openEditDialog(member)}>
-                          <Pencil className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="h-8 px-2 sm:h-9 sm:px-3"
-                          onClick={() => {
-                            setTerminateError('')
-                            setTerminatingMember(member)
-                          }}
-                          disabled={!Number.isInteger(Number(member.id)) || Number(member.id) <= 0}
-                        >
-                          <Ban className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Terminate</span>
-                        </Button>
-                        <Button type="button" size="sm" variant="destructive" className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => setDeletingMember(member)}>
-                          <Trash2 className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Delete</span>
-                        </Button>
+                        <Can permission={Permissions.UPDATE_LEADER}>
+                          <Button type="button" size="sm" variant="outline" aria-label={`Edit ${name}`} className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => openEditDialog(member)}>
+                            <Pencil className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Edit</span>
+                          </Button>
+                        </Can>
+                        <Can permission={Permissions.DELETE_LEADER}>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            aria-label={`Terminate ${name}`}
+                            className="h-8 px-2 sm:h-9 sm:px-3"
+                            onClick={() => {
+                              setTerminateError('')
+                              setTerminatingMember(member)
+                            }}
+                            disabled={!Number.isInteger(Number(member.id)) || Number(member.id) <= 0}
+                          >
+                            <Ban className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Terminate</span>
+                          </Button>
+                        </Can>
+                        <Can permission={Permissions.DELETE_LEADER}>
+                          <Button type="button" size="sm" variant="destructive" aria-label={`Delete ${name}`} className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => setDeletingMember(member)}>
+                            <Trash2 className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Delete</span>
+                          </Button>
+                        </Can>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm">
@@ -578,8 +589,9 @@ export default function ElectedStateAssemblyPage() {
             {addStep === 1 ? (
               <>
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Active election *</label>
+                  <label htmlFor="state-assembly-active-election" className="mb-1 block text-sm font-medium">Active election *</label>
                   <select
+                    id="state-assembly-active-election"
                     value={electionId}
                     disabled={isLoadingActiveElections || activeAddElections.length === 0}
                     onChange={(event) => {
@@ -599,9 +611,10 @@ export default function ElectedStateAssemblyPage() {
                   {activeElectionError && <p role="alert" className="mt-1 text-sm text-red-600">{activeElectionError}</p>}
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Candidate NIN or phone number *</label>
+                  <label htmlFor="state-assembly-candidate-search" className="mb-1 block text-sm font-medium">Candidate NIN or phone number *</label>
                   <div className="flex gap-2">
                     <Input
+                      id="state-assembly-candidate-search"
                       value={candidateSearch}
                       onChange={(event) => {
                         setCandidateSearch(event.target.value)
@@ -616,9 +629,11 @@ export default function ElectedStateAssemblyPage() {
                       }}
                       placeholder="Enter candidate NIN or phone number"
                     />
-                    <Button onClick={verifyCandidate} disabled={isVerifying || isLoadingActiveElections || !electionId}>
-                      {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify'}
-                    </Button>
+                    <Can permission={Permissions.UPDATE_LEADER}>
+                      <Button onClick={verifyCandidate} disabled={isVerifying || isLoadingActiveElections || !electionId}>
+                        {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : 'Verify'}
+                      </Button>
+                    </Can>
                   </div>
                   {candidateSearchError && <p role="alert" className="mt-1 text-sm text-red-600">{candidateSearchError}</p>}
                 </div>
@@ -648,31 +663,31 @@ export default function ElectedStateAssemblyPage() {
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-sm font-medium">Office *</label>
-                    <select value={officeId} onChange={(event) => setOfficeId(event.target.value)} className="w-full rounded-md border px-3 py-2">
+                    <label htmlFor="state-assembly-office" className="mb-1 block text-sm font-medium">Office *</label>
+                    <select id="state-assembly-office" value={officeId} onChange={(event) => setOfficeId(event.target.value)} className="w-full rounded-md border px-3 py-2">
                       <option value="">Select office</option>
                       {offices.map((office) => <option key={office.id} value={office.id}>{office.title}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium">Election</label>
-                    <Input value={activeAddElections.find((election) => election.id === Number(electionId))?.year ?? ''} disabled />
+                    <label htmlFor="state-assembly-election" className="mb-1 block text-sm font-medium">Election</label>
+                    <Input id="state-assembly-election" value={activeAddElections.find((election) => election.id === Number(electionId))?.year ?? ''} disabled />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium">Start date *</label>
-                    <Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
+                    <label htmlFor="state-assembly-start-date" className="mb-1 block text-sm font-medium">Start date *</label>
+                    <Input id="state-assembly-start-date" type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium">End date *</label>
-                    <Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
+                    <label htmlFor="state-assembly-end-date" className="mb-1 block text-sm font-medium">End date *</label>
+                    <Input id="state-assembly-end-date" type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="mb-1 block text-sm font-medium">Tenure *</label>
-                    <Input value={tenure} onChange={(event) => setTenure(event.target.value)} placeholder="Enter tenure (for example, 2026-2030)" />
+                    <label htmlFor="state-assembly-tenure" className="mb-1 block text-sm font-medium">Tenure *</label>
+                    <Input id="state-assembly-tenure" value={tenure} onChange={(event) => setTenure(event.target.value)} placeholder="Enter tenure (for example, 2026-2030)" />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="mb-1 block text-sm font-medium">Remark</label>
-                    <Textarea value={remark} onChange={(event) => setRemark(event.target.value)} rows={3} placeholder="Optional remark" />
+                    <label htmlFor="state-assembly-remark" className="mb-1 block text-sm font-medium">Remark</label>
+                    <Textarea id="state-assembly-remark" value={remark} onChange={(event) => setRemark(event.target.value)} rows={3} placeholder="Optional remark" />
                   </div>
                 </div>
                 {formError && <p role="alert" className="text-sm text-red-600">{formError}</p>}
@@ -683,10 +698,12 @@ export default function ElectedStateAssemblyPage() {
                     setCandidateSearchError('')
                     setFormError('')
                   }} disabled={isSaving}>Back</Button>
-                  <Button onClick={saveMember} disabled={isSaving || !selectedCandidate} className="bg-[#146c4f] hover:bg-[#10563f]">
-                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isSaving ? 'Saving...' : 'Add Elected Member'}
-                  </Button>
+                  <Can permission={Permissions.CREATE_LEADER}>
+                    <Button onClick={saveMember} disabled={isSaving || !selectedCandidate} className="bg-[#146c4f] hover:bg-[#10563f]">
+                      {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                      {isSaving ? 'Saving...' : 'Add Elected Member'}
+                    </Button>
+                  </Can>
                 </div>
               </>
             )}
@@ -701,12 +718,12 @@ export default function ElectedStateAssemblyPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium">Candidate ID</label>
-              <Input value={editData.candidate_id || ''} onChange={(event) => setEditData((current) => ({ ...current, candidate_id: Number(event.target.value) }))} />
+              <label htmlFor="edit-state-assembly-candidate-id" className="mb-1 block text-sm font-medium">Candidate ID</label>
+              <Input id="edit-state-assembly-candidate-id" value={editData.candidate_id || ''} onChange={(event) => setEditData((current) => ({ ...current, candidate_id: Number(event.target.value) }))} />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Election</label>
-              <select value={String(editData.election_id || '')} onChange={(event) => setEditData((current) => ({ ...current, election_id: Number(event.target.value) }))} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+              <label htmlFor="edit-state-assembly-election" className="mb-1 block text-sm font-medium">Election</label>
+              <select id="edit-state-assembly-election" value={String(editData.election_id || '')} onChange={(event) => setEditData((current) => ({ ...current, election_id: Number(event.target.value) }))} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
                 <option value="">Select election</option>
                 {elections.map((election) => (
                   <option key={election.id} value={election.id}>{election.year}</option>
@@ -714,31 +731,33 @@ export default function ElectedStateAssemblyPage() {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Office ID</label>
-              <Input value={editData.office_id || ''} onChange={(event) => setEditData((current) => ({ ...current, office_id: Number(event.target.value) }))} />
+              <label htmlFor="edit-state-assembly-office-id" className="mb-1 block text-sm font-medium">Office ID</label>
+              <Input id="edit-state-assembly-office-id" value={editData.office_id || ''} onChange={(event) => setEditData((current) => ({ ...current, office_id: Number(event.target.value) }))} />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium">Start date</label>
-                <Input type="date" value={editData.start_date || ''} onChange={(event) => setEditData((current) => ({ ...current, start_date: event.target.value }))} />
+                <label htmlFor="edit-state-assembly-start-date" className="mb-1 block text-sm font-medium">Start date</label>
+                <Input id="edit-state-assembly-start-date" type="date" value={editData.start_date || ''} onChange={(event) => setEditData((current) => ({ ...current, start_date: event.target.value }))} />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">End date</label>
-                <Input type="date" value={editData.end_date || ''} onChange={(event) => setEditData((current) => ({ ...current, end_date: event.target.value }))} />
+                <label htmlFor="edit-state-assembly-end-date" className="mb-1 block text-sm font-medium">End date</label>
+                <Input id="edit-state-assembly-end-date" type="date" value={editData.end_date || ''} onChange={(event) => setEditData((current) => ({ ...current, end_date: event.target.value }))} />
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Tenure</label>
-              <Input value={editData.tenure || ''} onChange={(event) => setEditData((current) => ({ ...current, tenure: event.target.value }))} />
+              <label htmlFor="edit-state-assembly-tenure" className="mb-1 block text-sm font-medium">Tenure</label>
+              <Input id="edit-state-assembly-tenure" value={editData.tenure || ''} onChange={(event) => setEditData((current) => ({ ...current, tenure: event.target.value }))} />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Remark</label>
-              <Textarea value={editData.remark || ''} onChange={(event) => setEditData((current) => ({ ...current, remark: event.target.value }))} rows={4} />
+              <label htmlFor="edit-state-assembly-remark" className="mb-1 block text-sm font-medium">Remark</label>
+              <Textarea id="edit-state-assembly-remark" value={editData.remark || ''} onChange={(event) => setEditData((current) => ({ ...current, remark: event.target.value }))} rows={4} />
             </div>
-            {editError && <div className="text-sm text-red-600">{editError}</div>}
+            {editError && <div role="alert" className="text-sm text-red-600">{editError}</div>}
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setEditingMember(null)}>Cancel</Button>
-              <Button onClick={saveEdit} disabled={isUpdating} className="bg-[#146c4f] hover:bg-[#10563f]">{isUpdating ? 'Saving...' : 'Save changes'}</Button>
+              <Can permission={Permissions.UPDATE_LEADER}>
+                <Button onClick={saveEdit} disabled={isUpdating} className="bg-[#146c4f] hover:bg-[#10563f]">{isUpdating ? 'Saving...' : 'Save changes'}</Button>
+              </Can>
             </div>
           </div>
         </DialogContent>
@@ -750,10 +769,12 @@ export default function ElectedStateAssemblyPage() {
             <DialogTitle>Delete elected member</DialogTitle>
             <DialogDescription>Are you sure you want to remove this elected member?</DialogDescription>
           </DialogHeader>
-          {deleteError && <div className="text-sm text-red-600">{deleteError}</div>}
+          {deleteError && <div role="alert" className="text-sm text-red-600">{deleteError}</div>}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setDeletingMember(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={() => deletingMember && removeMember(deletingMember)} disabled={isDeleting}>{isDeleting ? 'Deleting...' : 'Delete'}</Button>
+            <Can permission={Permissions.DELETE_LEADER}>
+              <Button variant="destructive" onClick={() => deletingMember && removeMember(deletingMember)} disabled={isDeleting}>{isDeleting ? 'Deleting...' : 'Delete'}</Button>
+            </Can>
           </div>
         </DialogContent>
       </Dialog>
@@ -769,10 +790,12 @@ export default function ElectedStateAssemblyPage() {
           {terminateError && <div role="alert" className="text-sm text-red-600">{terminateError}</div>}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setTerminatingMember(null)} disabled={isTerminating}>Cancel</Button>
-            <Button variant="destructive" onClick={() => terminatingMember && terminateMember(terminatingMember)} disabled={isTerminating}>
-              {isTerminating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isTerminating ? 'Terminating...' : 'Terminate'}
-            </Button>
+            <Can permission={Permissions.DELETE_LEADER}>
+              <Button variant="destructive" onClick={() => terminatingMember && terminateMember(terminatingMember)} disabled={isTerminating}>
+                {isTerminating && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                {isTerminating ? 'Terminating...' : 'Terminate'}
+              </Button>
+            </Can>
           </div>
         </DialogContent>
       </Dialog>

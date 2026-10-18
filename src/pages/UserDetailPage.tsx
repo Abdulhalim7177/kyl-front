@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { userService } from '@/services/users'
 import { User } from '@/services/auth'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -77,7 +79,7 @@ export default function UserDetailPage() {
   if (error || !user) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-500 font-medium">{error || 'User not found'}</p>
+        <p role="alert" className="text-red-500 font-medium">{error || 'User not found'}</p>
         <Button
           variant="outline"
           onClick={() => {
@@ -112,30 +114,36 @@ export default function UserDetailPage() {
           }}
           className="gap-2"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Users
+          <ArrowLeft aria-hidden="true" className="w-4 h-4" /> Back to Users
         </Button>
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => navigate('/k8s9d7f3-users-add')}
-            className="gap-2"
-          >
-            <Plus className="w-4 h-4" /> Add User
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleDeleteUser}
-            disabled={deleting}
-            className="gap-2 text-red-600 border-red-200 hover:bg-red-50"
-          >
-            <Trash2 className="w-4 h-4" /> {deleting ? 'Deleting...' : 'Delete'}
-          </Button>
-          <Button 
-            onClick={() => navigate(`/k8s9d7f3-users-edit/${user.id}`)}
-            className="bg-[#146c4f] hover:bg-[#115a42] text-white gap-2"
-          >
-            <Edit className="w-4 h-4" /> Edit Profile
-          </Button>
+          <Can any={[Permissions.CREATE_USER, Permissions.CREATE_PARTY_USER, Permissions.CREATE_STATE_USER]}>
+            <Button
+              variant="outline"
+              onClick={() => navigate('/k8s9d7f3-users-add')}
+              className="gap-2"
+            >
+              <Plus aria-hidden="true" className="w-4 h-4" /> Add User
+            </Button>
+          </Can>
+          <Can permission={Permissions.DELETE_USER}>
+            <Button
+              variant="outline"
+              onClick={handleDeleteUser}
+              disabled={deleting}
+              className="gap-2 text-red-600 border-red-200 hover:bg-red-50"
+            >
+              <Trash2 aria-hidden="true" className="w-4 h-4" /> {deleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </Can>
+          <Can permission={Permissions.UPDATE_USER}>
+            <Button 
+              onClick={() => navigate(`/k8s9d7f3-users-edit/${user.id}`)}
+              className="bg-[#146c4f] hover:bg-[#115a42] text-white gap-2"
+            >
+              <Edit aria-hidden="true" className="w-4 h-4" /> Edit Profile
+            </Button>
+          </Can>
         </div>
       </div>
 

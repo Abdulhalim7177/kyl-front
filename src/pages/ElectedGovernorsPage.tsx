@@ -11,6 +11,8 @@ import { electionService, Election, StateOffice } from '@/services/elections'
 import { AddElectedGovernorData, ElectedLeader, leadersService, UpdateElectedGovernorData } from '@/services/leaders'
 import { Party, partyService } from '@/services/parties'
 import { getLogoUrl } from '@/lib/utils'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 
 const normalizeCandidateIdentifier = (value: string | number | undefined) =>
   String(value ?? '').toLowerCase().replace(/[\s()+-]/g, '')
@@ -328,10 +330,10 @@ export default function ElectedGovernorsPage() {
     return (
       <div className="space-y-4 p-4 md:p-0">
         <Link to="/k8s9d7f3-districts/states" className="inline-flex items-center gap-2 text-sm font-medium text-[#146c4f] hover:underline">
-          <ArrowLeft className="h-4 w-4" /> Back to states
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to states
         </Link>
         <Card>
-          <CardContent className="py-12 text-center text-red-600">{error}</CardContent>
+          <CardContent role="alert" className="py-12 text-center text-red-600">{error}</CardContent>
         </Card>
       </div>
     )
@@ -340,7 +342,7 @@ export default function ElectedGovernorsPage() {
   return (
     <div className="space-y-6 p-4 md:p-0">
       <Link to="/k8s9d7f3-districts/states" className="inline-flex items-center gap-2 text-sm font-medium text-[#146c4f] hover:underline">
-        <ArrowLeft className="h-4 w-4" /> Back to states
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to states
       </Link>
 
       <Card className="border border-gray-100 shadow-md">
@@ -359,10 +361,12 @@ export default function ElectedGovernorsPage() {
                 </div>
               </div>
 
-                <Button type="button" onClick={() => setIsAddOpen(true)} className="w-full bg-[#146c4f] hover:bg-[#10563f] sm:w-auto">
-                  <Plus className="h-4 w-4" />
-                  Add Elected
-                </Button>
+                <Can permission={Permissions.CREATE_LEADER}>
+                  <Button type="button" onClick={() => setIsAddOpen(true)} className="w-full bg-[#146c4f] hover:bg-[#10563f] sm:w-auto">
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    Add Elected
+                  </Button>
+                </Can>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-[#146c4f]">
@@ -424,12 +428,16 @@ export default function ElectedGovernorsPage() {
                           {leader?.status || 'Active'}
                         </span>
                         <div className="flex shrink-0 gap-1 sm:gap-2">
-                          <Button type="button" variant="outline" size="sm" aria-label={`Edit ${candidateName}`} title="Edit leader" className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => openEditForm(leader)}>
-                            <Pencil className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
-                          </Button>
-                          <Button type="button" variant="destructive" size="sm" aria-label={`Delete ${candidateName}`} title="Delete leader" className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => removeElectedGovernor(leader)} disabled={isDeleting}>
-                            <Trash2 className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Delete</span>
-                          </Button>
+                          <Can permission={Permissions.UPDATE_LEADER}>
+                            <Button type="button" variant="outline" size="sm" aria-label={`Edit ${candidateName}`} title="Edit leader" className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => openEditForm(leader)}>
+                              <Pencil className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Edit</span>
+                            </Button>
+                          </Can>
+                          <Can permission={Permissions.DELETE_LEADER}>
+                            <Button type="button" variant="destructive" size="sm" aria-label={`Delete ${candidateName}`} title="Delete leader" className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => removeElectedGovernor(leader)} disabled={isDeleting}>
+                              <Trash2 className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Delete</span>
+                            </Button>
+                          </Can>
                         </div>
                       </div>
 
@@ -585,22 +593,24 @@ export default function ElectedGovernorsPage() {
                       }
                     }}
                   />
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      if (selectedCandidate) {
-                        void addElectedLeader()
-                        return
-                      }
-                      void findCandidate()
-                    }}
-                    disabled={isLookingUpCandidate || isSaving}
-                    className="bg-[#146c4f] hover:bg-[#10563f]"
-                  >
-                    {isLookingUpCandidate ? 'Checking...' : selectedCandidate ? (isSaving ? 'Saving...' : 'Add Elected') : 'Verify Candidate'}
-                  </Button>
+                  <Can any={[Permissions.CREATE_LEADER, Permissions.UPDATE_LEADER]}>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        if (selectedCandidate) {
+                          void addElectedLeader()
+                          return
+                        }
+                        void findCandidate()
+                      }}
+                      disabled={isLookingUpCandidate || isSaving}
+                      className="bg-[#146c4f] hover:bg-[#10563f]"
+                    >
+                      {isLookingUpCandidate ? 'Checking...' : selectedCandidate ? (isSaving ? 'Saving...' : 'Add Elected') : 'Verify Candidate'}
+                    </Button>
+                  </Can>
                 </div>
-                {candidateSearchError && <p className="mt-2 text-sm text-red-600">{candidateSearchError}</p>}
+                {candidateSearchError && <p role="alert" className="mt-2 text-sm text-red-600">{candidateSearchError}</p>}
                 {selectedCandidate && (
                   <div className="mt-3 space-y-3 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800">
                     <p className="font-semibold text-green-900">Candidate verified for the selected election.</p>
@@ -719,16 +729,18 @@ export default function ElectedGovernorsPage() {
               </>
             )}
 
-            {formError && <p className="text-sm text-red-600">{formError}</p>}
+            {formError && <p role="alert" className="text-sm text-red-600">{formError}</p>}
 
             <div className="flex justify-end gap-3 pt-2">
               <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>
                 Cancel
               </Button>
               {selectedCandidate && (
-                <Button type="button" onClick={addElectedLeader} disabled={isSaving} className="bg-[#146c4f] hover:bg-[#10563f]">
-                  {isSaving ? 'Saving...' : 'Save Elected Leader'}
-                </Button>
+                <Can permission={Permissions.CREATE_LEADER}>
+                  <Button type="button" onClick={addElectedLeader} disabled={isSaving} className="bg-[#146c4f] hover:bg-[#10563f]">
+                    {isSaving ? 'Saving...' : 'Save Elected Leader'}
+                  </Button>
+                </Can>
               )}
             </div>
           </div>
@@ -881,9 +893,11 @@ export default function ElectedGovernorsPage() {
             {editError && <p role="alert" className="text-sm text-red-600">{editError}</p>}
             <div className="flex justify-end gap-3">
               <Button type="button" variant="outline" onClick={() => setEditingLeader(null)} disabled={isUpdating}>Cancel</Button>
-              <Button type="button" onClick={updateElectedLeader} disabled={isUpdating} className="bg-[#146c4f] hover:bg-[#10563f]">
-                {isUpdating ? 'Updating...' : 'Save Changes'}
-              </Button>
+              <Can permission={Permissions.UPDATE_LEADER}>
+                <Button type="button" onClick={updateElectedLeader} disabled={isUpdating} className="bg-[#146c4f] hover:bg-[#10563f]">
+                  {isUpdating ? 'Updating...' : 'Save Changes'}
+                </Button>
+              </Can>
             </div>
           </div>
         </DialogContent>

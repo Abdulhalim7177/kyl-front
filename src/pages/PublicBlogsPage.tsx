@@ -53,7 +53,7 @@ export default function PublicBlogsPage() {
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
               </div>
             ) : error ? (
-              <div className="text-center py-20 text-red-500 font-medium">{error}</div>
+              <div role="alert" className="text-center py-20 text-red-500 font-medium">{error}</div>
             ) : posts.length === 0 ? (
               <div className="text-center py-20 text-gray-500 bg-white rounded-2xl shadow-sm border border-gray-100">
                 <p className="text-xl font-medium mb-2">No articles found</p>
@@ -96,7 +96,7 @@ export default function PublicBlogsPage() {
                         to={`/blog/${post.id}`} 
                         className="inline-flex items-center text-primary font-bold hover:text-emerald-700 transition-colors mt-auto"
                       >
-                        Read Article <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
+                        Read Article <ArrowRight aria-hidden="true" className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
                       </Link>
                     </div>
                   </article>
@@ -109,7 +109,7 @@ export default function PublicBlogsPage() {
           <div className="lg:w-1/4">
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 sticky top-24">
               <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <Tag className="w-5 h-5 text-primary" />
+                <Tag aria-hidden="true" className="w-5 h-5 text-primary" />
                 Categories
               </h3>
               <div className="space-y-2">

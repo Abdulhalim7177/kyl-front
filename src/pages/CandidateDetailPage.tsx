@@ -5,6 +5,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 import {
   Dialog,
   DialogContent,
@@ -16,6 +18,7 @@ import {
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -362,7 +365,7 @@ export default function CandidateDetailPage() {
   if (error || !candidate) {
     return (
       <div className="text-center py-16">
-        <div className="text-red-600 mb-4">
+        <div className="text-red-600 mb-4" role="alert">
           <p className="font-medium mb-2">Error Loading Candidate</p>
           <p className="text-sm text-gray-600">{error}</p>
         </div>
@@ -414,19 +417,27 @@ export default function CandidateDetailPage() {
             ref={fileInputRef}
             onChange={handlePhotoUpload}
           />
-          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto}>
-            <Upload className="mr-2 h-4 w-4" />
-            {uploadingPhoto ? 'Uploading...' : 'Upload Photo'}
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => openCreateDialog('education')}>
-            <Plus className="mr-1 h-4 w-4" /> Education
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => openCreateDialog('achievements')}>
-            <Plus className="mr-1 h-4 w-4" /> Achievement
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => openCreateDialog('experience')}>
-            <Plus className="mr-1 h-4 w-4" /> Experience
-          </Button>
+          <Can permission={Permissions.UPDATE_CANDIDATE}>
+            <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto}>
+              <Upload aria-hidden="true" className="mr-2 h-4 w-4" />
+              {uploadingPhoto ? 'Uploading...' : 'Upload Photo'}
+            </Button>
+          </Can>
+          <Can permission={Permissions.ADD_CANDIDATE_EDUCATION}>
+            <Button variant="outline" size="sm" onClick={() => openCreateDialog('education')}>
+              <Plus aria-hidden="true" className="mr-1 h-4 w-4" /> Education
+            </Button>
+          </Can>
+          <Can permission={Permissions.ADD_CANDIDATE_ACHIEVEMENT}>
+            <Button variant="outline" size="sm" onClick={() => openCreateDialog('achievements')}>
+              <Plus aria-hidden="true" className="mr-1 h-4 w-4" /> Achievement
+            </Button>
+          </Can>
+          <Can permission={Permissions.ADD_CANDIDATE_EXPERIENCE}>
+            <Button variant="outline" size="sm" onClick={() => openCreateDialog('experience')}>
+              <Plus aria-hidden="true" className="mr-1 h-4 w-4" /> Experience
+            </Button>
+          </Can>
         </div>
       </div>
 
@@ -450,7 +461,7 @@ export default function CandidateDetailPage() {
               onClick={() => setActiveTab(tab)}
               className={`flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${activeTab === tab ? 'border-[#146c4f] text-[#146c4f]' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
             >
-              <Icon className="h-4 w-4" />
+              <Icon aria-hidden="true" className="h-4 w-4" />
               {label}
             </button>
           ))}
@@ -501,9 +512,10 @@ export default function CandidateDetailPage() {
               <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading {activeTab}...
             </div>
           ) : recordsError ? (
-            <div className="py-8 text-center text-sm text-red-600">{recordsError}</div>
+            <div className="py-8 text-center text-sm text-red-600" role="alert">{recordsError}</div>
           ) : activeTab === 'education' ? (
             <Table>
+              <TableCaption className="sr-only">Education records</TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead>Education</TableHead>
@@ -525,8 +537,8 @@ export default function CandidateDetailPage() {
                     <TableCell>
                       <div className="flex justify-end gap-1">
                         <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="View education" title="View" onClick={() => void handleViewRecord('education', record)}><Eye className="h-4 w-4" /></Button>
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="Edit education" title="Edit" disabled={!record.id} onClick={() => openEditDialog('education', record)}><Pencil className="h-4 w-4" /></Button>
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700" aria-label="Delete education" title="Delete" disabled={!record.id} onClick={() => setPendingDelete({ tab: 'education', record })}><Trash2 className="h-4 w-4" /></Button>
+                        <Can permission={Permissions.UPDATE_CANDIDATE_EDUCATION}><Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="Edit education" title="Edit" disabled={!record.id} onClick={() => openEditDialog('education', record)}><Pencil aria-hidden="true" className="h-4 w-4" /></Button></Can>
+                        <Can permission={Permissions.DELETE_CANDIDATE_EDUCATION}><Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700" aria-label="Delete education" title="Delete" disabled={!record.id} onClick={() => setPendingDelete({ tab: 'education', record })}><Trash2 aria-hidden="true" className="h-4 w-4" /></Button></Can>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -535,6 +547,7 @@ export default function CandidateDetailPage() {
             </Table>
           ) : activeTab === 'achievements' ? (
             <Table>
+              <TableCaption className="sr-only">Achievement records</TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead>Title</TableHead>
@@ -554,8 +567,8 @@ export default function CandidateDetailPage() {
                     <TableCell>
                       <div className="flex justify-end gap-1">
                         <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="View achievement" title="View" onClick={() => void handleViewRecord('achievements', record)}><Eye className="h-4 w-4" /></Button>
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="Edit achievement" title="Edit" disabled={!record.id} onClick={() => openEditDialog('achievements', record)}><Pencil className="h-4 w-4" /></Button>
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700" aria-label="Delete achievement" title="Delete" disabled={!record.id} onClick={() => setPendingDelete({ tab: 'achievements', record })}><Trash2 className="h-4 w-4" /></Button>
+                        <Can permission={Permissions.UPDATE_CANDIDATE_ACHIEVEMENT}><Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="Edit achievement" title="Edit" disabled={!record.id} onClick={() => openEditDialog('achievements', record)}><Pencil aria-hidden="true" className="h-4 w-4" /></Button></Can>
+                        <Can permission={Permissions.DELETE_CANDIDATE_ACHIEVEMENT}><Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700" aria-label="Delete achievement" title="Delete" disabled={!record.id} onClick={() => setPendingDelete({ tab: 'achievements', record })}><Trash2 aria-hidden="true" className="h-4 w-4" /></Button></Can>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -564,6 +577,7 @@ export default function CandidateDetailPage() {
             </Table>
           ) : (
             <Table>
+              <TableCaption className="sr-only">Experience records</TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead>Job title</TableHead>
@@ -585,8 +599,8 @@ export default function CandidateDetailPage() {
                     <TableCell>
                       <div className="flex justify-end gap-1">
                         <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="View experience" title="View" onClick={() => void handleViewRecord('experience', record)}><Eye className="h-4 w-4" /></Button>
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="Edit experience" title="Edit" disabled={!record.id} onClick={() => openEditDialog('experience', record)}><Pencil className="h-4 w-4" /></Button>
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700" aria-label="Delete experience" title="Delete" disabled={!record.id} onClick={() => setPendingDelete({ tab: 'experience', record })}><Trash2 className="h-4 w-4" /></Button>
+                        <Can permission={Permissions.UPDATE_CANDIDATE_EXPERIENCE}><Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="Edit experience" title="Edit" disabled={!record.id} onClick={() => openEditDialog('experience', record)}><Pencil aria-hidden="true" className="h-4 w-4" /></Button></Can>
+                        <Can permission={Permissions.DELETE_CANDIDATE_EXPERIENCE}><Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700" aria-label="Delete experience" title="Delete" disabled={!record.id} onClick={() => setPendingDelete({ tab: 'experience', record })}><Trash2 aria-hidden="true" className="h-4 w-4" /></Button></Can>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -616,54 +630,56 @@ export default function CandidateDetailPage() {
             {createDialog === 'education' && (
               <>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="space-y-1 text-sm font-medium">Education level<Input required value={educationForm.education_level} onChange={(e) => setEducationForm((form) => ({ ...form, education_level: e.target.value }))} /></label>
-                  <label className="space-y-1 text-sm font-medium">Field of study<Input required value={educationForm.field_of_study} onChange={(e) => setEducationForm((form) => ({ ...form, field_of_study: e.target.value }))} /></label>
-                  <label className="space-y-1 text-sm font-medium">Institution<Input required value={educationForm.institution} onChange={(e) => setEducationForm((form) => ({ ...form, institution: e.target.value }))} /></label>
-                  <label className="space-y-1 text-sm font-medium">Country<Input required value={educationForm.country} onChange={(e) => setEducationForm((form) => ({ ...form, country: e.target.value }))} /></label>
-                  <label className="space-y-1 text-sm font-medium">Start year<Input required type="number" min="1900" max="2100" value={educationForm.start_year} onChange={(e) => setEducationForm((form) => ({ ...form, start_year: e.target.value }))} /></label>
-                  <label className="space-y-1 text-sm font-medium">Graduation year<Input required type="number" min="1900" max="2100" value={educationForm.graduation_year} onChange={(e) => setEducationForm((form) => ({ ...form, graduation_year: e.target.value }))} /></label>
+                  <label htmlFor="candidate-education-level" className="space-y-1 text-sm font-medium">Education level<Input id="candidate-education-level" required value={educationForm.education_level} onChange={(e) => setEducationForm((form) => ({ ...form, education_level: e.target.value }))} /></label>
+                  <label htmlFor="candidate-education-field-of-study" className="space-y-1 text-sm font-medium">Field of study<Input id="candidate-education-field-of-study" required value={educationForm.field_of_study} onChange={(e) => setEducationForm((form) => ({ ...form, field_of_study: e.target.value }))} /></label>
+                  <label htmlFor="candidate-education-institution" className="space-y-1 text-sm font-medium">Institution<Input id="candidate-education-institution" required value={educationForm.institution} onChange={(e) => setEducationForm((form) => ({ ...form, institution: e.target.value }))} /></label>
+                  <label htmlFor="candidate-education-country" className="space-y-1 text-sm font-medium">Country<Input id="candidate-education-country" required value={educationForm.country} onChange={(e) => setEducationForm((form) => ({ ...form, country: e.target.value }))} /></label>
+                  <label htmlFor="candidate-education-start-year" className="space-y-1 text-sm font-medium">Start year<Input id="candidate-education-start-year" required type="number" min="1900" max="2100" value={educationForm.start_year} onChange={(e) => setEducationForm((form) => ({ ...form, start_year: e.target.value }))} /></label>
+                  <label htmlFor="candidate-education-graduation-year" className="space-y-1 text-sm font-medium">Graduation year<Input id="candidate-education-graduation-year" required type="number" min="1900" max="2100" value={educationForm.graduation_year} onChange={(e) => setEducationForm((form) => ({ ...form, graduation_year: e.target.value }))} /></label>
                 </div>
-                <label className="block space-y-1 text-sm font-medium">Certificate<Input value={educationForm.education_certificate} onChange={(e) => setEducationForm((form) => ({ ...form, education_certificate: e.target.value }))} /></label>
-                <label className="block space-y-1 text-sm font-medium">Description<Textarea value={educationForm.description} onChange={(e) => setEducationForm((form) => ({ ...form, description: e.target.value }))} /></label>
+                <label htmlFor="candidate-education-certificate" className="block space-y-1 text-sm font-medium">Certificate<Input id="candidate-education-certificate" value={educationForm.education_certificate} onChange={(e) => setEducationForm((form) => ({ ...form, education_certificate: e.target.value }))} /></label>
+                <label htmlFor="candidate-education-description" className="block space-y-1 text-sm font-medium">Description<Textarea id="candidate-education-description" value={educationForm.description} onChange={(e) => setEducationForm((form) => ({ ...form, description: e.target.value }))} /></label>
               </>
             )}
 
             {createDialog === 'achievements' && (
               <>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="space-y-1 text-sm font-medium">Title<Input required value={achievementForm.title} onChange={(e) => setAchievementForm((form) => ({ ...form, title: e.target.value }))} /></label>
-                  <label className="space-y-1 text-sm font-medium">Issuer<Input required value={achievementForm.issuer} onChange={(e) => setAchievementForm((form) => ({ ...form, issuer: e.target.value }))} /></label>
-                  <label className="space-y-1 text-sm font-medium sm:col-span-2">Date<Input required type="date" value={achievementForm.achievement_date} onChange={(e) => setAchievementForm((form) => ({ ...form, achievement_date: e.target.value }))} /></label>
+                  <label htmlFor="candidate-achievement-title" className="space-y-1 text-sm font-medium">Title<Input id="candidate-achievement-title" required value={achievementForm.title} onChange={(e) => setAchievementForm((form) => ({ ...form, title: e.target.value }))} /></label>
+                  <label htmlFor="candidate-achievement-issuer" className="space-y-1 text-sm font-medium">Issuer<Input id="candidate-achievement-issuer" required value={achievementForm.issuer} onChange={(e) => setAchievementForm((form) => ({ ...form, issuer: e.target.value }))} /></label>
+                  <label htmlFor="candidate-achievement-date" className="space-y-1 text-sm font-medium sm:col-span-2">Date<Input id="candidate-achievement-date" required type="date" value={achievementForm.achievement_date} onChange={(e) => setAchievementForm((form) => ({ ...form, achievement_date: e.target.value }))} /></label>
                 </div>
-                <label className="block space-y-1 text-sm font-medium">Description<Textarea value={achievementForm.description} onChange={(e) => setAchievementForm((form) => ({ ...form, description: e.target.value }))} /></label>
+                <label htmlFor="candidate-achievement-description" className="block space-y-1 text-sm font-medium">Description<Textarea id="candidate-achievement-description" value={achievementForm.description} onChange={(e) => setAchievementForm((form) => ({ ...form, description: e.target.value }))} /></label>
               </>
             )}
 
             {createDialog === 'experience' && (
               <>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="space-y-1 text-sm font-medium">Job title<Input required value={experienceForm.job_title} onChange={(e) => setExperienceForm((form) => ({ ...form, job_title: e.target.value }))} /></label>
-                  <label className="space-y-1 text-sm font-medium">Organization<Input required value={experienceForm.organization} onChange={(e) => setExperienceForm((form) => ({ ...form, organization: e.target.value }))} /></label>
-                  <label className="space-y-1 text-sm font-medium sm:col-span-2">Industry type<Input required value={experienceForm.industry_type} onChange={(e) => setExperienceForm((form) => ({ ...form, industry_type: e.target.value }))} /></label>
-                  <label className="space-y-1 text-sm font-medium">Start date<Input required type="date" value={experienceForm.start_date} onChange={(e) => setExperienceForm((form) => ({ ...form, start_date: e.target.value }))} /></label>
-                  <label className="space-y-1 text-sm font-medium">End date<Input type="date" disabled={experienceForm.is_current} required={!experienceForm.is_current} value={experienceForm.end_date} onChange={(e) => setExperienceForm((form) => ({ ...form, end_date: e.target.value }))} /></label>
+                  <label htmlFor="candidate-experience-job-title" className="space-y-1 text-sm font-medium">Job title<Input id="candidate-experience-job-title" required value={experienceForm.job_title} onChange={(e) => setExperienceForm((form) => ({ ...form, job_title: e.target.value }))} /></label>
+                  <label htmlFor="candidate-experience-organization" className="space-y-1 text-sm font-medium">Organization<Input id="candidate-experience-organization" required value={experienceForm.organization} onChange={(e) => setExperienceForm((form) => ({ ...form, organization: e.target.value }))} /></label>
+                  <label htmlFor="candidate-experience-industry-type" className="space-y-1 text-sm font-medium sm:col-span-2">Industry type<Input id="candidate-experience-industry-type" required value={experienceForm.industry_type} onChange={(e) => setExperienceForm((form) => ({ ...form, industry_type: e.target.value }))} /></label>
+                  <label htmlFor="candidate-experience-start-date" className="space-y-1 text-sm font-medium">Start date<Input id="candidate-experience-start-date" required type="date" value={experienceForm.start_date} onChange={(e) => setExperienceForm((form) => ({ ...form, start_date: e.target.value }))} /></label>
+                  <label htmlFor="candidate-experience-end-date" className="space-y-1 text-sm font-medium">End date<Input id="candidate-experience-end-date" type="date" disabled={experienceForm.is_current} required={!experienceForm.is_current} value={experienceForm.end_date} onChange={(e) => setExperienceForm((form) => ({ ...form, end_date: e.target.value }))} /></label>
                 </div>
                 <label className="flex items-center gap-2 text-sm text-gray-700">
                   <input type="checkbox" checked={experienceForm.is_current} onChange={(e) => setExperienceForm((form) => ({ ...form, is_current: e.target.checked, end_date: e.target.checked ? '' : form.end_date }))} />
                   This is my current role
                 </label>
-                <label className="block space-y-1 text-sm font-medium">Description<Textarea value={experienceForm.description} onChange={(e) => setExperienceForm((form) => ({ ...form, description: e.target.value }))} /></label>
-                <label className="block space-y-1 text-sm font-medium">Responsibilities<Textarea value={experienceForm.responsibilities} onChange={(e) => setExperienceForm((form) => ({ ...form, responsibilities: e.target.value }))} /></label>
+                <label htmlFor="candidate-experience-description" className="block space-y-1 text-sm font-medium">Description<Textarea id="candidate-experience-description" value={experienceForm.description} onChange={(e) => setExperienceForm((form) => ({ ...form, description: e.target.value }))} /></label>
+                <label htmlFor="candidate-experience-responsibilities" className="block space-y-1 text-sm font-medium">Responsibilities<Textarea id="candidate-experience-responsibilities" value={experienceForm.responsibilities} onChange={(e) => setExperienceForm((form) => ({ ...form, responsibilities: e.target.value }))} /></label>
               </>
             )}
 
             {createError && <p role="alert" className="text-sm text-red-600">{createError}</p>}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => { setCreateDialog(null); setEditingRecordId(null) }} disabled={savingRecord}>Cancel</Button>
-              <Button type="submit" disabled={savingRecord} className="bg-[#146c4f] text-white hover:bg-[#115a42]">
-                {savingRecord && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {savingRecord ? 'Saving...' : editingRecordId ? 'Save changes' : 'Save record'}
-              </Button>
+              <Can any={[Permissions.ADD_CANDIDATE_EDUCATION, Permissions.UPDATE_CANDIDATE_EDUCATION, Permissions.ADD_CANDIDATE_EXPERIENCE, Permissions.UPDATE_CANDIDATE_EXPERIENCE, Permissions.ADD_CANDIDATE_ACHIEVEMENT, Permissions.UPDATE_CANDIDATE_ACHIEVEMENT]}>
+                <Button type="submit" disabled={savingRecord} className="bg-[#146c4f] text-white hover:bg-[#115a42]">
+                  {savingRecord && <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />}
+                  {savingRecord ? 'Saving...' : editingRecordId ? 'Save changes' : 'Save record'}
+                </Button>
+              </Can>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -735,7 +751,7 @@ export default function CandidateDetailPage() {
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setPendingDelete(null)} disabled={deletingRecord}>Cancel</Button>
             <Button type="button" variant="destructive" onClick={handleDeleteRecord} disabled={deletingRecord}>
-              {deletingRecord && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {deletingRecord && <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />}
               {deletingRecord ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>

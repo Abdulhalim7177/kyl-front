@@ -140,7 +140,7 @@ export default function PublicPollDetailPage() {
       )}
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <Link to="/polls" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6 transition-colors">
-        <ChevronLeft className="w-5 h-5 mr-1" /> Back to Polls
+        <ChevronLeft aria-hidden="true" className="w-5 h-5 mr-1" /> Back to Polls
       </Link>
       
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-10">
@@ -164,7 +164,7 @@ export default function PublicPollDetailPage() {
         )}
         
         {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-8 font-medium">
+          <div role="alert" className="bg-red-50 text-red-600 p-4 rounded-xl mb-8 font-medium">
             {error}
           </div>
         )}
@@ -224,14 +224,14 @@ export default function PublicPollDetailPage() {
                 onClick={fetchResultsManual}
                 className="w-full sm:w-auto px-6 py-3 text-gray-500 hover:bg-gray-100 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
               >
-                <BarChart2 className="w-5 h-5" /> View Results
+                <BarChart2 aria-hidden="true" className="w-5 h-5" /> View Results
               </button>
             </div>
           </div>
         ) : (
           <div className="bg-gray-50 p-6 md:p-8 rounded-2xl border border-gray-100">
             <h3 className="text-2xl font-bold mb-2 flex items-center gap-2">
-              <BarChart2 className="w-6 h-6 text-primary" />
+              <BarChart2 aria-hidden="true" className="w-6 h-6 text-primary" />
               Poll Results
             </h3>
             <p className="text-gray-500 mb-8">Total Votes: <span className="font-bold text-gray-900">{totalVotes}</span></p>

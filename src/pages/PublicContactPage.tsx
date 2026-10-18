@@ -120,7 +120,7 @@ export default function PublicContactPage() {
                 )}
 
                 {error && (
-                  <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 font-medium">
+                  <div role="alert" className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 font-medium">
                     {error}
                   </div>
                 )}
@@ -128,8 +128,9 @@ export default function PublicContactPage() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Your Name</label>
+                      <label htmlFor="your-name" className="text-sm font-medium text-gray-700">Your Name</label>
                       <Input 
+                        id="your-name"
                         required 
                         value={formData.sender_name}
                         onChange={(e) => setFormData({...formData, sender_name: e.target.value})}
@@ -138,8 +139,9 @@ export default function PublicContactPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Email Address</label>
+                      <label htmlFor="email-address" className="text-sm font-medium text-gray-700">Email Address</label>
                       <Input 
+                        id="email-address"
                         required 
                         type="email"
                         value={formData.email}
@@ -151,8 +153,9 @@ export default function PublicContactPage() {
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Message</label>
+                    <label htmlFor="message" className="text-sm font-medium text-gray-700">Message</label>
                     <Textarea 
+                      id="message"
                       required
                       value={formData.message}
                       onChange={(e) => setFormData({...formData, message: e.target.value})}
@@ -167,9 +170,9 @@ export default function PublicContactPage() {
                     className="w-full md:w-auto bg-[#146c4f] hover:bg-[#115a42] text-white rounded-xl px-8 py-6 h-auto text-lg font-bold transition-all"
                   >
                     {loading ? (
-                      <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Sending Message...</>
+                      <><Loader2 aria-hidden="true" className="w-5 h-5 mr-2 animate-spin" /> Sending Message...</>
                     ) : (
-                      <><Send className="w-5 h-5 mr-2" /> Send Message</>
+                      <><Send aria-hidden="true" className="w-5 h-5 mr-2" /> Send Message</>
                     )}
                   </Button>
                 </form>

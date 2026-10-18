@@ -11,6 +11,8 @@ import { District, districtsService } from '@/services/districts'
 import { electionService, Election, SenateOffice } from '@/services/elections'
 import { Party, partyService } from '@/services/parties'
 import { getLogoUrl } from '@/lib/utils'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 
 export default function FederalHouseCandidatesPage() {
   const { id } = useParams<{ id: string }>()
@@ -365,7 +367,7 @@ export default function FederalHouseCandidatesPage() {
   return (
     <div className="space-y-6 p-4 md:p-0">
       <Link to="/k8s9d7f3-districts/federal" className="inline-flex items-center gap-2 text-sm font-medium text-[#146c4f] hover:underline">
-        <ArrowLeft className="h-4 w-4" /> Back to Federal Constituencies
+        <ArrowLeft aria-hidden="true" className="h-4 w-4" /> Back to Federal Constituencies
       </Link>
       <Card className="border border-gray-100 shadow-md">
         <CardContent className="p-0">
@@ -413,6 +415,7 @@ export default function FederalHouseCandidatesPage() {
                 <p className="font-semibold text-[#146c4f]">{candidates.length} candidates</p>
               </div>
 
+              <Can permission={Permissions.CREATE_CANDIDATE}>
               <Button size="sm" variant="outline" onClick={() => {
                 setAddStep(1)
                 setSelectedCandidate(null)
@@ -423,6 +426,7 @@ export default function FederalHouseCandidatesPage() {
               }}>
                 Add Candidate
               </Button>
+              </Can>
 
             </div>
           </div>
@@ -471,16 +475,19 @@ export default function FederalHouseCandidatesPage() {
                           <p className="text-xs font-semibold text-[#146c4f]">{candidate.office_title || 'Federal House Representative'}</p>
                         </div>
                       </div>
+                      <Can permission={Permissions.UPDATE_CANDIDATE}>
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
+                        aria-label={`Edit ${candidate.full_name}`}
                         className="h-8 shrink-0 px-2 sm:h-9 sm:px-3"
                         onClick={() => openEditCandidate(candidate)}
                         disabled={!candidate.assignment_id}
                       >
-                        <Pencil className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
+                        <Pencil aria-hidden="true" className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
                       </Button>
+                      </Can>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div className="rounded-xl bg-gray-50 p-3">
@@ -515,18 +522,21 @@ export default function FederalHouseCandidatesPage() {
                       </div>
                     )}
                     <div className="mt-4 flex justify-end border-t border-gray-100 pt-3">
+                      <Can permission={Permissions.DELETE_CANDIDATE}>
                       <Button
                         type="button"
                         size="sm"
                         variant="destructive"
+                        aria-label={`Delete ${candidate.full_name}`}
                         onClick={() => {
                           setDeleteError('')
                           setDeletingCandidate(candidate)
                         }}
                         disabled={!candidate.assignment_id}
                       >
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        <Trash2 aria-hidden="true" className="mr-2 h-4 w-4" /> Delete
                       </Button>
+                      </Can>
                     </div>
                   </article>
                 )
@@ -546,7 +556,7 @@ export default function FederalHouseCandidatesPage() {
                   onClick={() => setCandidatePage((page) => Math.max(1, page - 1))}
                   disabled={candidatePage === 1}
                 >
-                  <ChevronLeft className="mr-1 h-4 w-4" /> Previous
+                  <ChevronLeft aria-hidden="true" className="mr-1 h-4 w-4" /> Previous
                 </Button>
                 <span className="text-sm text-gray-600">Page {candidatePage} of {totalCandidatePages}</span>
                 <Button
@@ -556,7 +566,7 @@ export default function FederalHouseCandidatesPage() {
                   onClick={() => setCandidatePage((page) => Math.min(totalCandidatePages, page + 1))}
                   disabled={candidatePage >= totalCandidatePages}
                 >
-                  Next <ChevronRight className="ml-1 h-4 w-4" />
+                  Next <ChevronRight aria-hidden="true" className="ml-1 h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -587,8 +597,8 @@ export default function FederalHouseCandidatesPage() {
             {addStep === 1 ? (
               <>
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Election</label>
-                  <select className="w-full rounded-md border px-3 py-2" value={addForm.election_id} onChange={(e) => {
+                  <label htmlFor="add-candidate-election" className="mb-1 block text-sm font-medium">Election</label>
+                  <select id="add-candidate-election" className="w-full rounded-md border px-3 py-2" value={addForm.election_id} onChange={(e) => {
                     setAddForm((s) => ({ ...s, election_id: Number(e.target.value) }))
                     setSelectedCandidate(null)
                     setCandidateSearchError('')
@@ -600,20 +610,22 @@ export default function FederalHouseCandidatesPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Candidate NIN or phone number</label>
+                  <label htmlFor="add-candidate-search" className="mb-1 block text-sm font-medium">Candidate NIN or phone number</label>
                   <div className="flex gap-2">
-                    <Input value={candidateSearch} onChange={(e) => {
+                    <Input id="add-candidate-search" value={candidateSearch} onChange={(e) => {
                       setCandidateSearch(e.target.value)
                       setSelectedCandidate(null)
                       setCandidateSearchError('')
                     }} placeholder="Enter NIN or phone" />
+                    <Can permission={Permissions.TOGGLE_CANDIDATE_STATUS}>
                     <Button onClick={verifyCandidate} disabled={isVerifying}>
                       {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify'}
                     </Button>
+                    </Can>
                   </div>
-                  {candidateSearchError && <p className="mt-1 text-xs text-red-600">{candidateSearchError}</p>}
+                  {candidateSearchError && <p role="alert" className="mt-1 text-xs text-red-600">{candidateSearchError}</p>}
                 </div>
-                {metaError && <p className="text-sm text-red-600">{metaError}</p>}
+                {metaError && <p role="alert" className="text-sm text-red-600">{metaError}</p>}
                 <div className="flex justify-end gap-2">
                   <Button variant="ghost" onClick={() => setIsAddOpen(false)}>Cancel</Button>
                 </div>
@@ -646,8 +658,8 @@ export default function FederalHouseCandidatesPage() {
                 )}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-sm font-medium">Office</label>
-                    <select className="w-full rounded-md border px-3 py-2" value={addForm.office_id} onChange={(e) => setAddForm((s) => ({ ...s, office_id: Number(e.target.value) }))}>
+                    <label htmlFor="add-candidate-office" className="mb-1 block text-sm font-medium">Office</label>
+                    <select id="add-candidate-office" className="w-full rounded-md border px-3 py-2" value={addForm.office_id} onChange={(e) => setAddForm((s) => ({ ...s, office_id: Number(e.target.value) }))}>
                       <option value={0}>Select office</option>
                       {officeOptions.map((o) => (
                         <option key={o.id} value={o.id}>{o.title}</option>
@@ -655,21 +667,23 @@ export default function FederalHouseCandidatesPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium">Manifesto (optional)</label>
-                    <textarea className="w-full rounded-md border px-3 py-2" rows={3} value={addForm.manifesto} onChange={(e) => setAddForm((s) => ({ ...s, manifesto: e.target.value }))} />
+                    <label htmlFor="add-candidate-manifesto" className="mb-1 block text-sm font-medium">Manifesto (optional)</label>
+                    <textarea id="add-candidate-manifesto" className="w-full rounded-md border px-3 py-2" rows={3} value={addForm.manifesto} onChange={(e) => setAddForm((s) => ({ ...s, manifesto: e.target.value }))} />
                   </div>
                 </div>
-                {metaError && <p className="text-sm text-red-600">{metaError}</p>}
-                {addError && <p className="text-sm text-red-600">{addError}</p>}
+                {metaError && <p role="alert" className="text-sm text-red-600">{metaError}</p>}
+                {addError && <p role="alert" className="text-sm text-red-600">{addError}</p>}
                 <div className="flex justify-end gap-2">
                   <Button variant="ghost" onClick={() => {
                     setAddStep(1)
                     setSelectedCandidate(null)
                     setAddError('')
                   }}>Back</Button>
+                  <Can permission={Permissions.CREATE_CANDIDATE}>
                   <Button onClick={submitAddCandidate} disabled={isSaving || !selectedCandidate}>
                     {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Add Candidate'}
                   </Button>
+                  </Can>
                 </div>
               </>
             )}
@@ -690,8 +704,9 @@ export default function FederalHouseCandidatesPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium">Candidate</label>
+              <label htmlFor="edit-candidate-candidate" className="mb-1 block text-sm font-medium">Candidate</label>
               <select
+                id="edit-candidate-candidate"
                 className="w-full rounded-md border bg-gray-100 px-3 py-2 text-gray-500 disabled:cursor-not-allowed"
                 value={editForm.candidate_id}
                 disabled
@@ -704,8 +719,9 @@ export default function FederalHouseCandidatesPage() {
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium">Office</label>
+                <label htmlFor="edit-candidate-office" className="mb-1 block text-sm font-medium">Office</label>
                 <select
+                  id="edit-candidate-office"
                   className="w-full rounded-md border px-3 py-2"
                   value={editForm.office_id}
                   onChange={(event) => setEditForm((form) => ({ ...form, office_id: Number(event.target.value) }))}
@@ -717,8 +733,9 @@ export default function FederalHouseCandidatesPage() {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Political Party</label>
+                <label htmlFor="edit-candidate-party" className="mb-1 block text-sm font-medium">Political Party</label>
                 <select
+                  id="edit-candidate-party"
                   className="w-full rounded-md border bg-gray-100 px-3 py-2 text-gray-500 disabled:cursor-not-allowed"
                   value={editForm.party_id}
                   disabled
@@ -735,8 +752,9 @@ export default function FederalHouseCandidatesPage() {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Election</label>
+                <label htmlFor="edit-candidate-election" className="mb-1 block text-sm font-medium">Election</label>
                 <select
+                  id="edit-candidate-election"
                   className="w-full rounded-md border px-3 py-2"
                   value={editForm.election_id}
                   onChange={(event) => setEditForm((form) => ({ ...form, election_id: Number(event.target.value) }))}
@@ -749,8 +767,9 @@ export default function FederalHouseCandidatesPage() {
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Manifesto</label>
+              <label htmlFor="edit-candidate-manifesto" className="mb-1 block text-sm font-medium">Manifesto</label>
               <textarea
+                id="edit-candidate-manifesto"
                 className="w-full rounded-md border px-3 py-2"
                 rows={4}
                 value={editForm.manifesto}
@@ -760,9 +779,11 @@ export default function FederalHouseCandidatesPage() {
             {editError && <p role="alert" className="text-sm text-red-600">{editError}</p>}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="ghost" onClick={() => setEditingCandidate(null)} disabled={isUpdating}>Cancel</Button>
+              <Can permission={Permissions.UPDATE_CANDIDATE}>
               <Button type="button" onClick={submitEditCandidate} disabled={isUpdating}>
                 {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Changes'}
               </Button>
+              </Can>
             </div>
           </div>
         </DialogContent>
@@ -789,9 +810,11 @@ export default function FederalHouseCandidatesPage() {
             <Button type="button" variant="outline" onClick={() => setDeletingCandidate(null)} disabled={isDeleting}>
               Cancel
             </Button>
+            <Can permission={Permissions.DELETE_CANDIDATE}>
             <Button type="button" variant="destructive" onClick={removeFederalHouseCandidate} disabled={isDeleting}>
               {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Delete Candidate'}
             </Button>
+            </Can>
           </div>
         </DialogContent>
       </Dialog>

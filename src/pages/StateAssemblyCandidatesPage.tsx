@@ -13,6 +13,8 @@ import { Election, electionService } from '@/services/elections'
 import { Party, partyService } from '@/services/parties'
 import { useAuth } from '@/contexts/AuthContext'
 import { getLogoUrl, getPartyLogoValue } from '@/lib/utils'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 
 type OfficeOption = { id: number; title: string; status?: number }
 
@@ -464,7 +466,7 @@ export default function StateAssemblyCandidatesPage() {
   return (
     <div className="space-y-6 p-4 md:p-0">
       <Link to="/k8s9d7f3-districts/state-house" className="inline-flex items-center gap-2 text-sm font-medium text-[#146c4f] hover:underline">
-        <ArrowLeft className="h-4 w-4" /> Back to State Constituencies
+        <ArrowLeft aria-hidden="true" className="h-4 w-4" /> Back to State Constituencies
       </Link>
       <Card className="border border-gray-100 shadow-md">
         <CardContent className="p-0">
@@ -504,18 +506,20 @@ export default function StateAssemblyCandidatesPage() {
                 />
               </label>
               <Button type="button" size="sm" variant="outline" disabled={candidatesLoading} onClick={() => void searchCandidates()}>
-                {candidatesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Search className="mr-2 h-4 w-4" /> Search</>}
+                {candidatesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Search aria-hidden="true" className="mr-2 h-4 w-4" /> Search</>}
               </Button>
               <Button type="button" size="sm" variant="outline" disabled={candidatesLoading} onClick={() => void clearCandidateSearch()}>
-                <X className="mr-2 h-4 w-4" /> Show Active
+                <X aria-hidden="true" className="mr-2 h-4 w-4" /> Show Active
               </Button>
               <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-2">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Matching Candidates</p>
                 <p className="font-semibold text-[#146c4f]">{filteredCandidates.length} candidates</p>
               </div>
+              <Can permission={Permissions.CREATE_CANDIDATE}>
               <Button size="sm" onClick={() => void openAddDialog()}>
-                <Plus className="mr-2 h-4 w-4" /> Add Candidate
+                <Plus aria-hidden="true" className="mr-2 h-4 w-4" /> Add Candidate
               </Button>
+              </Can>
             </div>
           </div>
 
@@ -558,9 +562,11 @@ export default function StateAssemblyCandidatesPage() {
                           <p className="text-xs font-semibold text-[#146c4f]">{candidate.office_title || 'State House of Assembly Candidate'}</p>
                         </div>
                       </div>
-                      <Button type="button" size="sm" variant="outline" className="h-8 shrink-0 px-2 sm:h-9 sm:px-3" onClick={() => openEditDialog(candidate)} disabled={!candidate.assignment_id}>
-                        <Pencil className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
+                      <Can permission={Permissions.UPDATE_CANDIDATE}>
+                      <Button type="button" size="sm" variant="outline" aria-label={`Edit ${candidate.full_name}`} className="h-8 shrink-0 px-2 sm:h-9 sm:px-3" onClick={() => openEditDialog(candidate)} disabled={!candidate.assignment_id}>
+                        <Pencil aria-hidden="true" className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
                       </Button>
+                      </Can>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div className="rounded-xl bg-gray-50 p-3">
@@ -593,12 +599,14 @@ export default function StateAssemblyCandidatesPage() {
                       </div>
                     )}
                     <div className="mt-4 flex justify-end border-t border-gray-100 pt-3">
-                      <Button type="button" size="sm" variant="destructive" onClick={() => {
+                      <Can permission={Permissions.DELETE_CANDIDATE}>
+                      <Button type="button" size="sm" variant="destructive" aria-label={`Delete ${candidate.full_name}`} onClick={() => {
                         setDeleteError('')
                         setDeletingCandidate(candidate)
                       }} disabled={!candidate.assignment_id}>
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        <Trash2 aria-hidden="true" className="mr-2 h-4 w-4" /> Delete
                       </Button>
+                      </Can>
                     </div>
                   </article>
                 )
@@ -612,11 +620,11 @@ export default function StateAssemblyCandidatesPage() {
               </p>
               <div className="flex items-center gap-2">
                 <Button type="button" size="sm" variant="outline" onClick={() => setCandidatePage((page) => Math.max(1, page - 1))} disabled={candidatePage === 1}>
-                  <ChevronLeft className="mr-1 h-4 w-4" /> Previous
+                  <ChevronLeft aria-hidden="true" className="mr-1 h-4 w-4" /> Previous
                 </Button>
                 <span className="text-sm text-gray-600">Page {candidatePage} of {totalCandidatePages}</span>
                 <Button type="button" size="sm" variant="outline" onClick={() => setCandidatePage((page) => Math.min(totalCandidatePages, page + 1))} disabled={candidatePage >= totalCandidatePages}>
-                  Next <ChevronRight className="ml-1 h-4 w-4" />
+                  Next <ChevronRight aria-hidden="true" className="ml-1 h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -661,10 +669,11 @@ export default function StateAssemblyCandidatesPage() {
                 </select>
                 {addElectionError && <p role="alert" className="mt-1 text-sm text-red-600">{addElectionError}</p>}
               </div>
-              <label className="block space-y-1 text-sm font-medium">
+              <label htmlFor="state-assembly-add-candidate-search" className="block space-y-1 text-sm font-medium">
                 Candidate NIN or phone number *
                 <div className="flex gap-2">
                   <Input
+                    id="state-assembly-add-candidate-search"
                     value={candidateSearch}
                     onChange={(event) => {
                       setCandidateSearch(event.target.value)
@@ -679,9 +688,11 @@ export default function StateAssemblyCandidatesPage() {
                     placeholder="Enter candidate NIN or phone number"
                     className="flex-1"
                   />
+                  <Can permission={Permissions.TOGGLE_CANDIDATE_STATUS}>
                   <Button onClick={verifyCandidate} disabled={isVerifying || isLoadingAddElections || !electionId}>
                     {isVerifying ? 'Verifying...' : 'Verify'}
                   </Button>
+                  </Can>
                 </div>
               </label>
               {candidateSearchError && <div role="alert" className="text-sm text-red-600">{candidateSearchError}</div>}
@@ -718,8 +729,9 @@ export default function StateAssemblyCandidatesPage() {
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Office *</label>
+                <label htmlFor="state-assembly-add-office" className="mb-1 block text-sm font-medium">Office *</label>
                 <select
+                  id="state-assembly-add-office"
                   value={officeId}
                   onChange={(event) => setOfficeId(event.target.value)}
                   disabled={isLoadingOffices || offices.length === 0}
@@ -733,8 +745,8 @@ export default function StateAssemblyCandidatesPage() {
                 {officeLoadError && <p role="alert" className="mt-1 text-sm text-red-600">{officeLoadError}</p>}
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Manifesto</label>
-                <Textarea value={manifesto} onChange={(event) => setManifesto(event.target.value)} placeholder="Enter manifesto details" rows={4} />
+                <label htmlFor="state-assembly-add-manifesto" className="mb-1 block text-sm font-medium">Manifesto</label>
+                <Textarea id="state-assembly-add-manifesto" value={manifesto} onChange={(event) => setManifesto(event.target.value)} placeholder="Enter manifesto details" rows={4} />
               </div>
               {formError && <div role="alert" className="text-sm text-red-600">{formError}</div>}
               <div className="flex justify-between gap-2">
@@ -749,9 +761,11 @@ export default function StateAssemblyCandidatesPage() {
                 >
                   Back
                 </Button>
+                <Can permission={Permissions.CREATE_CANDIDATE}>
                 <Button onClick={saveMember} disabled={isSaving} className="bg-[#146c4f] hover:bg-[#10563f]">
                   {isSaving ? 'Saving...' : 'Add candidate'}
                 </Button>
+                </Can>
               </div>
             </div>
           )}
@@ -766,13 +780,14 @@ export default function StateAssemblyCandidatesPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium">Candidate</label>
-              <Input value={editingCandidate?.full_name ?? ''} disabled />
+              <label htmlFor="state-assembly-edit-candidate" className="mb-1 block text-sm font-medium">Candidate</label>
+              <Input id="state-assembly-edit-candidate" value={editingCandidate?.full_name ?? ''} disabled />
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium">Office</label>
+                <label htmlFor="state-assembly-edit-office" className="mb-1 block text-sm font-medium">Office</label>
                 <select
+                  id="state-assembly-edit-office"
                   value={editData.office_id || ''}
                   onChange={(event) => setEditData((current) => ({ ...current, office_id: Number(event.target.value) }))}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -784,12 +799,13 @@ export default function StateAssemblyCandidatesPage() {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Political Party</label>
-                <Input value={editingCandidate?.party?.name || editingCandidate?.political_party || `Party ${editData.party_id}`} disabled />
+                <label htmlFor="state-assembly-edit-party" className="mb-1 block text-sm font-medium">Political Party</label>
+                <Input id="state-assembly-edit-party" value={editingCandidate?.party?.name || editingCandidate?.political_party || `Party ${editData.party_id}`} disabled />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Election</label>
+                <label htmlFor="state-assembly-edit-election" className="mb-1 block text-sm font-medium">Election</label>
                 <select
+                  id="state-assembly-edit-election"
                   value={String(editData.election_id || '')}
                   onChange={(event) => setEditData((current) => ({ ...current, election_id: Number(event.target.value) }))}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -801,20 +817,22 @@ export default function StateAssemblyCandidatesPage() {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">State Constituency</label>
-                <Input value={districtName} disabled />
+                <label htmlFor="state-assembly-edit-district" className="mb-1 block text-sm font-medium">State Constituency</label>
+                <Input id="state-assembly-edit-district" value={districtName} disabled />
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Manifesto</label>
-              <Textarea value={editData.manifesto} onChange={(event) => setEditData((current) => ({ ...current, manifesto: event.target.value }))} rows={4} />
+              <label htmlFor="state-assembly-edit-manifesto" className="mb-1 block text-sm font-medium">Manifesto</label>
+              <Textarea id="state-assembly-edit-manifesto" value={editData.manifesto} onChange={(event) => setEditData((current) => ({ ...current, manifesto: event.target.value }))} rows={4} />
             </div>
-            {editError && <div className="text-sm text-red-600">{editError}</div>}
+            {editError && <div role="alert" className="text-sm text-red-600">{editError}</div>}
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setEditingCandidate(null)}>Cancel</Button>
+              <Can permission={Permissions.UPDATE_CANDIDATE}>
               <Button onClick={saveEdit} disabled={isUpdating} className="bg-[#146c4f] hover:bg-[#10563f]">
                 {isUpdating ? 'Saving...' : 'Save changes'}
               </Button>
+              </Can>
             </div>
           </div>
         </DialogContent>
@@ -826,12 +844,14 @@ export default function StateAssemblyCandidatesPage() {
             <DialogTitle>Delete candidate</DialogTitle>
             <DialogDescription>Are you sure you want to remove this candidate from this State Assembly constituency?</DialogDescription>
           </DialogHeader>
-          {deleteError && <div className="text-sm text-red-600">{deleteError}</div>}
+          {deleteError && <div role="alert" className="text-sm text-red-600">{deleteError}</div>}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setDeletingCandidate(null)}>Cancel</Button>
+            <Can permission={Permissions.DELETE_CANDIDATE}>
             <Button variant="destructive" onClick={() => deletingCandidate && removeCandidate(deletingCandidate)} disabled={isDeleting}>
               {isDeleting ? 'Deleting...' : 'Delete'}
             </Button>
+            </Can>
           </div>
         </DialogContent>
       </Dialog>

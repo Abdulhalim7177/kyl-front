@@ -13,6 +13,8 @@ import { AddElectedLgaChairmanData, ElectedLeader, ElectedLgaActionResponse, lea
 import { Election, electionService, StateOffice } from '@/services/elections'
 import { partyService } from '@/services/parties'
 import { getLogoUrl, getPartyLogoValue } from '@/lib/utils'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 
 interface LgaLeadershipPageProps {
   mode: 'candidates' | 'elected'
@@ -839,7 +841,7 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
   return (
     <div className="space-y-6 p-4 md:p-0">
       <Link to={backPath} className="inline-flex items-center gap-2 text-sm font-medium text-[#146c4f] hover:underline">
-        <ArrowLeft className="h-4 w-4" /> Back to LGAs
+        <ArrowLeft aria-hidden="true" className="h-4 w-4" /> Back to LGAs
       </Link>
       <Card className="border border-gray-100 shadow-md">
         <CardContent className="p-0">
@@ -865,21 +867,25 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
               </div>
               {mode === 'candidates' && (
                 <>
-                  <Button type="button" size="sm" className="bg-[#146c4f] hover:bg-[#10563f]" onClick={() => void openAddDialog()}>
-                    <Plus className="mr-2 h-4 w-4" /> Add Candidate
-                  </Button>
+                  <Can permission={Permissions.CREATE_CANDIDATE}>
+                    <Button type="button" size="sm" className="bg-[#146c4f] hover:bg-[#10563f]" onClick={() => void openAddDialog()}>
+                      <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> Add Candidate
+                    </Button>
+                  </Can>
                 </>
               )}
               {mode === 'elected' && (
-                <Button
-                  type="button"
-                  size="sm"
-                  className="bg-[#146c4f] hover:bg-[#10563f]"
-                  onClick={() => void handleElectedAddDialog(true)}
-                  disabled={loading || isLoadingElectedOptions || isAddingElected}
-                >
-                  <Plus className="mr-2 h-4 w-4" /> Add Elected Chairman
-                </Button>
+                <Can permission={Permissions.CREATE_LEADER}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="bg-[#146c4f] hover:bg-[#10563f]"
+                    onClick={() => void handleElectedAddDialog(true)}
+                    disabled={loading || isLoadingElectedOptions || isAddingElected}
+                  >
+                    <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> Add Elected Chairman
+                  </Button>
+                </Can>
               )}
             </div>
           </div>
@@ -965,7 +971,7 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
                   />
                 </label>
                 <Button type="button" onClick={() => void searchLgaCandidates()} disabled={isSearching || loading}>
-                  {isSearching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {isSearching ? <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Search
                 </Button>
                 <Button type="button" variant="outline" onClick={() => void showActiveCandidates()} disabled={isSearching || loading}>
@@ -1010,7 +1016,7 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
                   onClick={() => void searchElectedLgaLeaders()}
                   disabled={isSearchingElected || loading}
                 >
-                  {isSearchingElected && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isSearchingElected && <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />}
                   Search
                 </Button>
                 <Button
@@ -1075,29 +1081,35 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
                         </div>
                       </div>
                       <div className="flex max-w-full flex-wrap gap-1.5 sm:gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="destructive"
-                          className="h-8 px-2 sm:h-9 sm:px-3"
-                          onClick={() => {
-                            setDeleteError('')
-                            setDeletingCandidate(candidate)
-                          }}
-                          disabled={!candidate.assignment_id || isDeleting}
-                        >
-                          <Trash2 className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Delete</span>
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="h-8 px-2 sm:h-9 sm:px-3"
-                          onClick={() => void openEditCandidate(candidate)}
-                          disabled={!candidate.assignment_id || isUpdating || isDeleting}
-                        >
-                          <Pencil className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
-                        </Button>
+                        <Can permission={Permissions.DELETE_CANDIDATE}>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="destructive"
+                            aria-label={`Delete ${candidateName}`}
+                            className="h-8 px-2 sm:h-9 sm:px-3"
+                            onClick={() => {
+                              setDeleteError('')
+                              setDeletingCandidate(candidate)
+                            }}
+                            disabled={!candidate.assignment_id || isDeleting}
+                          >
+                            <Trash2 className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Delete</span>
+                          </Button>
+                        </Can>
+                        <Can permission={Permissions.UPDATE_CANDIDATE}>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            aria-label={`Edit ${candidateName}`}
+                            className="h-8 px-2 sm:h-9 sm:px-3"
+                            onClick={() => void openEditCandidate(candidate)}
+                            disabled={!candidate.assignment_id || isUpdating || isDeleting}
+                          >
+                            <Pencil className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Edit</span>
+                          </Button>
+                        </Can>
                       </div>
                     </div>
                     <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
@@ -1142,11 +1154,11 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
               </p>
               <div className="flex items-center gap-2">
                 <Button type="button" size="sm" variant="outline" onClick={() => setCandidatePage((page) => Math.max(1, page - 1))} disabled={candidatePage === 1}>
-                  <ChevronLeft className="mr-1 h-4 w-4" /> Previous
+                  <ChevronLeft aria-hidden="true" className="mr-1 h-4 w-4" /> Previous
                 </Button>
                 <span className="text-sm text-gray-600">Page {candidatePage} of {totalCandidatePages}</span>
                 <Button type="button" size="sm" variant="outline" onClick={() => setCandidatePage((page) => Math.min(totalCandidatePages, page + 1))} disabled={candidatePage >= totalCandidatePages}>
-                  Next <ChevronRight className="ml-1 h-4 w-4" />
+                  Next <ChevronRight aria-hidden="true" className="ml-1 h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -1193,44 +1205,53 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
                         <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-800">
                           {leader.status || 'Active'}
                         </span>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => void openEditElectedLeader(leader)}
-                          disabled={isUpdatingElected || isProcessingElectedAction}
-                          className="h-8 px-2 sm:h-9 sm:px-3"
-                        >
-                          <Pencil className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setElectedActionError('')
-                            setTerminationResponse(null)
-                            setElectedAction({ type: 'terminate', leader })
-                          }}
-                          disabled={!Number.isInteger(Number(leader.id)) || Number(leader.id) <= 0 || isProcessingElectedAction}
-                          className="h-8 px-2 sm:h-9 sm:px-3"
-                        >
-                          <Ban className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Terminate</span>
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => {
-                            setElectedActionError('')
-                            setTerminationResponse(null)
-                            setElectedAction({ type: 'delete', leader })
-                          }}
-                          disabled={!Number.isInteger(Number(leader.id)) || Number(leader.id) <= 0 || isProcessingElectedAction}
-                          className="h-8 px-2 sm:h-9 sm:px-3"
-                        >
-                          <Trash2 className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Delete</span>
-                        </Button>
+                        <Can permission={Permissions.UPDATE_LEADER}>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            aria-label={`Edit ${leaderName}`}
+                            onClick={() => void openEditElectedLeader(leader)}
+                            disabled={isUpdatingElected || isProcessingElectedAction}
+                            className="h-8 px-2 sm:h-9 sm:px-3"
+                          >
+                            <Pencil className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Edit</span>
+                          </Button>
+                        </Can>
+                        <Can permission={Permissions.DELETE_LEADER}>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            aria-label={`Terminate ${leaderName}`}
+                            onClick={() => {
+                              setElectedActionError('')
+                              setTerminationResponse(null)
+                              setElectedAction({ type: 'terminate', leader })
+                            }}
+                            disabled={!Number.isInteger(Number(leader.id)) || Number(leader.id) <= 0 || isProcessingElectedAction}
+                            className="h-8 px-2 sm:h-9 sm:px-3"
+                          >
+                            <Ban className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Terminate</span>
+                          </Button>
+                        </Can>
+                        <Can permission={Permissions.DELETE_LEADER}>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="destructive"
+                            aria-label={`Delete ${leaderName}`}
+                            onClick={() => {
+                              setElectedActionError('')
+                              setTerminationResponse(null)
+                              setElectedAction({ type: 'delete', leader })
+                            }}
+                            disabled={!Number.isInteger(Number(leader.id)) || Number(leader.id) <= 0 || isProcessingElectedAction}
+                            className="h-8 px-2 sm:h-9 sm:px-3"
+                          >
+                            <Trash2 className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Delete</span>
+                          </Button>
+                        </Can>
                       </div>
                     </div>
                     <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
@@ -1343,9 +1364,11 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
                       }}
                       placeholder="Enter candidate NIN or phone number"
                     />
-                    <Button type="button" onClick={() => void verifyCandidate()} disabled={isVerifying || isLoadingElections || !electionId}>
-                      {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify'}
-                    </Button>
+                    <Can permission={Permissions.TOGGLE_CANDIDATE_STATUS}>
+                      <Button type="button" onClick={() => void verifyCandidate()} disabled={isVerifying || isLoadingElections || !electionId}>
+                        {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : 'Verify'}
+                      </Button>
+                    </Can>
                   </div>
                 </div>
                 {candidateSearchError && <p role="alert" className="text-sm text-red-600">{candidateSearchError}</p>}
@@ -1378,9 +1401,10 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
                   </div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="space-y-1 text-sm font-medium sm:col-span-2">
+                  <label htmlFor="lga-candidate-office" className="space-y-1 text-sm font-medium sm:col-span-2">
                     Office *
                     <select
+                      id="lga-candidate-office"
                       value={candidateOfficeId}
                       onChange={(event) => setCandidateOfficeId(event.target.value)}
                       disabled={isLoadingElections || lgaOffices.length === 0}
@@ -1391,9 +1415,9 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
                     </select>
                     {officeLoadError && <span role="alert" className="block text-sm font-normal text-red-600">{officeLoadError}</span>}
                   </label>
-                  <label className="space-y-1 text-sm font-medium sm:col-span-2">
+                  <label htmlFor="lga-candidate-manifesto" className="space-y-1 text-sm font-medium sm:col-span-2">
                     Manifesto
-                    <Textarea value={manifesto} onChange={(event) => setManifesto(event.target.value)} rows={4} placeholder="Enter candidate manifesto" />
+                    <Textarea id="lga-candidate-manifesto" value={manifesto} onChange={(event) => setManifesto(event.target.value)} rows={4} placeholder="Enter candidate manifesto" />
                   </label>
                 </div>
                 {formError && <p role="alert" className="text-sm text-red-600">{formError}</p>}
@@ -1402,15 +1426,17 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
                     setSelectedCandidate(null)
                     setFormError('')
                   }}>Back</Button>
-                  <Button
-                    type="button"
-                    className="bg-[#146c4f] hover:bg-[#10563f]"
-                    onClick={() => void addLgaCandidate()}
-                    disabled={isSaving}
-                  >
-                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isSaving ? 'Saving...' : 'Add Candidate'}
-                  </Button>
+                  <Can permission={Permissions.CREATE_CANDIDATE}>
+                    <Button
+                      type="button"
+                      className="bg-[#146c4f] hover:bg-[#10563f]"
+                      onClick={() => void addLgaCandidate()}
+                      disabled={isSaving}
+                    >
+                      {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                      {isSaving ? 'Saving...' : 'Add Candidate'}
+                    </Button>
+                  </Can>
                 </div>
               </div>
             )}
@@ -1431,13 +1457,14 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
             ) : (
               <div className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Candidate</label>
-                  <Input value={editingCandidate?.full_name ?? ''} disabled />
+                  <label htmlFor="edit-candidate-name" className="mb-1 block text-sm font-medium">Candidate</label>
+                  <Input id="edit-candidate-name" value={editingCandidate?.full_name ?? ''} disabled />
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="space-y-1 text-sm font-medium">
+                  <label htmlFor="edit-candidate-office" className="space-y-1 text-sm font-medium">
                     Office *
                     <select
+                      id="edit-candidate-office"
                       value={editData.office_id || ''}
                       onChange={(event) => setEditData((current) => ({ ...current, office_id: Number(event.target.value) }))}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -1446,9 +1473,10 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
                       {lgaOffices.map((office) => <option key={office.id} value={office.id}>{office.title}</option>)}
                     </select>
                   </label>
-                  <label className="space-y-1 text-sm font-medium">
+                  <label htmlFor="edit-candidate-election" className="space-y-1 text-sm font-medium">
                     Election *
                     <select
+                      id="edit-candidate-election"
                       value={editData.election_id || ''}
                       onChange={(event) => setEditData((current) => ({ ...current, election_id: Number(event.target.value) }))}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -1459,26 +1487,28 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
                       ))}
                     </select>
                   </label>
-                  <label className="space-y-1 text-sm font-medium">
+                  <label htmlFor="edit-candidate-party" className="space-y-1 text-sm font-medium">
                     Political party
-                    <Input value={editingCandidate?.party?.name || editingCandidate?.political_party || `Party ${editData.party_id}`} disabled />
+                    <Input id="edit-candidate-party" value={editingCandidate?.party?.name || editingCandidate?.political_party || `Party ${editData.party_id}`} disabled />
                   </label>
-                  <label className="space-y-1 text-sm font-medium">
+                  <label htmlFor="edit-candidate-lga" className="space-y-1 text-sm font-medium">
                     LGA
-                    <Input value={lga?.name ?? ''} disabled />
+                    <Input id="edit-candidate-lga" value={lga?.name ?? ''} disabled />
                   </label>
-                  <label className="space-y-1 text-sm font-medium sm:col-span-2">
+                  <label htmlFor="edit-candidate-manifesto" className="space-y-1 text-sm font-medium sm:col-span-2">
                     Manifesto
-                    <Textarea value={editData.manifesto} onChange={(event) => setEditData((current) => ({ ...current, manifesto: event.target.value }))} rows={4} />
+                    <Textarea id="edit-candidate-manifesto" value={editData.manifesto} onChange={(event) => setEditData((current) => ({ ...current, manifesto: event.target.value }))} rows={4} />
                   </label>
                 </div>
                 {editError && <p role="alert" className="text-sm text-red-600">{editError}</p>}
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setEditingCandidate(null)} disabled={isUpdating}>Cancel</Button>
-                  <Button type="button" onClick={() => void updateLgaCandidate()} disabled={isUpdating} className="bg-[#146c4f] hover:bg-[#10563f]">
-                    {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isUpdating ? 'Saving...' : 'Save changes'}
-                  </Button>
+                  <Can permission={Permissions.UPDATE_CANDIDATE}>
+                    <Button type="button" onClick={() => void updateLgaCandidate()} disabled={isUpdating} className="bg-[#146c4f] hover:bg-[#10563f]">
+                      {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                      {isUpdating ? 'Saving...' : 'Save changes'}
+                    </Button>
+                  </Can>
                 </div>
               </div>
             )}
@@ -1499,15 +1529,17 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
               <Button type="button" variant="outline" onClick={() => setDeletingCandidate(null)} disabled={isDeleting}>
                 Cancel
               </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => deletingCandidate && void removeLgaCandidate(deletingCandidate)}
-                disabled={isDeleting}
-              >
-                {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </Button>
+              <Can permission={Permissions.DELETE_CANDIDATE}>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => deletingCandidate && void removeLgaCandidate(deletingCandidate)}
+                  disabled={isDeleting}
+                >
+                  {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </Button>
+              </Can>
             </div>
           </DialogContent>
         </Dialog>
@@ -1543,17 +1575,19 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
               >
                 Cancel
               </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => void performElectedAction()}
-                disabled={isProcessingElectedAction}
-              >
-                {isProcessingElectedAction && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isProcessingElectedAction
-                  ? electedAction?.type === 'delete' ? 'Deleting...' : 'Terminating...'
-                  : electedAction?.type === 'delete' ? 'Delete' : 'Terminate'}
-              </Button>
+              <Can permission={Permissions.DELETE_LEADER}>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => void performElectedAction()}
+                  disabled={isProcessingElectedAction}
+                >
+                  {isProcessingElectedAction && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                  {isProcessingElectedAction
+                    ? electedAction?.type === 'delete' ? 'Deleting...' : 'Terminating...'
+                    : electedAction?.type === 'delete' ? 'Delete' : 'Terminate'}
+                </Button>
+              </Can>
             </div>
           </DialogContent>
         </Dialog>
@@ -1574,19 +1608,20 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
             ) : (
               <div className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="space-y-1 text-sm font-medium">
+                  <label htmlFor="elected-edit-candidate-name" className="space-y-1 text-sm font-medium">
                     Candidate
-                    <Input value={electedEditCandidateName || `Candidate ${electedEditData.candidate_id}`} disabled />
+                    <Input id="elected-edit-candidate-name" value={electedEditCandidateName || `Candidate ${electedEditData.candidate_id}`} disabled />
                   </label>
-                  <label className="space-y-1 text-sm font-medium">
+                  <label htmlFor="elected-edit-party" className="space-y-1 text-sm font-medium">
                     Political party
-                    <Input value={electedEditPartyName || `Party ${electedEditData.party_id}`} disabled />
+                    <Input id="elected-edit-party" value={electedEditPartyName || `Party ${electedEditData.party_id}`} disabled />
                   </label>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="space-y-1 text-sm font-medium">
+                  <label htmlFor="elected-edit-office" className="space-y-1 text-sm font-medium">
                     Office *
                     <select
+                      id="elected-edit-office"
                       value={electedEditData.office_id || ''}
                       onChange={(event) => setElectedEditData((current) => ({ ...current, office_id: Number(event.target.value) }))}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -1597,9 +1632,10 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
                       ))}
                     </select>
                   </label>
-                  <label className="space-y-1 text-sm font-medium">
+                  <label htmlFor="elected-edit-election" className="space-y-1 text-sm font-medium">
                     Election *
                     <select
+                      id="elected-edit-election"
                       value={electedEditData.election_id || ''}
                       onChange={(event) => setElectedEditData((current) => ({ ...current, election_id: Number(event.target.value) }))}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -1612,36 +1648,40 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
                       ))}
                     </select>
                   </label>
-                  <label className="space-y-1 text-sm font-medium">
+                  <label htmlFor="elected-edit-lga" className="space-y-1 text-sm font-medium">
                     LGA
-                    <Input value={lga?.name ?? ''} disabled />
+                    <Input id="elected-edit-lga" value={lga?.name ?? ''} disabled />
                   </label>
-                  <label className="space-y-1 text-sm font-medium">
+                  <label htmlFor="elected-edit-start-date" className="space-y-1 text-sm font-medium">
                     Start date *
                     <Input
+                      id="elected-edit-start-date"
                       type="date"
                       value={electedEditData.start_date}
                       onChange={(event) => setElectedEditData((current) => ({ ...current, start_date: event.target.value }))}
                     />
                   </label>
-                  <label className="space-y-1 text-sm font-medium">
+                  <label htmlFor="elected-edit-end-date" className="space-y-1 text-sm font-medium">
                     End date *
                     <Input
+                      id="elected-edit-end-date"
                       type="date"
                       value={electedEditData.end_date}
                       onChange={(event) => setElectedEditData((current) => ({ ...current, end_date: event.target.value }))}
                     />
                   </label>
-                  <label className="space-y-1 text-sm font-medium sm:col-span-2">
+                  <label htmlFor="elected-edit-tenure" className="space-y-1 text-sm font-medium sm:col-span-2">
                     Tenure *
                     <Input
+                      id="elected-edit-tenure"
                       value={electedEditData.tenure}
                       onChange={(event) => setElectedEditData((current) => ({ ...current, tenure: event.target.value }))}
                     />
                   </label>
-                  <label className="space-y-1 text-sm font-medium sm:col-span-2">
+                  <label htmlFor="elected-edit-remark" className="space-y-1 text-sm font-medium sm:col-span-2">
                     Remark
                     <Textarea
+                      id="elected-edit-remark"
                       value={electedEditData.remark}
                       onChange={(event) => setElectedEditData((current) => ({ ...current, remark: event.target.value }))}
                       rows={4}
@@ -1653,15 +1693,17 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
                   <Button type="button" variant="outline" onClick={() => setEditingElectedLeader(null)} disabled={isUpdatingElected}>
                     Cancel
                   </Button>
-                  <Button
-                    type="button"
-                    onClick={() => void updateElectedLgaLeader()}
-                    disabled={isUpdatingElected || isLoadingElectedEditOptions}
-                    className="bg-[#146c4f] hover:bg-[#10563f]"
-                  >
-                    {isUpdatingElected && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isUpdatingElected ? 'Saving...' : 'Save changes'}
-                  </Button>
+                  <Can permission={Permissions.UPDATE_LEADER}>
+                    <Button
+                      type="button"
+                      onClick={() => void updateElectedLgaLeader()}
+                      disabled={isUpdatingElected || isLoadingElectedEditOptions}
+                      className="bg-[#146c4f] hover:bg-[#10563f]"
+                    >
+                      {isUpdatingElected && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                      {isUpdatingElected ? 'Saving...' : 'Save changes'}
+                    </Button>
+                  </Can>
                 </div>
               </div>
             )}
@@ -1685,9 +1727,10 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
               </div>
             ) : !electedCandidate ? (
               <div className="space-y-4">
-                <label className="block space-y-1 text-sm font-medium">
+                <label htmlFor="elected-lga-election" className="block space-y-1 text-sm font-medium">
                   Active election *
                   <select
+                    id="elected-lga-election"
                     value={electedElectionId}
                     onChange={(event) => {
                       setElectedElectionId(event.target.value)
@@ -1725,13 +1768,15 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
                       }}
                       placeholder="Enter candidate NIN or phone number"
                     />
-                    <Button
-                      type="button"
-                      onClick={() => void verifyElectedCandidate()}
-                      disabled={isVerifyingElectedCandidate || !electedElectionId || Boolean(electedOptionsError)}
-                    >
-                      {isVerifyingElectedCandidate ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify'}
-                    </Button>
+                    <Can permission={Permissions.UPDATE_LEADER}>
+                      <Button
+                        type="button"
+                        onClick={() => void verifyElectedCandidate()}
+                        disabled={isVerifyingElectedCandidate || !electedElectionId || Boolean(electedOptionsError)}
+                      >
+                        {isVerifyingElectedCandidate ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : 'Verify'}
+                      </Button>
+                    </Can>
                   </div>
                 </div>
                 {electedVerifyError && <p role="alert" className="text-sm text-red-600">{electedVerifyError}</p>}
@@ -1765,9 +1810,10 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
                   </div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="space-y-1 text-sm font-medium">
+                  <label htmlFor="elected-lga-office" className="space-y-1 text-sm font-medium">
                     Office *
                     <select
+                      id="elected-lga-office"
                       value={electedOfficeId}
                       onChange={(event) => setElectedOfficeId(event.target.value)}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -1778,28 +1824,29 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
                       ))}
                     </select>
                   </label>
-                  <label className="space-y-1 text-sm font-medium">
+                  <label htmlFor="elected-lga-election-year" className="space-y-1 text-sm font-medium">
                     Election
                     <Input
+                      id="elected-lga-election-year"
                       value={`${electedElections.find((election) => election.id === Number(electedElectionId))?.year ?? electedElectionId}`}
                       disabled
                     />
                   </label>
-                  <label className="space-y-1 text-sm font-medium">
+                  <label htmlFor="elected-lga-start-date" className="space-y-1 text-sm font-medium">
                     Start date *
-                    <Input type="date" value={electedStartDate} onChange={(event) => setElectedStartDate(event.target.value)} />
+                    <Input id="elected-lga-start-date" type="date" value={electedStartDate} onChange={(event) => setElectedStartDate(event.target.value)} />
                   </label>
-                  <label className="space-y-1 text-sm font-medium">
+                  <label htmlFor="elected-lga-end-date" className="space-y-1 text-sm font-medium">
                     End date *
-                    <Input type="date" value={electedEndDate} onChange={(event) => setElectedEndDate(event.target.value)} />
+                    <Input id="elected-lga-end-date" type="date" value={electedEndDate} onChange={(event) => setElectedEndDate(event.target.value)} />
                   </label>
-                  <label className="space-y-1 text-sm font-medium">
+                  <label htmlFor="elected-lga-tenure" className="space-y-1 text-sm font-medium">
                     Tenure *
-                    <Input value={electedTenure} onChange={(event) => setElectedTenure(event.target.value)} placeholder="e.g. 4 years" />
+                    <Input id="elected-lga-tenure" value={electedTenure} onChange={(event) => setElectedTenure(event.target.value)} placeholder="e.g. 4 years" />
                   </label>
-                  <label className="space-y-1 text-sm font-medium sm:col-span-2">
+                  <label htmlFor="elected-lga-remark" className="space-y-1 text-sm font-medium sm:col-span-2">
                     Remark
-                    <Textarea value={electedRemark} onChange={(event) => setElectedRemark(event.target.value)} rows={3} />
+                    <Textarea id="elected-lga-remark" value={electedRemark} onChange={(event) => setElectedRemark(event.target.value)} rows={3} />
                   </label>
                 </div>
                 {electedFormError && <p role="alert" className="text-sm text-red-600">{electedFormError}</p>}
@@ -1819,15 +1866,17 @@ export default function LgaLeadershipPage({ mode }: LgaLeadershipPageProps) {
                     <Button type="button" variant="outline" onClick={() => void handleElectedAddDialog(false)} disabled={isAddingElected}>
                       Cancel
                     </Button>
-                    <Button
-                      type="button"
-                      onClick={() => void addElectedLgaChairman()}
-                      disabled={isAddingElected || electedOffices.length === 0}
-                      className="bg-[#146c4f] hover:bg-[#10563f]"
-                    >
-                      {isAddingElected && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      {isAddingElected ? 'Saving...' : 'Add Elected Official'}
-                    </Button>
+                    <Can permission={Permissions.CREATE_LEADER}>
+                      <Button
+                        type="button"
+                        onClick={() => void addElectedLgaChairman()}
+                        disabled={isAddingElected || electedOffices.length === 0}
+                        className="bg-[#146c4f] hover:bg-[#10563f]"
+                      >
+                        {isAddingElected && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                        {isAddingElected ? 'Saving...' : 'Add Elected Official'}
+                      </Button>
+                    </Can>
                   </div>
                 </div>
               </div>

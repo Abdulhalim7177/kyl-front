@@ -40,7 +40,7 @@ export default function PublicBlogDetailPage() {
         <h2 className="text-3xl font-bold text-gray-900 mb-4">Post Not Found</h2>
         <p className="text-gray-500 mb-8">{error || "The article you're looking for doesn't exist or has been removed."}</p>
         <Link to="/blogs" className="text-primary font-medium hover:underline flex items-center gap-2">
-          <ArrowLeft className="w-4 h-4" /> Back to News
+          <ArrowLeft aria-hidden="true" className="w-4 h-4" /> Back to News
         </Link>
       </div>
     )
@@ -62,7 +62,7 @@ export default function PublicBlogDetailPage() {
       <section className="bg-gray-50 py-16 md:py-24 mt-[-6rem] border-b border-gray-100">
         <div className="container mx-auto px-4 max-w-4xl">
           <Link to="/blogs" className="inline-flex items-center text-primary font-semibold hover:text-emerald-700 transition-colors mb-8">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Back to News
+            <ArrowLeft aria-hidden="true" className="w-4 h-4 mr-2" /> Back to News
           </Link>
           
           {post.type && (
@@ -107,7 +107,7 @@ export default function PublicBlogDetailPage() {
         <div className="mt-16 pt-8 border-t border-gray-100 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <span className="font-semibold text-gray-900">Share this article:</span>
-            <button className="p-2 bg-gray-50 hover:bg-gray-100 rounded-full text-gray-600 transition-colors" onClick={() => navigator.clipboard.writeText(window.location.href).then(() => alert('Link copied!'))}>
+            <button aria-label="Copy link to article" className="p-2 bg-gray-50 hover:bg-gray-100 rounded-full text-gray-600 transition-colors" onClick={() => navigator.clipboard.writeText(window.location.href).then(() => alert('Link copied!'))}>
               <Share2 className="w-5 h-5" />
             </button>
           </div>

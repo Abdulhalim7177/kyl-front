@@ -106,7 +106,7 @@ export default function PublicPartyProfilePage() {
           <div className="lg:col-span-2 space-y-8">
             {/* Philosophy / Manifesto */}
             <section className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 p-8">
-              <h2 className="text-sm font-bold text-gray-400 tracking-widest uppercase mb-6 flex items-center gap-2"><Info className="w-4 h-4" /> Philosophy & Manifesto</h2>
+              <h2 className="text-sm font-bold text-gray-400 tracking-widest uppercase mb-6 flex items-center gap-2"><Info aria-hidden="true" className="w-4 h-4" /> Philosophy & Manifesto</h2>
               <p className="text-gray-700 leading-relaxed whitespace-pre-line text-lg font-light">
                 {party.philosophy || 'No official philosophy or manifesto provided.'}
               </p>
@@ -125,7 +125,7 @@ export default function PublicPartyProfilePage() {
           <div className="space-y-8">
             {/* Headquarters / Contact */}
             <section className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 p-8">
-              <h2 className="text-sm font-bold text-gray-400 tracking-widest uppercase mb-6 flex items-center gap-2"><Building2 className="w-4 h-4" /> Headquarters</h2>
+              <h2 className="text-sm font-bold text-gray-400 tracking-widest uppercase mb-6 flex items-center gap-2"><Building2 aria-hidden="true" className="w-4 h-4" /> Headquarters</h2>
               
               <div className="flex items-start gap-3 mb-4">
                 <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />

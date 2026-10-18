@@ -130,6 +130,7 @@ export default function DirectoryPage() {
           </div>
           <input
             type="text"
+            aria-label="Search candidates, parties, offices"
             className="block w-full pl-12 pr-40 py-4 md:py-5 border border-gray-300 rounded-full shadow-sm text-lg focus:ring-primary focus:border-primary transition-shadow"
             placeholder="Search candidates, parties, offices..."
             value={query}
@@ -139,6 +140,7 @@ export default function DirectoryPage() {
             <button
               type="button"
               onClick={handleClear}
+              aria-label="Clear search"
               className="absolute inset-y-0 right-32 flex items-center pr-2 text-gray-400 hover:text-gray-600 transition-colors"
               title="Clear search"
             >
@@ -170,7 +172,7 @@ export default function DirectoryPage() {
                 onClick={() => handlePillClick(s)}
                 className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-colors flex items-center gap-2"
               >
-                <Search className="w-4 h-4 text-gray-400" />
+                <Search aria-hidden="true" className="w-4 h-4 text-gray-400" />
                 {s.title}
               </button>
             )
@@ -195,7 +197,7 @@ export default function DirectoryPage() {
                     {Object.entries(groupedCandidates).map(([groupName, candidates]: any) => (
                       <div key={groupName}>
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-800">
-                          <User className="w-6 h-6 text-primary" /> {groupName}
+                          <User aria-hidden="true" className="w-6 h-6 text-primary" /> {groupName}
                         </h2>
                         <div className="space-y-4">
                           {candidates.map((c: any) => (
@@ -207,7 +209,7 @@ export default function DirectoryPage() {
                                 <h3 className="font-bold text-gray-900 truncate">{c.title}</h3>
                                 <p className="text-sm text-gray-500 truncate">{c.subtitle}</p>
                               </div>
-                              <ArrowRight className="w-5 h-5 text-gray-300" />
+                              <ArrowRight aria-hidden="true" className="w-5 h-5 text-gray-300" />
                             </Link>
                           ))}
                         </div>
@@ -221,7 +223,7 @@ export default function DirectoryPage() {
               <div className="col-span-1 md:col-span-2 lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 items-start content-start">
                   {results.states?.length > 0 && (
                     <div className="space-y-4">
-                      <h2 className="text-lg font-bold flex items-center gap-2 text-gray-800 border-b pb-2"><MapPin className="w-5 h-5 text-red-500" /> States</h2>
+                      <h2 className="text-lg font-bold flex items-center gap-2 text-gray-800 border-b pb-2"><MapPin aria-hidden="true" className="w-5 h-5 text-red-500" /> States</h2>
                       <div className="space-y-3">
                         {results.states.map((s: any) => (
                            <button 
@@ -234,7 +236,7 @@ export default function DirectoryPage() {
                                <p className="text-xs text-gray-500 truncate mt-1">Explore candidates in this state</p>
                              </div>
                              <div className="w-8 h-8 rounded-full bg-gray-50 group-hover:bg-red-50 flex items-center justify-center transition-colors shrink-0">
-                               <Search className="w-4 h-4 text-gray-400 group-hover:text-red-500" />
+                               <Search aria-hidden="true" className="w-4 h-4 text-gray-400 group-hover:text-red-500" />
                              </div>
                            </button>
                         ))}
@@ -244,7 +246,7 @@ export default function DirectoryPage() {
 
                   {results.districts?.length > 0 && (
                     <div className="space-y-4">
-                      <h2 className="text-lg font-bold flex items-center gap-2 text-gray-800 border-b pb-2"><MapPin className="w-5 h-5 text-orange-500" /> Districts</h2>
+                      <h2 className="text-lg font-bold flex items-center gap-2 text-gray-800 border-b pb-2"><MapPin aria-hidden="true" className="w-5 h-5 text-orange-500" /> Districts</h2>
                       <div className="space-y-3">
                         {results.districts.map((d: any) => (
                            <button 
@@ -257,7 +259,7 @@ export default function DirectoryPage() {
                                <p className="text-xs text-gray-500 truncate mt-1">{d.subtitle}</p>
                              </div>
                              <div className="w-8 h-8 rounded-full bg-gray-50 group-hover:bg-orange-50 flex items-center justify-center transition-colors shrink-0">
-                               <Search className="w-4 h-4 text-gray-400 group-hover:text-orange-500" />
+                               <Search aria-hidden="true" className="w-4 h-4 text-gray-400 group-hover:text-orange-500" />
                              </div>
                            </button>
                         ))}
@@ -267,7 +269,7 @@ export default function DirectoryPage() {
 
                   {results.parties?.length > 0 && (
                     <div className="space-y-4">
-                      <h2 className="text-lg font-bold flex items-center gap-2 text-gray-800 border-b pb-2"><Flag className="w-5 h-5 text-green-600" /> Parties</h2>
+                      <h2 className="text-lg font-bold flex items-center gap-2 text-gray-800 border-b pb-2"><Flag aria-hidden="true" className="w-5 h-5 text-green-600" /> Parties</h2>
                       <div className="space-y-3">
                         {results.parties.map((p: any) => (
                            <Link to={getLink(p)} key={`p-${p.id}`} className="block p-4 border border-gray-200 rounded-xl hover:border-green-500 hover:shadow-md transition-all bg-white flex items-center gap-3">
@@ -286,7 +288,7 @@ export default function DirectoryPage() {
 
                   {results.elections?.length > 0 && (
                     <div className="space-y-4">
-                      <h2 className="text-lg font-bold flex items-center gap-2 text-gray-800 border-b pb-2"><Landmark className="w-5 h-5 text-blue-600" /> Elections</h2>
+                      <h2 className="text-lg font-bold flex items-center gap-2 text-gray-800 border-b pb-2"><Landmark aria-hidden="true" className="w-5 h-5 text-blue-600" /> Elections</h2>
                       <div className="space-y-3">
                         {results.elections.map((e: any) => (
                            <Link to={getLink(e)} key={`e-${e.id}`} className="block p-4 border border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-md transition-all bg-white flex items-start gap-3">

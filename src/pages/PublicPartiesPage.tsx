@@ -67,7 +67,7 @@ export default function PublicPartiesPage() {
   if (error) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-red-50 text-red-600 p-4 rounded-md">
+        <div role="alert" className="bg-red-50 text-red-600 p-4 rounded-md">
           {error}
         </div>
       </div>
@@ -90,6 +90,7 @@ export default function PublicPartiesPage() {
           </div>
           <input
             type="text"
+            aria-label="Search parties"
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm"
             placeholder="Search parties..."
             value={searchTerm}

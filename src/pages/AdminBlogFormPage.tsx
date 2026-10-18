@@ -4,6 +4,8 @@ import { ArrowLeft, Loader2, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 import { blogService, PostType } from '@/services/blogs'
 
 export default function AdminBlogFormPage() {
@@ -120,9 +122,11 @@ export default function AdminBlogFormPage() {
 
           <div className="flex justify-end gap-3 border-t border-gray-100 pt-6 lg:col-span-2">
             <Button type="button" variant="outline" onClick={() => navigate(-1)} className="rounded-xl border-gray-200 text-gray-600">Cancel</Button>
-            <Button type="submit" disabled={loading || categories.length === 0} className="rounded-xl bg-[#146c4f] text-white hover:bg-[#115a42]">
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{isEditing ? 'Save changes' : 'Create post'}
-            </Button>
+            <Can any={[Permissions.CREATE_POST, Permissions.UPDATE_POST]}>
+              <Button type="submit" disabled={loading || categories.length === 0} className="rounded-xl bg-[#146c4f] text-white hover:bg-[#115a42]">
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{isEditing ? 'Save changes' : 'Create post'}
+              </Button>
+            </Can>
           </div>
         </form>
       </div>

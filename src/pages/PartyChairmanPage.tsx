@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { partyService } from '@/services/parties'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 import { ArrowLeft, Trash2 } from 'lucide-react'
 
 interface PartyChairman {
@@ -112,7 +114,7 @@ export default function PartyChairmanPage() {
   if (error) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-center">
-        <p className="text-sm text-red-600">{error}</p>
+        <p role="alert" className="text-sm text-red-600">{error}</p>
         <Button variant="outline" onClick={() => navigate(`/k8s9d7f3-parties/${partyId}`)}>
           Back to Party Profile
         </Button>
@@ -138,7 +140,7 @@ export default function PartyChairmanPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => navigate(`/k8s9d7f3-parties/${partyId}`)}>
-            <ArrowLeft className="w-4 h-4" /> Back to Profile
+            <ArrowLeft aria-hidden="true" className="w-4 h-4" /> Back to Profile
           </Button>
         </div>
       </div>
@@ -157,16 +159,18 @@ export default function PartyChairmanPage() {
                 <Badge variant="outline">{currentChairman.status}</Badge>
               )}
               {currentChairman && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDeleteChairman}
-                  disabled={deleting}
-                  className="h-8 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                >
-                  <Trash2 className="w-3 h-3 mr-1" />
-                  {deleting ? 'Deleting...' : 'Remove'}
-                </Button>
+                <Can permission={Permissions.DELETE_PARTY_CHAIRMAN}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDeleteChairman}
+                    disabled={deleting}
+                    className="h-8 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                  >
+                    <Trash2 aria-hidden="true" className="w-3 h-3 mr-1" />
+                    {deleting ? 'Deleting...' : 'Remove'}
+                  </Button>
+                </Can>
               )}
             </div>
           </div>

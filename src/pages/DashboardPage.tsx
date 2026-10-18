@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -151,6 +152,7 @@ export default function DashboardPage() {
           <div className="overflow-x-auto">
             <div className="min-w-[800px]">
               <Table>
+                <TableCaption className="sr-only">Recent candidates list</TableCaption>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent border-gray-100">
                     <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider">NAME</TableHead>
@@ -255,7 +257,7 @@ export default function DashboardPage() {
                 <CardTitle className="text-base md:text-lg font-semibold">Registration Trends</CardTitle>
                 <p className="text-xs md:text-sm text-gray-500 mt-1">Monthly user vs candidate registrations</p>
               </div>
-              <select className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs md:text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary w-full sm:w-auto">
+              <select aria-label="Registration trend period" className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs md:text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary w-full sm:w-auto">
                 <option>Last 6 Months</option>
               </select>
             </div>

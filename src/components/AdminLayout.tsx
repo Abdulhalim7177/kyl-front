@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { canAccessPath } from '@/lib/routePermissions'
+import AccessDeniedPage from '@/pages/AccessDeniedPage'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { 
@@ -77,17 +79,22 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
     return (
     <div className="flex flex-col h-full bg-white">
       <div className="mb-6 pt-6 flex justify-center">
-        <Link to="/">
+        <Link to="/" aria-label="Know Your Leaders home">
           <img src="/frame-51.png" alt="KYL Logo" className="h-[4.5rem] w-auto object-contain cursor-pointer" />
         </Link>
       </div>
       
-      <nav className="w-full flex-1 px-4 space-y-1 overflow-y-auto">
+      <nav aria-label="Admin navigation" className="w-full flex-1 px-4 space-y-1 overflow-y-auto">
         {SIDEBAR_ITEMS.map((item, index) => {
           const IconComponent = item.icon
-          const hasSubItems = item.subItems && item.subItems.length > 0
+          const visibleSubItems = item.subItems?.filter(sub => canAccessPath(user, sub.path)) ?? []
+          const hasSubItems = visibleSubItems.length > 0
+          const isVisible = hasSubItems || canAccessPath(user, item.path)
           const isMenuOpen = openMenus.includes(item.name)
-          const isSubActive = hasSubItems && item.subItems?.some(sub => location.pathname.startsWith(sub.path))
+
+          if (!isVisible) return null
+
+          const isSubActive = hasSubItems && visibleSubItems.some(sub => location.pathname.startsWith(sub.path))
           const isActive = location.pathname === item.path || isSubActive
 
           return (
@@ -95,13 +102,14 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
               {hasSubItems ? (
                 <button 
                   onClick={() => toggleMenu(item.name)}
+                  aria-expanded={isMenuOpen}
                   className={`flex items-center justify-between px-4 py-3 rounded-xl font-medium transition-colors ${isActive || isMenuOpen ? 'bg-[#dcfce7]/20 text-[#146c4f]' : 'text-gray-600 hover:bg-gray-50'}`}
                 >
                   <div className="flex items-center">
-                    <IconComponent className={`w-5 h-5 mr-3 ${isActive || isMenuOpen ? 'text-[#146c4f]' : 'text-gray-400'}`} />
+                    <IconComponent aria-hidden="true" className={`w-5 h-5 mr-3 ${isActive || isMenuOpen ? 'text-[#146c4f]' : 'text-gray-400'}`} />
                     {item.name}
                   </div>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown aria-hidden="true" className={`w-4 h-4 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
               ) : (
                 <Link 
@@ -109,7 +117,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center px-4 py-3 rounded-xl font-medium transition-colors ${isActive ? 'bg-[#dcfce7]/50 text-[#146c4f]' : 'text-gray-600 hover:bg-gray-50'}`}
                 >
-                  <IconComponent className={`w-5 h-5 mr-3 ${isActive ? 'text-[#146c4f]' : 'text-gray-400'}`} />
+                  <IconComponent aria-hidden="true" className={`w-5 h-5 mr-3 ${isActive ? 'text-[#146c4f]' : 'text-gray-400'}`} />
                   {item.name}
                 </Link>
               )}
@@ -118,7 +126,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
                 <div 
                   className={`flex flex-col ml-4 pl-4 border-l border-gray-200 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${isMenuOpen ? 'max-h-[500px] mt-1 opacity-100' : 'max-h-0 mt-0 opacity-0 pointer-events-none'}`}
                 >
-                  {item.subItems?.map((subItem, subIndex) => {
+                  {visibleSubItems.map((subItem, subIndex) => {
                     const isSubItemActive = location.pathname === subItem.path
                     return (
                       <Link
@@ -153,17 +161,27 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
         </div>
         <button 
           onClick={handleLogout} 
+          aria-label="Log out"
+          title="Log out"
           className="p-2 text-gray-400 hover:text-red-500 transition-colors shrink-0"
         >
-           <LogOut className="w-4 h-4" />
+           <LogOut aria-hidden="true" className="w-4 h-4" />
         </button>
       </div>
     </div>
   )
   }
 
+  const routeAllowed = canAccessPath(user, location.pathname)
+
   return (
     <div className="flex h-[100dvh] bg-[#f8fafc] font-sans text-sm overflow-hidden">
+      <a
+        href="#admin-main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-white"
+      >
+        Skip to main content
+      </a>
       {/* Desktop Sidebar */}
       <aside className="w-[260px] border-r border-[#e2e8f0] h-full shrink-0 z-10 transition-all hidden md:block">
          <SidebarContent />
@@ -178,8 +196,8 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
           <div className="flex items-center gap-3">
              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                <SheetTrigger asChild>
-                 <button className="md:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-md">
-                   <Menu className="w-6 h-6" />
+                 <button aria-label="Open navigation menu" className="md:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-md">
+                   <Menu aria-hidden="true" className="w-6 h-6" />
                  </button>
                </SheetTrigger>
                <SheetContent side="left" className="w-[80vw] max-w-sm p-0 m-0 [&>button]:hidden">
@@ -193,7 +211,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
           <div className="flex items-center gap-2 sm:gap-4 text-gray-500">
              {title === 'Admin / Districts / States' && (
                <div className="relative w-36 sm:w-56">
-                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                 <Search aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                  <Input
                    value={searchParams.get('stateSearch') || ''}
                    onChange={(event) => {
@@ -211,15 +229,19 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
                  />
                </div>
              )}
-             <button className="hover:text-primary transition-colors p-1.5"><Bell className="w-5 h-5" /></button>
-             <button className="hover:text-primary transition-colors p-1.5 hidden sm:block"><HelpCircle className="w-5 h-5" /></button>
-          </div>
-        </header>
+             <button aria-label="Notifications" className="hover:text-primary transition-colors p-1.5"><Bell aria-hidden="true" className="w-5 h-5" /></button>
+             <button aria-label="Help" className="hover:text-primary transition-colors p-1.5 hidden sm:block"><HelpCircle aria-hidden="true" className="w-5 h-5" /></button>
+           </div>
+         </header>
 
-        {/* Dynamic Page Content block */}
-        <main className="flex-1 w-full px-4 sm:px-8 pb-8 max-w-[1400px] mx-auto z-10 flex flex-col pt-2 sm:pt-4">
-          {children}
-        </main>
+         {/* Dynamic Page Content block */}
+         <main
+           id="admin-main-content"
+           tabIndex={-1}
+           className="flex-1 w-full px-4 sm:px-8 pb-8 max-w-[1400px] mx-auto z-10 flex flex-col pt-2 sm:pt-4"
+         >
+           {routeAllowed ? children : <AccessDeniedPage />}
+         </main>
       </div>
     </div>
   )

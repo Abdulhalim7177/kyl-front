@@ -88,7 +88,7 @@ export default function UploadPartyLogoDialog({ partyId, onUploadSuccess }: Uplo
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline">
-          <Upload className="w-4 h-4 mr-2" />
+          <Upload aria-hidden="true" className="w-4 h-4 mr-2" />
           Upload Logo
         </Button>
       </DialogTrigger>
@@ -102,7 +102,7 @@ export default function UploadPartyLogoDialog({ partyId, onUploadSuccess }: Uplo
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {error}
             </div>
           )}

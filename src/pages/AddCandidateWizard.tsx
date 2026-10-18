@@ -6,6 +6,8 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { candidateService, Candidate, CreateCandidateData, Party, LGADistrict } from '@/services/candidates'
 
@@ -180,8 +182,9 @@ export default function AddCandidateWizard() {
           <div className="space-y-4">
             {/* Full Legal Name */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Full Legal Name *</label>
+              <label htmlFor="candidate-full-name" className="text-sm font-medium text-gray-700">Full Legal Name *</label>
               <Input
+                id="candidate-full-name"
                 placeholder="Enter full legal name"
                 value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
@@ -191,8 +194,9 @@ export default function AddCandidateWizard() {
 
             {/* NIN */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">NIN *</label>
+              <label htmlFor="candidate-nin" className="text-sm font-medium text-gray-700">NIN *</label>
               <Input
+                id="candidate-nin"
                 type="number"
                 placeholder="Enter National Identification Number"
                 value={formData.nin || ''}
@@ -204,8 +208,9 @@ export default function AddCandidateWizard() {
             {/* Date of Birth and Gender on same line */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Date of Birth</label>
+                <label htmlFor="candidate-dob" className="text-sm font-medium text-gray-700">Date of Birth</label>
                 <Input
+                  id="candidate-dob"
                   type="date"
                   value={formData.dob}
                   onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
@@ -213,12 +218,12 @@ export default function AddCandidateWizard() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Gender *</label>
+                <label htmlFor="candidate-gender" className="text-sm font-medium text-gray-700">Gender *</label>
                 <Select
                   value={formData.gender}
                   onValueChange={(value) => setFormData({ ...formData, gender: value as CreateCandidateData['gender'] })}
                 >
-                  <SelectTrigger className="h-12">
+                  <SelectTrigger id="candidate-gender" className="h-12">
                     <SelectValue placeholder="Select gender" />
                   </SelectTrigger>
                   <SelectContent>
@@ -231,8 +236,9 @@ export default function AddCandidateWizard() {
 
             {/* Religious Affiliation */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Religion</label>
+              <label htmlFor="candidate-religion" className="text-sm font-medium text-gray-700">Religion</label>
               <Input
+                id="candidate-religion"
                 placeholder="Islam"
                 value={formData.religion}
                 onChange={(e) => setFormData({ ...formData, religion: e.target.value })}
@@ -242,8 +248,9 @@ export default function AddCandidateWizard() {
 
             {/* Biography */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Biography</label>
+              <label htmlFor="candidate-bio" className="text-sm font-medium text-gray-700">Biography</label>
               <Textarea
+                id="candidate-bio"
                 placeholder="Provide a brief overview of your professional journey"
                 value={formData.bio}
                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
@@ -259,8 +266,9 @@ export default function AddCandidateWizard() {
             {/* Email and Phone on same line */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Email Address</label>
+                <label htmlFor="candidate-email" className="text-sm font-medium text-gray-700">Email Address</label>
                 <Input
+                  id="candidate-email"
                   type="email"
                   placeholder="Enter email address"
                   value={formData.email}
@@ -269,8 +277,9 @@ export default function AddCandidateWizard() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Phone Number *</label>
+                <label htmlFor="candidate-phone" className="text-sm font-medium text-gray-700">Phone Number *</label>
                 <Input
+                  id="candidate-phone"
                   placeholder="Enter phone number"
                   value={formData.phoneNo}
                   onChange={(e) => setFormData({ ...formData, phoneNo: e.target.value })}
@@ -281,8 +290,9 @@ export default function AddCandidateWizard() {
 
             {/* Residential Address */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Residential Address</label>
+              <label htmlFor="candidate-address" className="text-sm font-medium text-gray-700">Residential Address</label>
               <Input
+                id="candidate-address"
                 placeholder="Enter residential address"
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
@@ -298,13 +308,13 @@ export default function AddCandidateWizard() {
             {selectDataError && <div role="alert" className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">{selectDataError}</div>}
             {/* Party Selection */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Political Party *</label>
+              <label htmlFor="candidate-party" className="text-sm font-medium text-gray-700">Political Party *</label>
               <Select
                 value={formData.party_id?.toString() || ''}
                 onValueChange={(value) => setFormData({ ...formData, party_id: parseInt(value) })}
                 disabled={loadingSelectData || Boolean(selectDataError)}
               >
-                <SelectTrigger className="h-12 rounded-xl border border-gray-200 bg-white shadow-sm hover:border-[#146c4f]/40 focus:ring-2 focus:ring-[#146c4f]/20 focus:border-[#146c4f]">
+                <SelectTrigger id="candidate-party" className="h-12 rounded-xl border border-gray-200 bg-white shadow-sm hover:border-[#146c4f]/40 focus:ring-2 focus:ring-[#146c4f]/20 focus:border-[#146c4f]">
                   <SelectValue placeholder={loadingSelectData ? "Loading parties..." : "Select Political Party"} />
                 </SelectTrigger>
                 <SelectContent
@@ -347,13 +357,13 @@ export default function AddCandidateWizard() {
 
             {/* LGA District Selection */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">LGA District *</label>
+              <label htmlFor="candidate-lga-district" className="text-sm font-medium text-gray-700">LGA District *</label>
               <Select
                 value={formData.lga_district_id?.toString() || ''}
                 onValueChange={(value) => setFormData({ ...formData, lga_district_id: parseInt(value) })}
                 disabled={loadingSelectData || Boolean(selectDataError)}
               >
-                <SelectTrigger className="h-12 rounded-xl border border-gray-200 bg-white shadow-sm hover:border-[#146c4f]/40 focus:ring-2 focus:ring-[#146c4f]/20 focus:border-[#146c4f]">
+                <SelectTrigger id="candidate-lga-district" className="h-12 rounded-xl border border-gray-200 bg-white shadow-sm hover:border-[#146c4f]/40 focus:ring-2 focus:ring-[#146c4f]/20 focus:border-[#146c4f]">
                   <SelectValue placeholder="Select LGA District" />
                 </SelectTrigger>
                 <SelectContent
@@ -391,8 +401,9 @@ export default function AddCandidateWizard() {
 
             {/* Remark */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Remark <span className="text-gray-400">(Internal)</span></label>
+              <label htmlFor="candidate-remark" className="text-sm font-medium text-gray-700">Remark <span className="text-gray-400">(Internal)</span></label>
               <Input
+                id="candidate-remark"
                 placeholder="Enter internal remark"
                 value={formData.remark}
                 onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
@@ -408,7 +419,7 @@ export default function AddCandidateWizard() {
           <div className="flex items-center justify-center min-h-[320px]">
             <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 max-w-sm w-full text-center">
               <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <CheckCircle className="w-7 h-7 text-green-600" />
+                <CheckCircle aria-hidden="true" className="w-7 h-7 text-green-600" />
               </div>
               <h2 className="text-lg font-semibold text-gray-800 mb-2">{isEditMode ? 'Update Submitted' : 'Registration Submitted'}</h2>
               <p className="text-gray-600 text-sm mb-1">
@@ -471,7 +482,7 @@ export default function AddCandidateWizard() {
            onClick={() => navigate('/k8s9d7f3-candidates')}
            className="flex items-center gap-2"
          >
-           <ArrowLeft className="w-4 h-4" />
+           <ArrowLeft aria-hidden="true" className="w-4 h-4" />
            Back to Candidates
          </Button>
       </div>
@@ -540,7 +551,7 @@ export default function AddCandidateWizard() {
                   onClick={handleSaveDraft}
                   className="flex items-center gap-2"
                 >
-                  <Save className="w-4 h-4" />
+                  <Save aria-hidden="true" className="w-4 h-4" />
                   Save as Draft
                 </Button>
               ) : currentStep === 1 ? (
@@ -551,28 +562,30 @@ export default function AddCandidateWizard() {
                   onClick={handleBack}
                   className="flex items-center gap-2"
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  <ArrowLeft aria-hidden="true" className="w-4 h-4" />
                   Back
                 </Button>
               )}
             </div>
             <div className="w-full sm:w-auto">
               {currentStep === WIZARD_STEPS.length ? (
-                <Button 
-                  className="bg-[#146c4f] hover:bg-[#115a42] text-white flex items-center gap-2 w-full sm:w-auto"
-                  onClick={handleNext}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Candidate' : 'Create Candidate')}
-                  <CheckCircle className="w-4 h-4" />
-                </Button>
+                <Can any={[Permissions.CREATE_CANDIDATE, Permissions.UPDATE_CANDIDATE]}>
+                  <Button 
+                    className="bg-[#146c4f] hover:bg-[#115a42] text-white flex items-center gap-2 w-full sm:w-auto"
+                    onClick={handleNext}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Candidate' : 'Create Candidate')}
+                    <CheckCircle aria-hidden="true" className="w-4 h-4" />
+                  </Button>
+                </Can>
               ) : (
                 <Button 
                   className="bg-[#146c4f] hover:bg-[#115a42] text-white flex items-center gap-2 w-full sm:w-auto"
                   onClick={handleNext}
                 >
                   Next Step
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight aria-hidden="true" className="w-4 h-4" />
                 </Button>
               )}
             </div>

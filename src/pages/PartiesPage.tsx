@@ -8,6 +8,8 @@ import { PaginationControls } from '@/components/PaginationControls'
 import { useClientPagination } from '@/components/useClientPagination'
 import { Search, ToggleRight } from 'lucide-react'
 import AddPartyDialog from '@/components/AddPartyDialog'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 import { getLogoUrl, cn } from '@/lib/utils'
 import { Card } from '@/components/ui/card'
 
@@ -152,15 +154,18 @@ export default function PartiesPage() {
             Manage registered political parties, update their logos, and control their active status.
           </p>
         </div>
-        <AddPartyDialog onPartyAdded={loadParties} />
+        <Can permission={Permissions.CREATE_PARTY}>
+          <AddPartyDialog onPartyAdded={loadParties} />
+        </Can>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="relative w-full sm:w-96">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search aria-hidden="true" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <Input
             value={state.search}
             onChange={(e) => setState(prev => ({ ...prev, search: e.target.value }))}
+            aria-label="Search parties by name or slogan"
             placeholder="Search parties by name or slogan..."
             className="pl-9 bg-gray-50 border-transparent focus:bg-white transition-colors h-10"
           />
@@ -182,15 +187,17 @@ export default function PartiesPage() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-green-50/50 border border-green-100 rounded-lg px-4 py-3 animate-in fade-in slide-in-from-top-2">
           <p className="text-sm font-medium text-green-800">{selectedIds.size} party{selectedIds.size > 1 ? 'ies' : ''} selected</p>
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleToggleSelectedParties}
-              disabled={togglingIds.size > 0}
-              className="bg-white text-green-700 hover:bg-green-50 border border-green-200"
-            >
-              Toggle Status for Selected
-            </Button>
+            <Can permission={Permissions.CHANGE_PARTY_STATUS}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleToggleSelectedParties}
+                disabled={togglingIds.size > 0}
+                className="bg-white text-green-700 hover:bg-green-50 border border-green-200"
+              >
+                Toggle Status for Selected
+              </Button>
+            </Can>
             <Button
               variant="ghost"
               size="sm"
@@ -205,7 +212,7 @@ export default function PartiesPage() {
       )}
 
       {state.error && (
-        <div className="px-4 py-3 text-sm text-red-800 bg-red-50 border border-red-100 rounded-lg">
+        <div role="alert" className="px-4 py-3 text-sm text-red-800 bg-red-50 border border-red-100 rounded-lg">
           {state.error}
         </div>
       )}
@@ -280,19 +287,21 @@ export default function PartiesPage() {
                 </div>
                 
                 <div className="p-3 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleToggleParty(party.id)}
-                    disabled={isToggling}
-                    className={cn(
-                      "flex-1 h-9 text-xs font-medium",
-                      party.status ? "text-red-600 hover:text-red-700 hover:bg-red-50" : "text-green-600 hover:text-green-700 hover:bg-green-50"
-                    )}
-                  >
-                    <ToggleRight className="w-3.5 h-3.5 mr-1.5" />
-                    {party.status ? 'Deactivate' : 'Activate'}
-                  </Button>
+                  <Can permission={Permissions.CHANGE_PARTY_STATUS}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleToggleParty(party.id)}
+                      disabled={isToggling}
+                      className={cn(
+                        "flex-1 h-9 text-xs font-medium",
+                        party.status ? "text-red-600 hover:text-red-700 hover:bg-red-50" : "text-green-600 hover:text-green-700 hover:bg-green-50"
+                      )}
+                    >
+                      <ToggleRight aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
+                      {party.status ? 'Deactivate' : 'Activate'}
+                    </Button>
+                  </Can>
                   <Button
                     asChild
                     variant="default"

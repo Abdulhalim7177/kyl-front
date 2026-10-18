@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import Can from '@/components/Can'
+import { Roles } from '@/lib/permissions'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 
 export default function AdminPollFormPage() {
@@ -112,9 +114,10 @@ export default function AdminPollFormPage() {
           variant="ghost" 
           size="icon" 
           onClick={() => navigate(-1)}
+          aria-label="Go back"
           className="text-gray-500 hover:text-gray-900"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft aria-hidden="true" className="w-5 h-5" />
         </Button>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
@@ -128,7 +131,7 @@ export default function AdminPollFormPage() {
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
         {error && (
-          <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100">
+          <div role="alert" className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100">
             {error}
           </div>
         )}
@@ -136,8 +139,9 @@ export default function AdminPollFormPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Question</label>
+              <label htmlFor="poll-question" className="text-sm font-medium text-gray-700">Question</label>
               <Input 
+                id="poll-question"
                 required 
                 name="question" 
                 value={formData.question} 
@@ -149,8 +153,9 @@ export default function AdminPollFormPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Election ID</label>
+                <label htmlFor="poll-election-id" className="text-sm font-medium text-gray-700">Election ID</label>
                 <Input 
+                  id="poll-election-id"
                   required 
                   type="number" 
                   name="election_id" 
@@ -160,8 +165,9 @@ export default function AdminPollFormPage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Office ID</label>
+                <label htmlFor="poll-office-id" className="text-sm font-medium text-gray-700">Office ID</label>
                 <Input 
+                  id="poll-office-id"
                   required 
                   type="number" 
                   name="office_id" 
@@ -173,8 +179,9 @@ export default function AdminPollFormPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Candidate Office IDs (Comma separated)</label>
+              <label htmlFor="poll-candidate-office-ids" className="text-sm font-medium text-gray-700">Candidate Office IDs (Comma separated)</label>
               <Input 
+                id="poll-candidate-office-ids"
                 placeholder="e.g. 14, 15, 16"
                 value={formData.candidate_office_ids.join(', ')}
                 onChange={(e) => setFormData({...formData, candidate_office_ids: e.target.value.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n))})}
@@ -184,8 +191,9 @@ export default function AdminPollFormPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Start Time</label>
+                <label htmlFor="poll-start-time" className="text-sm font-medium text-gray-700">Start Time</label>
                 <Input 
+                  id="poll-start-time"
                   type="datetime-local" 
                   name="starts_at" 
                   value={formData.starts_at} 
@@ -194,8 +202,9 @@ export default function AdminPollFormPage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">End Time</label>
+                <label htmlFor="poll-end-time" className="text-sm font-medium text-gray-700">End Time</label>
                 <Input 
+                  id="poll-end-time"
                   type="datetime-local" 
                   name="ends_at" 
                   value={formData.ends_at} 
@@ -207,8 +216,9 @@ export default function AdminPollFormPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Status</label>
+                <label htmlFor="poll-status" className="text-sm font-medium text-gray-700">Status</label>
                 <select 
+                  id="poll-status"
                   name="status" 
                   value={formData.status} 
                   onChange={handleChange} 
@@ -221,8 +231,9 @@ export default function AdminPollFormPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Results Visibility</label>
+                <label htmlFor="poll-results-visibility" className="text-sm font-medium text-gray-700">Results Visibility</label>
                 <select 
+                  id="poll-results-visibility"
                   name="results_visibility" 
                   value={formData.results_visibility} 
                   onChange={handleChange} 
@@ -245,13 +256,15 @@ export default function AdminPollFormPage() {
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={loading} 
-              className="rounded-xl bg-[#146c4f] hover:bg-[#115a42] text-white"
-            >
-              {loading ? 'Saving...' : 'Save Poll'}
-            </Button>
+            <Can role={[Roles.SUPER_ADMIN, Roles.SUPPORT_ADMIN]}>
+              <Button 
+                type="submit" 
+                disabled={loading} 
+                className="rounded-xl bg-[#146c4f] hover:bg-[#115a42] text-white"
+              >
+                {loading ? 'Saving...' : 'Save Poll'}
+              </Button>
+            </Can>
           </div>
         </form>
       </div>

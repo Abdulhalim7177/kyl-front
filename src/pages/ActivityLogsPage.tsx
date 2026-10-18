@@ -3,6 +3,7 @@ import { userService, ActivityLog } from '@/services/users'
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -66,6 +67,7 @@ export default function ActivityLogsPage() {
         <div className="relative flex-1">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <Input 
+            aria-label="Search activity logs"
             placeholder="Search by action, module, or user..." 
             className="pl-9 bg-gray-50/50 border-gray-200"
             value={search}
@@ -74,14 +76,14 @@ export default function ActivityLogsPage() {
         </div>
         <div className="flex gap-2">
            <button className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
-             <Calendar className="w-4 h-4" />
+             <Calendar aria-hidden="true" className="w-4 h-4" />
              Date Range
            </button>
         </div>
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 text-sm">
+        <div role="alert" className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 text-sm">
           {error}
           <button onClick={fetchLogs} className="ml-4 underline">Try Again</button>
         </div>
@@ -90,6 +92,7 @@ export default function ActivityLogsPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
+            <TableCaption className="sr-only">Activity logs list</TableCaption>
             <TableHeader>
               <TableRow className="hover:bg-transparent border-gray-100">
                 <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider">TIMESTAMP</TableHead>

@@ -13,6 +13,8 @@ import { AddElectedWardCouncillorData, ElectedLeader, leadersService } from '@/s
 import { Party, partyService } from '@/services/parties'
 import { useAuth } from '@/contexts/AuthContext'
 import { getLogoUrl, getPartyLogoValue } from '@/lib/utils'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 
 interface WardElectionPageProps {
   mode: 'candidates' | 'elected'
@@ -839,7 +841,7 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
         to="/k8s9d7f3-districts/wards"
         className="inline-flex items-center gap-2 text-sm font-medium text-[#146c4f] hover:underline"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to wards
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to wards
       </Link>
 
       <Card className="border border-gray-100 shadow-md">
@@ -865,26 +867,30 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
                 </p>
               </div>
               {mode === 'candidates' && (
-                <Button
-                  type="button"
-                  size="sm"
-                  className="bg-[#146c4f] hover:bg-[#10563f]"
-                  onClick={() => void openAddDialog()}
-                  disabled={loading}
-                >
-                  <Plus className="mr-2 h-4 w-4" /> Add Candidate
-                </Button>
+                <Can permission={Permissions.CREATE_CANDIDATE}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="bg-[#146c4f] hover:bg-[#10563f]"
+                    onClick={() => void openAddDialog()}
+                    disabled={loading}
+                  >
+                    <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> Add Candidate
+                  </Button>
+                </Can>
               )}
               {mode === 'elected' && (
-                <Button
-                  type="button"
-                  size="sm"
-                  className="bg-[#146c4f] hover:bg-[#10563f]"
-                  onClick={() => void openAddElectedDialog()}
-                  disabled={loading}
-                >
-                  <Plus className="mr-2 h-4 w-4" /> Add Elected Councillor
-                </Button>
+                <Can permission={Permissions.CREATE_LEADER}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="bg-[#146c4f] hover:bg-[#10563f]"
+                    onClick={() => void openAddElectedDialog()}
+                    disabled={loading}
+                  >
+                    <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> Add Elected Councillor
+                  </Button>
+                </Can>
               )}
             </div>
           </div>
@@ -1027,69 +1033,84 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
                         )}
                         {mode === 'candidates' && (
                           <>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              className="h-8 px-2 sm:h-9 sm:px-3"
-                              onClick={() => void openEditDialog(candidate)}
-                              disabled={!candidate.assignment_id || isUpdating || isDeleting}
-                            >
-                              <Pencil className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="destructive"
-                              className="h-8 px-2 sm:h-9 sm:px-3"
-                              onClick={() => {
-                                setDeleteError('')
-                                setDeletingCandidate(candidate)
-                              }}
-                              disabled={!candidate.assignment_id || isDeleting}
-                            >
-                              <Trash2 className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Delete</span>
-                            </Button>
+                            <Can permission={Permissions.UPDATE_CANDIDATE}>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                aria-label={`Edit ${candidateName}`}
+                                className="h-8 px-2 sm:h-9 sm:px-3"
+                                onClick={() => void openEditDialog(candidate)}
+                                disabled={!candidate.assignment_id || isUpdating || isDeleting}
+                              >
+                                <Pencil className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Edit</span>
+                              </Button>
+                            </Can>
+                            <Can permission={Permissions.DELETE_CANDIDATE}>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="destructive"
+                                aria-label={`Delete ${candidateName}`}
+                                className="h-8 px-2 sm:h-9 sm:px-3"
+                                onClick={() => {
+                                  setDeleteError('')
+                                  setDeletingCandidate(candidate)
+                                }}
+                                disabled={!candidate.assignment_id || isDeleting}
+                              >
+                                <Trash2 className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Delete</span>
+                              </Button>
+                            </Can>
                           </>
                         )}
                         {mode === 'elected' && (
                           <>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              className="h-8 px-2 sm:h-9 sm:px-3"
-                              onClick={() => void openEditElectedCouncillor(candidate)}
-                              disabled={!candidate.assignment_id || isUpdatingElected || isProcessingElectedAction}
-                            >
-                              <Pencil className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              className="h-8 px-2 sm:h-9 sm:px-3"
-                              onClick={() => {
-                                setElectedActionError('')
-                                setElectedAction({ type: 'terminate', candidate })
-                              }}
-                              disabled={!candidate.assignment_id || isProcessingElectedAction}
-                            >
-                              <Ban className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Terminate</span>
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="destructive"
-                              className="h-8 px-2 sm:h-9 sm:px-3"
-                              onClick={() => {
-                                setElectedActionError('')
-                                setElectedAction({ type: 'delete', candidate })
-                              }}
-                              disabled={!candidate.assignment_id || isProcessingElectedAction}
-                            >
-                              <Trash2 className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Delete</span>
-                            </Button>
+                            <Can permission={Permissions.UPDATE_LEADER}>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                aria-label={`Edit ${candidateName}`}
+                                className="h-8 px-2 sm:h-9 sm:px-3"
+                                onClick={() => void openEditElectedCouncillor(candidate)}
+                                disabled={!candidate.assignment_id || isUpdatingElected || isProcessingElectedAction}
+                              >
+                                <Pencil className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Edit</span>
+                              </Button>
+                            </Can>
+                            <Can permission={Permissions.DELETE_LEADER}>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                aria-label={`Terminate ${candidateName}`}
+                                className="h-8 px-2 sm:h-9 sm:px-3"
+                                onClick={() => {
+                                  setElectedActionError('')
+                                  setElectedAction({ type: 'terminate', candidate })
+                                }}
+                                disabled={!candidate.assignment_id || isProcessingElectedAction}
+                              >
+                                <Ban className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Terminate</span>
+                              </Button>
+                            </Can>
+                            <Can permission={Permissions.DELETE_LEADER}>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="destructive"
+                                aria-label={`Delete ${candidateName}`}
+                                className="h-8 px-2 sm:h-9 sm:px-3"
+                                onClick={() => {
+                                  setElectedActionError('')
+                                  setElectedAction({ type: 'delete', candidate })
+                                }}
+                                disabled={!candidate.assignment_id || isProcessingElectedAction}
+                              >
+                                <Trash2 className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Delete</span>
+                              </Button>
+                            </Can>
                           </>
                         )}
                       </div>
@@ -1169,11 +1190,11 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
               {totalPages > 1 && (
                 <div className="flex items-center gap-2">
                   <Button type="button" size="sm" variant="outline" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1}>
-                    <ChevronLeft className="mr-1 h-4 w-4" /> Previous
+                    <ChevronLeft className="mr-1 h-4 w-4" aria-hidden="true" /> Previous
                   </Button>
                   <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
                   <Button type="button" size="sm" variant="outline" onClick={() => setPage((current) => Math.min(totalPages, current + 1))} disabled={page >= totalPages}>
-                    Next <ChevronRight className="ml-1 h-4 w-4" />
+                    Next <ChevronRight className="ml-1 h-4 w-4" aria-hidden="true" />
                   </Button>
                 </div>
               )}
@@ -1211,17 +1232,19 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
             >
               Cancel
             </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => void performElectedCouncillorAction()}
-              disabled={isProcessingElectedAction}
-            >
-              {isProcessingElectedAction && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isProcessingElectedAction
-                ? electedAction?.type === 'delete' ? 'Deleting...' : 'Terminating...'
-                : electedAction?.type === 'delete' ? 'Delete' : 'Terminate'}
-            </Button>
+            <Can permission={Permissions.DELETE_LEADER}>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => void performElectedCouncillorAction()}
+                disabled={isProcessingElectedAction}
+              >
+                {isProcessingElectedAction && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                {isProcessingElectedAction
+                  ? electedAction?.type === 'delete' ? 'Deleting...' : 'Terminating...'
+                  : electedAction?.type === 'delete' ? 'Delete' : 'Terminate'}
+              </Button>
+            </Can>
           </div>
         </DialogContent>
       </Dialog>
@@ -1248,9 +1271,10 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
             </div>
           ) : !electedCandidate ? (
             <div className="space-y-4">
-              <label className="block space-y-1 text-sm font-medium">
+              <label htmlFor="elected-ward-active-election" className="block space-y-1 text-sm font-medium">
                 Active election *
                 <select
+                  id="elected-ward-active-election"
                   value={electedElectionId}
                   onChange={(event) => {
                     setElectedElectionId(event.target.value)
@@ -1288,13 +1312,15 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
                     }}
                     placeholder="Enter candidate NIN or phone number"
                   />
-                  <Button
-                    type="button"
-                    onClick={() => void verifyElectedCandidate()}
-                    disabled={isVerifyingElectedCandidate || !electedElectionId || Boolean(electedOptionsError)}
-                  >
-                    {isVerifyingElectedCandidate ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify'}
-                  </Button>
+                  <Can permission={Permissions.UPDATE_LEADER}>
+                    <Button
+                      type="button"
+                      onClick={() => void verifyElectedCandidate()}
+                      disabled={isVerifyingElectedCandidate || !electedElectionId || Boolean(electedOptionsError)}
+                    >
+                      {isVerifyingElectedCandidate ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : 'Verify'}
+                    </Button>
+                  </Can>
                 </div>
               </div>
               {electedVerifyError && <p role="alert" className="text-sm text-red-600">{electedVerifyError}</p>}
@@ -1332,9 +1358,10 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="space-y-1 text-sm font-medium">
+                <label htmlFor="elected-ward-office" className="space-y-1 text-sm font-medium">
                   Office *
                   <select
+                    id="elected-ward-office"
                     value={electedOfficeId}
                     onChange={(event) => setElectedOfficeId(event.target.value)}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -1345,28 +1372,29 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
                     ))}
                   </select>
                 </label>
-                <label className="space-y-1 text-sm font-medium">
+                <label htmlFor="elected-ward-election" className="space-y-1 text-sm font-medium">
                   Election
                   <Input
+                    id="elected-ward-election"
                     value={String(electedElections.find((election) => election.id === Number(electedElectionId))?.year ?? electedElectionId)}
                     disabled
                   />
                 </label>
-                <label className="space-y-1 text-sm font-medium">
+                <label htmlFor="elected-ward-start-date" className="space-y-1 text-sm font-medium">
                   Start date *
-                  <Input type="date" value={electedStartDate} onChange={(event) => setElectedStartDate(event.target.value)} />
+                  <Input id="elected-ward-start-date" type="date" value={electedStartDate} onChange={(event) => setElectedStartDate(event.target.value)} />
                 </label>
-                <label className="space-y-1 text-sm font-medium">
+                <label htmlFor="elected-ward-end-date" className="space-y-1 text-sm font-medium">
                   End date *
-                  <Input type="date" value={electedEndDate} onChange={(event) => setElectedEndDate(event.target.value)} />
+                  <Input id="elected-ward-end-date" type="date" value={electedEndDate} onChange={(event) => setElectedEndDate(event.target.value)} />
                 </label>
-                <label className="space-y-1 text-sm font-medium">
+                <label htmlFor="elected-ward-tenure" className="space-y-1 text-sm font-medium">
                   Tenure *
-                  <Input value={electedTenure} onChange={(event) => setElectedTenure(event.target.value)} placeholder="e.g. 4 years" />
+                  <Input id="elected-ward-tenure" value={electedTenure} onChange={(event) => setElectedTenure(event.target.value)} placeholder="e.g. 4 years" />
                 </label>
-                <label className="space-y-1 text-sm font-medium sm:col-span-2">
+                <label htmlFor="elected-ward-remark" className="space-y-1 text-sm font-medium sm:col-span-2">
                   Remark
-                  <Textarea value={electedRemark} onChange={(event) => setElectedRemark(event.target.value)} rows={3} />
+                  <Textarea id="elected-ward-remark" value={electedRemark} onChange={(event) => setElectedRemark(event.target.value)} rows={3} />
                 </label>
               </div>
               {electedFormError && <p role="alert" className="text-sm text-red-600">{electedFormError}</p>}
@@ -1386,15 +1414,17 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
                   <Button type="button" variant="outline" onClick={() => setIsAddElectedOpen(false)} disabled={isAddingElected}>
                     Cancel
                   </Button>
-                  <Button
-                    type="button"
-                    className="bg-[#146c4f] hover:bg-[#10563f]"
-                    onClick={() => void addElectedWardCouncillor()}
-                    disabled={isAddingElected || electedOffices.length === 0}
-                  >
-                    {isAddingElected && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isAddingElected ? 'Saving...' : 'Add Elected Councillor'}
-                  </Button>
+                  <Can permission={Permissions.CREATE_LEADER}>
+                    <Button
+                      type="button"
+                      className="bg-[#146c4f] hover:bg-[#10563f]"
+                      onClick={() => void addElectedWardCouncillor()}
+                      disabled={isAddingElected || electedOffices.length === 0}
+                    >
+                      {isAddingElected && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                      {isAddingElected ? 'Saving...' : 'Add Elected Councillor'}
+                    </Button>
+                  </Can>
                 </div>
               </div>
             </div>
@@ -1425,19 +1455,20 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
           ) : (
             <div className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="space-y-1 text-sm font-medium">
+                <label htmlFor="edit-elected-ward-candidate" className="space-y-1 text-sm font-medium">
                   Candidate
-                  <Input value={editingElectedCandidate?.full_name ?? ''} disabled />
+                  <Input id="edit-elected-ward-candidate" value={editingElectedCandidate?.full_name ?? ''} disabled />
                 </label>
-                <label className="space-y-1 text-sm font-medium">
+                <label htmlFor="edit-elected-ward-party" className="space-y-1 text-sm font-medium">
                   Political party
-                  <Input value={editingElectedCandidate?.party?.name ?? editingElectedCandidate?.political_party ?? ''} disabled />
+                  <Input id="edit-elected-ward-party" value={editingElectedCandidate?.party?.name ?? editingElectedCandidate?.political_party ?? ''} disabled />
                 </label>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="space-y-1 text-sm font-medium">
+                <label htmlFor="edit-elected-ward-office" className="space-y-1 text-sm font-medium">
                   Office *
                   <select
+                    id="edit-elected-ward-office"
                     value={electedEditData.office_id || ''}
                     onChange={(event) => setElectedEditData((current) => ({ ...current, office_id: Number(event.target.value) }))}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -1448,9 +1479,10 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
                     ))}
                   </select>
                 </label>
-                <label className="space-y-1 text-sm font-medium">
+                <label htmlFor="edit-elected-ward-election" className="space-y-1 text-sm font-medium">
                   Election *
                   <select
+                    id="edit-elected-ward-election"
                     value={electedEditData.election_id || ''}
                     onChange={(event) => setElectedEditData((current) => ({ ...current, election_id: Number(event.target.value) }))}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -1463,36 +1495,40 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
                     ))}
                   </select>
                 </label>
-                <label className="space-y-1 text-sm font-medium">
+                <label htmlFor="edit-elected-ward-ward" className="space-y-1 text-sm font-medium">
                   Ward
-                  <Input value={wardName} disabled />
+                  <Input id="edit-elected-ward-ward" value={wardName} disabled />
                 </label>
-                <label className="space-y-1 text-sm font-medium">
+                <label htmlFor="edit-elected-ward-start-date" className="space-y-1 text-sm font-medium">
                   Start date *
                   <Input
+                    id="edit-elected-ward-start-date"
                     type="date"
                     value={electedEditData.start_date}
                     onChange={(event) => setElectedEditData((current) => ({ ...current, start_date: event.target.value }))}
                   />
                 </label>
-                <label className="space-y-1 text-sm font-medium">
+                <label htmlFor="edit-elected-ward-end-date" className="space-y-1 text-sm font-medium">
                   End date *
                   <Input
+                    id="edit-elected-ward-end-date"
                     type="date"
                     value={electedEditData.end_date}
                     onChange={(event) => setElectedEditData((current) => ({ ...current, end_date: event.target.value }))}
                   />
                 </label>
-                <label className="space-y-1 text-sm font-medium sm:col-span-2">
+                <label htmlFor="edit-elected-ward-tenure" className="space-y-1 text-sm font-medium sm:col-span-2">
                   Tenure *
                   <Input
+                    id="edit-elected-ward-tenure"
                     value={electedEditData.tenure}
                     onChange={(event) => setElectedEditData((current) => ({ ...current, tenure: event.target.value }))}
                   />
                 </label>
-                <label className="space-y-1 text-sm font-medium sm:col-span-2">
+                <label htmlFor="edit-elected-ward-remark" className="space-y-1 text-sm font-medium sm:col-span-2">
                   Remark
                   <Textarea
+                    id="edit-elected-ward-remark"
                     value={electedEditData.remark}
                     onChange={(event) => setElectedEditData((current) => ({ ...current, remark: event.target.value }))}
                     rows={4}
@@ -1509,15 +1545,17 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="button"
-                  onClick={() => void updateElectedCouncillor()}
-                  disabled={isUpdatingElected || isLoadingElectedEditOptions}
-                  className="bg-[#146c4f] hover:bg-[#10563f]"
-                >
-                  {isUpdatingElected && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {isUpdatingElected ? 'Saving...' : 'Save changes'}
-                </Button>
+                <Can permission={Permissions.UPDATE_LEADER}>
+                  <Button
+                    type="button"
+                    onClick={() => void updateElectedCouncillor()}
+                    disabled={isUpdatingElected || isLoadingElectedEditOptions}
+                    className="bg-[#146c4f] hover:bg-[#10563f]"
+                  >
+                    {isUpdatingElected && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                    {isUpdatingElected ? 'Saving...' : 'Save changes'}
+                  </Button>
+                </Can>
               </div>
             </div>
           )}
@@ -1544,15 +1582,17 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
               <Button type="button" variant="outline" onClick={() => setDeletingCandidate(null)} disabled={isDeleting}>
                 Cancel
               </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => deletingCandidate && void removeWardCandidate(deletingCandidate)}
-                disabled={isDeleting}
-              >
-                {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </Button>
+              <Can permission={Permissions.DELETE_CANDIDATE}>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => deletingCandidate && void removeWardCandidate(deletingCandidate)}
+                  disabled={isDeleting}
+                >
+                  {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </Button>
+              </Can>
             </div>
           </DialogContent>
         </Dialog>
@@ -1588,10 +1628,11 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
                   ))}
                 </select>
               </div>
-              <label className="block space-y-1 text-sm font-medium">
+              <label htmlFor="add-ward-candidate-search" className="block space-y-1 text-sm font-medium">
                 Candidate NIN or phone number *
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Input
+                    id="add-ward-candidate-search"
                     value={candidateSearch}
                     onChange={(event) => {
                       setCandidateSearch(event.target.value)
@@ -1606,9 +1647,11 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
                     placeholder="Enter candidate NIN or phone number"
                     className="flex-1"
                   />
-                  <Button type="button" onClick={() => void verifyCandidate()} disabled={isVerifying || isLoadingOptions || !electionId}>
-                    {isVerifying ? 'Verifying...' : 'Verify'}
-                  </Button>
+                  <Can permission={Permissions.TOGGLE_CANDIDATE_STATUS}>
+                    <Button type="button" onClick={() => void verifyCandidate()} disabled={isVerifying || isLoadingOptions || !electionId}>
+                      {isVerifying ? 'Verifying...' : 'Verify'}
+                    </Button>
+                  </Can>
                 </div>
               </label>
               {optionsError && <p role="alert" className="text-sm text-red-600">{optionsError}</p>}
@@ -1666,9 +1709,11 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
                 <Button type="button" variant="outline" onClick={() => setSelectedCandidate(null)}>Back</Button>
                 <div className="flex gap-2">
                   <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
-                  <Button type="button" className="bg-[#146c4f] hover:bg-[#10563f]" disabled={isSaving || offices.length === 0} onClick={() => void addCandidate()}>
-                    {isSaving ? 'Adding...' : 'Add Candidate'}
-                  </Button>
+                  <Can permission={Permissions.CREATE_CANDIDATE}>
+                    <Button type="button" className="bg-[#146c4f] hover:bg-[#10563f]" disabled={isSaving || offices.length === 0} onClick={() => void addCandidate()}>
+                      {isSaving ? 'Adding...' : 'Add Candidate'}
+                    </Button>
+                  </Can>
                 </div>
               </div>
             </div>
@@ -1697,13 +1742,14 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium">Candidate</label>
-                <Input value={editingCandidate?.full_name ?? ''} disabled />
+                <label htmlFor="edit-ward-candidate" className="mb-1 block text-sm font-medium">Candidate</label>
+                <Input id="edit-ward-candidate" value={editingCandidate?.full_name ?? ''} disabled />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="space-y-1 text-sm font-medium">
+                <label htmlFor="edit-ward-office" className="space-y-1 text-sm font-medium">
                   Office *
                   <select
+                    id="edit-ward-office"
                     value={editData.office_id || ''}
                     onChange={(event) => setEditData((current) => ({ ...current, office_id: Number(event.target.value) }))}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -1712,9 +1758,10 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
                     {offices.map((office) => <option key={office.id} value={office.id}>{office.title}</option>)}
                   </select>
                 </label>
-                <label className="space-y-1 text-sm font-medium">
+                <label htmlFor="edit-ward-election" className="space-y-1 text-sm font-medium">
                   Election *
                   <select
+                    id="edit-ward-election"
                     value={editData.election_id || ''}
                     onChange={(event) => setEditData((current) => ({ ...current, election_id: Number(event.target.value) }))}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -1727,17 +1774,18 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
                     ))}
                   </select>
                 </label>
-                <label className="space-y-1 text-sm font-medium">
+                <label htmlFor="edit-ward-party" className="space-y-1 text-sm font-medium">
                   Political party
-                  <Input value={editingCandidate?.party?.name || editingCandidate?.political_party || `Party ${editData.party_id}`} disabled />
+                  <Input id="edit-ward-party" value={editingCandidate?.party?.name || editingCandidate?.political_party || `Party ${editData.party_id}`} disabled />
                 </label>
-                <label className="space-y-1 text-sm font-medium">
+                <label htmlFor="edit-ward-ward" className="space-y-1 text-sm font-medium">
                   Ward
-                  <Input value={wardName} disabled />
+                  <Input id="edit-ward-ward" value={wardName} disabled />
                 </label>
-                <label className="space-y-1 text-sm font-medium sm:col-span-2">
+                <label htmlFor="edit-ward-manifesto" className="space-y-1 text-sm font-medium sm:col-span-2">
                   Manifesto
                   <Textarea
+                    id="edit-ward-manifesto"
                     value={editData.manifesto}
                     onChange={(event) => setEditData((current) => ({ ...current, manifesto: event.target.value }))}
                     rows={4}
@@ -1747,10 +1795,12 @@ export default function WardElectionPage({ mode }: WardElectionPageProps) {
               {editError && <p role="alert" className="text-sm text-red-600">{editError}</p>}
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)} disabled={isUpdating}>Cancel</Button>
-                <Button type="button" onClick={() => void updateCandidate()} disabled={isUpdating} className="bg-[#146c4f] hover:bg-[#10563f]">
-                  {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {isUpdating ? 'Saving...' : 'Save changes'}
-                </Button>
+                <Can permission={Permissions.UPDATE_CANDIDATE}>
+                  <Button type="button" onClick={() => void updateCandidate()} disabled={isUpdating} className="bg-[#146c4f] hover:bg-[#10563f]">
+                    {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                    {isUpdating ? 'Saving...' : 'Save changes'}
+                  </Button>
+                </Can>
               </div>
             </div>
           )}

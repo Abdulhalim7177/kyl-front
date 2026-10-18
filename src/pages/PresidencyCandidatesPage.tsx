@@ -19,6 +19,8 @@ import {
   PresidencyCandidate,
   UpdatePresidencyCandidateData,
 } from '@/services/elections'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 
 type PresidencyOffice = { id: number; title: string }
 
@@ -58,6 +60,7 @@ function CandidateCard({
             {candidate.status || 'Active'}
           </span>
           <div className="flex shrink-0 gap-1 sm:gap-2">
+            <Can permission={Permissions.UPDATE_CANDIDATE}>
             <Button
               type="button"
               size="sm"
@@ -67,9 +70,11 @@ function CandidateCard({
               className="h-8 px-2 sm:h-9 sm:px-3"
               onClick={() => onEdit(candidate)}
             >
-              <Pencil className="h-4 w-4 sm:mr-2" />
+              <Pencil aria-hidden="true" className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Edit</span>
             </Button>
+            </Can>
+            <Can permission={Permissions.DELETE_CANDIDATE}>
             <Button
               type="button"
               size="sm"
@@ -79,9 +84,10 @@ function CandidateCard({
               className="h-8 px-2 sm:h-9 sm:px-3"
               onClick={() => onDelete(candidate)}
             >
-              <Trash2 className="h-4 w-4 sm:mr-2" />
+              <Trash2 aria-hidden="true" className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Delete</span>
             </Button>
+            </Can>
           </div>
         </div>
         <div className="flex flex-col items-center text-center">
@@ -549,7 +555,7 @@ export default function PresidencyCandidatesPage() {
   return (
     <div className="space-y-6 p-4 md:p-0">
       <Link to="/k8s9d7f3-districts/presidency" className="inline-flex items-center gap-2 text-sm font-medium text-[#146c4f] hover:underline">
-        <ArrowLeft className="h-4 w-4" /> Back to Presidency
+        <ArrowLeft aria-hidden="true" className="h-4 w-4" /> Back to Presidency
       </Link>
       <Card className="border border-gray-100 shadow-md">
         <CardContent className="p-0">
@@ -568,9 +574,11 @@ export default function PresidencyCandidatesPage() {
               </div>
             </div>
             <div className="flex min-w-0 flex-col gap-3 lg:items-end">
+              <Can permission={Permissions.CREATE_CANDIDATE}>
               <Button type="button" className="w-full bg-[#146c4f] hover:bg-[#10563f] lg:w-auto" onClick={() => void openAddDialog()}>
                 Add Candidate
               </Button>
+              </Can>
               <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end lg:justify-end">
                 <label className="min-w-0 flex-1 space-y-1 text-xs font-medium text-gray-600 sm:min-w-36 sm:flex-none">
                   Election year
@@ -600,7 +608,7 @@ export default function PresidencyCandidatesPage() {
                   >
                     {loading && appliedElectionId !== null
                       ? <Loader2 className="h-4 w-4 animate-spin" />
-                      : <><Search className="mr-2 h-4 w-4" /> Search</>}
+                      : <><Search aria-hidden="true" className="mr-2 h-4 w-4" /> Search</>}
                   </Button>
                   <Button
                     type="button"
@@ -609,7 +617,7 @@ export default function PresidencyCandidatesPage() {
                     disabled={loading && appliedElectionId === null}
                     onClick={showActiveCandidates}
                   >
-                    <X className="mr-2 h-4 w-4" /> Show Active
+                    <X aria-hidden="true" className="mr-2 h-4 w-4" /> Show Active
                   </Button>
                 </div>
                 <div className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-4 py-2 sm:justify-start lg:ml-1">
@@ -624,7 +632,7 @@ export default function PresidencyCandidatesPage() {
             <div className="flex flex-col items-center gap-4 p-8 text-center">
               <p role="alert" className="text-sm text-red-600">{error}</p>
               <Button variant="outline" onClick={() => setReloadKey((key) => key + 1)}>
-                <RefreshCw className="mr-2 h-4 w-4" />
+                <RefreshCw aria-hidden="true" className="mr-2 h-4 w-4" />
                 Try again
               </Button>
             </div>
@@ -668,7 +676,7 @@ export default function PresidencyCandidatesPage() {
                   onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                   disabled={loading || !candidatesPage.prev_page_url}
                 >
-                  <ChevronLeft className="mr-1 h-4 w-4" /> Previous
+                  <ChevronLeft aria-hidden="true" className="mr-1 h-4 w-4" /> Previous
                 </Button>
                 <span className="text-sm text-gray-600">
                   Page {candidatesPage.current_page} of {candidatesPage.last_page}
@@ -680,7 +688,7 @@ export default function PresidencyCandidatesPage() {
                   onClick={() => setCurrentPage((page) => Math.min(candidatesPage.last_page, page + 1))}
                   disabled={loading || !candidatesPage.next_page_url}
                 >
-                  Next <ChevronRight className="ml-1 h-4 w-4" />
+                  Next <ChevronRight aria-hidden="true" className="ml-1 h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -749,6 +757,7 @@ export default function PresidencyCandidatesPage() {
                         placeholder="Enter phone number or NIN"
                         className="flex-1"
                       />
+                      <Can permission={Permissions.TOGGLE_CANDIDATE_STATUS}>
                       <Button
                         type="button"
                         onClick={() => void verifyCandidate()}
@@ -756,6 +765,7 @@ export default function PresidencyCandidatesPage() {
                       >
                         {isVerifying ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying</> : 'Verify'}
                       </Button>
+                      </Can>
                     </div>
                   </div>
                   {verificationError && <p role="alert" className="text-sm text-red-600">{verificationError}</p>}
@@ -850,6 +860,7 @@ export default function PresidencyCandidatesPage() {
                     >
                       Back
                     </Button>
+                    <Can permission={Permissions.CREATE_CANDIDATE}>
                     <Button
                       type="button"
                       onClick={() => void addCandidate()}
@@ -858,6 +869,7 @@ export default function PresidencyCandidatesPage() {
                     >
                       {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding...</> : 'Add candidate'}
                     </Button>
+                    </Can>
                   </div>
                 </>
               )}
@@ -959,6 +971,7 @@ export default function PresidencyCandidatesPage() {
                 >
                   Cancel
                 </Button>
+                <Can permission={Permissions.UPDATE_CANDIDATE}>
                 <Button
                   type="button"
                   onClick={() => void updateCandidate()}
@@ -967,6 +980,7 @@ export default function PresidencyCandidatesPage() {
                 >
                   {isUpdating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : 'Save changes'}
                 </Button>
+                </Can>
               </div>
             </div>
           )}
@@ -999,14 +1013,16 @@ export default function PresidencyCandidatesPage() {
             >
               Cancel
             </Button>
+            <Can permission={Permissions.DELETE_CANDIDATE}>
             <Button
               type="button"
               variant="destructive"
               onClick={() => void deleteCandidate()}
               disabled={isDeleting}
             >
-              {isDeleting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Removing...</> : <><Trash2 className="mr-2 h-4 w-4" /> Remove candidate</>}
+              {isDeleting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Removing...</> : <><Trash2 aria-hidden="true" className="mr-2 h-4 w-4" /> Remove candidate</>}
             </Button>
+            </Can>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -32,7 +32,7 @@ export default function PublicElectionsPage() {
   if (error) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-red-50 text-red-600 p-4 rounded-md">
+        <div role="alert" className="bg-red-50 text-red-600 p-4 rounded-md">
           {error}
         </div>
       </div>

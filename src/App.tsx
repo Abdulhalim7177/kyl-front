@@ -78,7 +78,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { Menu } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { HelmetProvider } from 'react-helmet-async'
 import Footer from '@/components/Footer'
 import DistrictsPage from '@/pages/DistrictsPage'
@@ -175,8 +175,14 @@ function NotFound() {
 function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <a
+        href="#public-main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
+      >
+        Skip to main content
+      </a>
       <Navigation />
-      <main className="flex-grow">
+      <main id="public-main-content" tabIndex={-1} className="flex-grow">
         {children}
       </main>
       <Footer />
@@ -193,11 +199,39 @@ function PublicLayoutOld({ children }: { children: React.ReactNode }) {
   )
 }
 
+/**
+ * Restores focus and scroll position on every route change so keyboard and
+ * screen-reader users are not stranded on the previous page's content.
+ */
+function RouteChangeHandler() {
+  const location = useLocation()
+  const isFirstRender = useRef(true)
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+    window.scrollTo(0, 0)
+    const target =
+      document.getElementById('admin-main-content') ??
+      document.getElementById('public-main-content') ??
+      document.querySelector('main')
+    if (target instanceof HTMLElement) {
+      target.setAttribute('tabindex', '-1')
+      target.focus({ preventScroll: true })
+    }
+  }, [location.pathname])
+
+  return null
+}
+
 function App() {
   return (
     <AuthProvider>
       <HelmetProvider>
         <BrowserRouter>
+        <RouteChangeHandler />
         <Routes>
           <Route path="/" element={<PublicLayout><PublicHomePage /></PublicLayout>} />
           <Route path="/districts" element={<PublicLayout><DistrictsExplorerPage /></PublicLayout>} />

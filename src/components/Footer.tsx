@@ -64,11 +64,13 @@ export default function Footer() {
               <input 
                 type="email" 
                 required
+                aria-label="Email address"
                 placeholder="Enter your email" 
                 className="w-full bg-slate-800 border-none rounded-xl py-3 pl-4 pr-12 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-emerald-500 outline-none"
               />
               <button 
                 type="submit" 
+                aria-label="Subscribe to newsletter"
                 className="absolute right-1 top-1 bottom-1 bg-emerald-500 text-white w-10 rounded-lg flex items-center justify-center hover:bg-emerald-600 transition-colors"
               >
                 <Send className="w-4 h-4" />

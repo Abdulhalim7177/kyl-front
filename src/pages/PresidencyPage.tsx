@@ -14,13 +14,13 @@ export default function PresidencyPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Link to="/k8s9d7f3-districts">
-          <button className="rounded-full p-2 hover:bg-gray-100 transition-colors">
+          <button className="rounded-full p-2 hover:bg-gray-100 transition-colors" aria-label="Back to districts">
             <ArrowLeft className="h-5 w-5 text-gray-600" />
           </button>
         </Link>
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-[#146c4f] flex items-center gap-2">
-            <MapPin className="h-6 w-6" />
+            <MapPin className="h-6 w-6" aria-hidden="true" />
             Presidency (National)
           </h1>
           <p className="text-sm text-gray-500">Manage national presidency elections, candidates, and leaders.</p>

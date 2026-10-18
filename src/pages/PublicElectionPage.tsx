@@ -116,7 +116,7 @@ export default function PublicElectionPage() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <h2 className="text-2xl font-bold mb-4">Election Not Found</h2>
         <Link to="/" className="text-primary hover:underline flex items-center">
-          <ChevronLeft className="w-4 h-4 mr-1" /> Back to Home
+          <ChevronLeft aria-hidden="true" className="w-4 h-4 mr-1" /> Back to Home
         </Link>
       </div>
     );
@@ -129,7 +129,7 @@ export default function PublicElectionPage() {
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
         <div className="container mx-auto relative z-10 max-w-5xl">
           <Link to="/" className="inline-flex items-center text-primary-foreground/80 hover:text-white mb-6 transition-colors">
-            <ChevronLeft className="w-5 h-5 mr-1" /> Back to Home
+            <ChevronLeft aria-hidden="true" className="w-5 h-5 mr-1" /> Back to Home
           </Link>
           <span className="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-sm font-medium tracking-wide mb-4">
             {election.year} Election
@@ -145,6 +145,7 @@ export default function PublicElectionPage() {
             <div className="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-xl backdrop-blur-sm">
               <Filter className="w-5 h-5 text-emerald-100" />
               <select 
+                aria-label="Filter by state"
                 className="bg-transparent border-none text-white outline-none font-semibold focus:ring-0 cursor-pointer [&>option]:text-gray-900"
                 value={selectedState}
                 onChange={(e) => setSelectedState(e.target.value)}
@@ -199,7 +200,7 @@ export default function PublicElectionPage() {
                 {/* Candidates List - Grouped by Party (Joint Tickets) */}
                 <div className="p-6 md:p-8">
                   <h3 className="text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2">
-                    <Users className="w-5 h-5 text-primary" />
+                    <Users aria-hidden="true" className="w-5 h-5 text-primary" />
                     Participating Tickets
                   </h3>
                   
@@ -256,7 +257,7 @@ export default function PublicElectionPage() {
                                       {candidate.fullName}
                                     </h4>
                                   </div>
-                                  <ChevronLeft className="w-5 h-5 text-gray-300 group-hover/cand:text-primary group-hover/cand:-translate-x-1 transition-all rotate-180" />
+                                  <ChevronLeft aria-hidden="true" className="w-5 h-5 text-gray-300 group-hover/cand:text-primary group-hover/cand:-translate-x-1 transition-all rotate-180" />
                                 </Link>
                               );
                             })}

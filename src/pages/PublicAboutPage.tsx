@@ -102,7 +102,7 @@ export default function PublicAboutPage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/elections" className="bg-[#146c4f] hover:bg-[#115a42] text-white px-8 py-4 rounded-xl font-bold text-lg transition-colors flex items-center">
-              View Elections <ArrowRight className="ml-2 w-5 h-5" />
+              View Elections <ArrowRight aria-hidden="true" className="ml-2 w-5 h-5" />
             </Link>
             <Link to="/contact" className="bg-gray-100 hover:bg-gray-200 text-gray-900 px-8 py-4 rounded-xl font-bold text-lg transition-colors">
               Contact Us

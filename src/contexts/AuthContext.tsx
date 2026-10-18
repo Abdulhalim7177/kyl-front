@@ -1,6 +1,15 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { authService, User } from '@/services/auth'
+import {
+  PermissionName,
+  RoleName,
+  userHasAllPermissions,
+  userHasAnyPermission,
+  userHasPermission,
+  userHasRole,
+  userIsSuperAdmin,
+} from '@/lib/permissions'
 
 interface AuthContextType {
   user: User | null
@@ -8,7 +17,11 @@ interface AuthContextType {
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
-  hasPermission: (permissionName: string) => boolean
+  hasPermission: (permissionName: PermissionName | string) => boolean
+  hasAnyPermission: (permissionNames: Array<PermissionName | string>) => boolean
+  hasAllPermissions: (permissionNames: Array<PermissionName | string>) => boolean
+  hasRole: (role: RoleName | string | Array<RoleName | string>) => boolean
+  isSuperAdmin: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -46,10 +59,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const hasPermission = (permissionName: string): boolean => {
-    if (!user) return false
-    return user.permissions.some(p => p.name === permissionName)
-  }
+  const hasPermission = (permissionName: PermissionName | string): boolean =>
+    userHasPermission(user, permissionName)
+
+  const hasAnyPermission = (permissionNames: Array<PermissionName | string>): boolean =>
+    userHasAnyPermission(user, permissionNames)
+
+  const hasAllPermissions = (permissionNames: Array<PermissionName | string>): boolean =>
+    userHasAllPermissions(user, permissionNames)
+
+  const hasRole = (role: RoleName | string | Array<RoleName | string>): boolean =>
+    userHasRole(user, role)
 
   return (
     <AuthContext.Provider
@@ -60,6 +80,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         hasPermission,
+        hasAnyPermission,
+        hasAllPermissions,
+        hasRole,
+        isSuperAdmin: userIsSuperAdmin(user),
       }}
     >
       {children}

@@ -13,6 +13,8 @@ import { Election, electionService } from '@/services/elections'
 import { AddElectedSenatorData, ElectedLeader, leadersService, UpdateElectedSenatorData } from '@/services/leaders'
 import { getLogoUrl } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 
 type OfficeOption = { id: number; title: string; status?: number }
 
@@ -360,7 +362,7 @@ export default function ElectedSenatorsPage() {
   return (
     <div className="space-y-6 p-4 md:p-0">
       <Link to="/k8s9d7f3-districts/senatorial" className="inline-flex items-center gap-2 text-sm font-medium text-[#146c4f] hover:underline">
-        <ArrowLeft className="h-4 w-4" /> Back to senatorial districts
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to senatorial districts
       </Link>
       <Card className="border border-gray-100 shadow-md">
         <CardContent className="p-0">
@@ -378,9 +380,11 @@ export default function ElectedSenatorsPage() {
                 <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Records</p>
                 <p className="flex items-center gap-1.5 font-semibold text-[#146c4f]"><CheckCircle2 className="h-4 w-4" />{filteredLeaders.length} elected</p>
               </div>
-              <Button type="button" onClick={() => handleAddDialogChange(true)} className="bg-[#146c4f] hover:bg-[#10563f]">
-                <Plus className="mr-2 h-4 w-4" /> Add Elected Senator
-              </Button>
+              <Can permission={Permissions.CREATE_LEADER}>
+                <Button type="button" onClick={() => handleAddDialogChange(true)} className="bg-[#146c4f] hover:bg-[#10563f]">
+                  <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> Add Elected Senator
+                </Button>
+              </Can>
             </div>
           </div>
 
@@ -399,9 +403,10 @@ export default function ElectedSenatorsPage() {
                   <DialogDescription>Verify the candidate with their NIN or phone number before completing the elected-senator record.</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
-              <label className="block max-w-xl space-y-2 text-sm font-medium text-gray-700">
+              <label htmlFor="elected-senator-election" className="block max-w-xl space-y-2 text-sm font-medium text-gray-700">
                 Election *
                 <select
+                  id="elected-senator-election"
                   className="h-10 w-full rounded-md border border-input bg-white px-3"
                   value={formData.election_id}
                   disabled={isVerifying}
@@ -417,10 +422,11 @@ export default function ElectedSenatorsPage() {
                 </select>
               </label>
               <div className="max-w-xl">
-                <label className="space-y-2 text-sm font-medium text-gray-700">
+                <label htmlFor="elected-senator-candidate-search" className="space-y-2 text-sm font-medium text-gray-700">
                   Candidate NIN or phone number *
                   <div className="flex gap-2">
                     <Input
+                      id="elected-senator-candidate-search"
                       value={candidateSearch}
                       disabled={isVerifying}
                       onChange={(event) => {
@@ -437,9 +443,11 @@ export default function ElectedSenatorsPage() {
                       }}
                       placeholder="Enter NIN or phone number"
                     />
-                    <Button type="button" variant="outline" onClick={verifyCandidate} disabled={isVerifying}>
-                      {isVerifying ? 'Checking...' : 'Verify Candidate'}
-                    </Button>
+                    <Can permission={Permissions.UPDATE_LEADER}>
+                      <Button type="button" variant="outline" onClick={verifyCandidate} disabled={isVerifying}>
+                        {isVerifying ? 'Checking...' : 'Verify Candidate'}
+                      </Button>
+                    </Can>
                   </div>
                 </label>
               </div>
@@ -458,35 +466,37 @@ export default function ElectedSenatorsPage() {
                     </div>
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
-                    <label className="space-y-2 text-sm font-medium text-gray-700">
+                    <label htmlFor="elected-senator-office" className="space-y-2 text-sm font-medium text-gray-700">
                       Office *
-                      <select className="h-10 w-full rounded-md border border-input bg-white px-3" value={formData.office_id} onChange={(event) => setFormData((current) => ({ ...current, office_id: event.target.value }))}>
+                      <select id="elected-senator-office" className="h-10 w-full rounded-md border border-input bg-white px-3" value={formData.office_id} onChange={(event) => setFormData((current) => ({ ...current, office_id: event.target.value }))}>
                         <option value="">Select office</option>
                         {offices.map((office) => <option key={office.id} value={office.id}>{office.title}</option>)}
                       </select>
                     </label>
-                    <label className="space-y-2 text-sm font-medium text-gray-700">
+                    <label htmlFor="elected-senator-tenure" className="space-y-2 text-sm font-medium text-gray-700">
                       Tenure *
-                      <Input value={formData.tenure} onChange={(event) => setFormData((current) => ({ ...current, tenure: event.target.value }))} placeholder="e.g. 2027-2031" />
+                      <Input id="elected-senator-tenure" value={formData.tenure} onChange={(event) => setFormData((current) => ({ ...current, tenure: event.target.value }))} placeholder="e.g. 2027-2031" />
                     </label>
-                    <label className="space-y-2 text-sm font-medium text-gray-700">
+                    <label htmlFor="elected-senator-start-date" className="space-y-2 text-sm font-medium text-gray-700">
                       Start date *
-                      <Input type="date" value={formData.start_date} onChange={(event) => setFormData((current) => ({ ...current, start_date: event.target.value }))} />
+                      <Input id="elected-senator-start-date" type="date" value={formData.start_date} onChange={(event) => setFormData((current) => ({ ...current, start_date: event.target.value }))} />
                     </label>
-                    <label className="space-y-2 text-sm font-medium text-gray-700">
+                    <label htmlFor="elected-senator-end-date" className="space-y-2 text-sm font-medium text-gray-700">
                       End date *
-                      <Input type="date" value={formData.end_date} onChange={(event) => setFormData((current) => ({ ...current, end_date: event.target.value }))} />
+                      <Input id="elected-senator-end-date" type="date" value={formData.end_date} onChange={(event) => setFormData((current) => ({ ...current, end_date: event.target.value }))} />
                     </label>
-                    <label className="space-y-2 text-sm font-medium text-gray-700 md:col-span-2">
+                    <label htmlFor="elected-senator-remark" className="space-y-2 text-sm font-medium text-gray-700 md:col-span-2">
                       Remark
-                      <Textarea value={formData.remark} onChange={(event) => setFormData((current) => ({ ...current, remark: event.target.value }))} placeholder="Administrative notes" rows={3} />
+                      <Textarea id="elected-senator-remark" value={formData.remark} onChange={(event) => setFormData((current) => ({ ...current, remark: event.target.value }))} placeholder="Administrative notes" rows={3} />
                     </label>
                   </div>
                   {formError && <p role="alert" className="text-sm text-red-600">{formError}</p>}
                   <div className="flex justify-end">
-                    <Button type="button" onClick={addElectedSenator} disabled={isSaving} className="bg-[#146c4f] hover:bg-[#10563f]">
-                      {isSaving ? 'Saving...' : 'Save Elected Senator'}
-                    </Button>
+                    <Can permission={Permissions.CREATE_LEADER}>
+                      <Button type="button" onClick={addElectedSenator} disabled={isSaving} className="bg-[#146c4f] hover:bg-[#10563f]">
+                        {isSaving ? 'Saving...' : 'Save Elected Senator'}
+                      </Button>
+                    </Can>
                   </div>
                 </div>
               )}
@@ -531,12 +541,16 @@ export default function ElectedSenatorsPage() {
                       </div>
                       <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:absolute sm:right-5 sm:top-5 sm:mt-0 sm:justify-end">
                         <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold uppercase text-emerald-800">{leader.status || 'Active'}</span>
-                        <Button type="button" size="sm" variant="outline" onClick={() => openEditForm(leader)} className="h-8 px-2 sm:h-9 sm:px-3">
-                          <Pencil className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
-                        </Button>
-                        <Button type="button" size="sm" variant="destructive" onClick={() => removeElectedSenator(leader)} disabled={isDeleting} className="h-8 px-2 sm:h-9 sm:px-3">
-                          <Trash2 className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Delete</span>
-                        </Button>
+                        <Can permission={Permissions.UPDATE_LEADER}>
+                          <Button type="button" size="sm" variant="outline" aria-label={`Edit ${candidateName}`} onClick={() => openEditForm(leader)} className="h-8 px-2 sm:h-9 sm:px-3">
+                            <Pencil className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Edit</span>
+                          </Button>
+                        </Can>
+                        <Can permission={Permissions.DELETE_LEADER}>
+                          <Button type="button" size="sm" variant="destructive" aria-label={`Delete ${candidateName}`} onClick={() => removeElectedSenator(leader)} disabled={isDeleting} className="h-8 px-2 sm:h-9 sm:px-3">
+                            <Trash2 className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Delete</span>
+                          </Button>
+                        </Can>
                       </div>
                     </div>
                     <div className="space-y-4 p-4 sm:p-5">
@@ -690,9 +704,11 @@ export default function ElectedSenatorsPage() {
             {editError && <p role="alert" className="text-sm text-red-600">{editError}</p>}
             <div className="flex justify-end gap-3">
               <Button type="button" variant="outline" onClick={() => setEditingLeader(null)} disabled={isUpdating}>Cancel</Button>
-              <Button type="button" onClick={updateElectedSenator} disabled={isUpdating} className="bg-[#146c4f] hover:bg-[#10563f]">
-                {isUpdating ? 'Updating...' : 'Save Changes'}
-              </Button>
+              <Can permission={Permissions.UPDATE_LEADER}>
+                <Button type="button" onClick={updateElectedSenator} disabled={isUpdating} className="bg-[#146c4f] hover:bg-[#10563f]">
+                  {isUpdating ? 'Updating...' : 'Save Changes'}
+                </Button>
+              </Can>
             </div>
           </div>
         </DialogContent>

@@ -148,9 +148,9 @@ export default function DistrictsExplorerPage() {
               onClick={() => handleDistrictClick(type, item)}
               className="w-full flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer text-left group"
             >
-              <MapPin size={14} className="text-gray-400 group-hover:text-primary transition-colors" />
+              <MapPin aria-hidden="true" size={14} className="text-gray-400 group-hover:text-primary transition-colors" />
               <span className="font-medium text-gray-700 text-sm flex-1">{item.name}</span>
-              <ChevronRight size={14} className="text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <ChevronRight aria-hidden="true" size={14} className="text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
           </li>
         ))}
@@ -173,11 +173,12 @@ export default function DistrictsExplorerPage() {
           <p className="text-emerald-100/80 font-light max-w-xl mx-auto mb-6">Select a state to explore its Senatorial, Federal, State Constituencies, and Local Government Areas.</p>
           
           <div className="max-w-sm mx-auto flex flex-col items-center gap-2">
-            <label className="text-sm font-medium text-emerald-100">Active Election Context</label>
+            <label htmlFor="active-election" className="text-sm font-medium text-emerald-100">Active Election Context</label>
             {loadingElections ? (
               <Loader2 className="w-5 h-5 animate-spin text-emerald-100" />
             ) : (
               <select 
+                id="active-election"
                 value={selectedElection}
                 onChange={e => setSelectedElection(e.target.value)}
                 className="w-full bg-white/10 border border-white/20 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 [&>option]:text-gray-900"
@@ -214,7 +215,7 @@ export default function DistrictsExplorerPage() {
                       }`}
                     >
                       <span>{state.name}</span>
-                      <ChevronRight size={16} className={`transition-transform duration-300 ${selectedState?.id === state.id ? 'text-primary translate-x-1' : 'text-gray-300'}`} />
+                      <ChevronRight aria-hidden="true" size={16} className={`transition-transform duration-300 ${selectedState?.id === state.id ? 'text-primary translate-x-1' : 'text-gray-300'}`} />
                     </button>
                   </li>
                 ))}
@@ -307,7 +308,7 @@ export default function DistrictsExplorerPage() {
                 <h3 className="font-bold text-gray-900 text-lg">{modalTitle}</h3>
                 <p className="text-sm text-gray-500">Candidates competing in this area</p>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-200 transition-colors">
+              <button onClick={() => setIsModalOpen(false)} aria-label="Close candidates modal" className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-200 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -315,7 +316,7 @@ export default function DistrictsExplorerPage() {
             <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
               {!selectedElection ? (
                 <div className="text-center py-10">
-                  <p className="text-red-500 font-medium">Please select an election from the top dropdown first.</p>
+                  <p role="alert" className="text-red-500 font-medium">Please select an election from the top dropdown first.</p>
                 </div>
               ) : loadingCandidates ? (
                 <div className="flex justify-center py-10">
@@ -351,7 +352,7 @@ export default function DistrictsExplorerPage() {
                           <p className="text-sm text-gray-500 truncate font-medium">{subtitle}</p>
                         </div>
                         <div className="w-8 h-8 rounded-full bg-gray-50 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
-                           <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-primary" />
+                           <ArrowRight aria-hidden="true" className="w-4 h-4 text-gray-400 group-hover:text-primary" />
                         </div>
                       </Link>
                     );

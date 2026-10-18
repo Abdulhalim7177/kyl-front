@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -312,7 +313,7 @@ export default function DistrictsPage({ type, title }: DistrictsPageProps) {
           <div>
             <div>
               <h2 className="text-lg md:text-xl font-semibold text-gray-900 flex items-center gap-2">
-                <Map className="w-6 h-6 text-[#146c4f]" />
+                <Map aria-hidden="true" className="w-6 h-6 text-[#146c4f]" />
                 {title} Management
               </h2>
               <p className="text-gray-500 mt-1 text-sm">Manage and view {title.toLowerCase()} across the electoral system.</p>
@@ -443,6 +444,7 @@ export default function DistrictsPage({ type, title }: DistrictsPageProps) {
           </div>
           <div className="hidden md:block">
           <Table>
+            <TableCaption className="sr-only">Districts list</TableCaption>
             <TableHeader className="bg-white border-b border-gray-100">
               <TableRow className="hover:bg-transparent">
                 <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider w-[140px]">S/N</TableHead>

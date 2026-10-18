@@ -136,7 +136,7 @@ export default function AddPartyDialog({ onPartyAdded }: AddPartyDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="bg-green-700 hover:bg-green-800 text-white">
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus aria-hidden="true" className="w-4 h-4 mr-2" />
           Add Party
         </Button>
       </DialogTrigger>
@@ -155,7 +155,7 @@ export default function AddPartyDialog({ onPartyAdded }: AddPartyDialogProps) {
                 <div className="relative w-24 h-24 rounded-full border-2 border-gray-200 overflow-hidden group">
                   <img src={logoPreview} alt="Logo preview" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button type="button" onClick={removeLogo} className="text-white hover:text-red-400 p-1">
+                    <button type="button" onClick={removeLogo} aria-label="Remove logo" className="text-white hover:text-red-400 p-1">
                       <X className="w-5 h-5" />
                     </button>
                   </div>
@@ -166,7 +166,7 @@ export default function AddPartyDialog({ onPartyAdded }: AddPartyDialogProps) {
                   onClick={() => fileInputRef.current?.click()}
                   className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-500 hover:border-[#146c4f] hover:text-[#146c4f] hover:bg-green-50 transition-colors"
                 >
-                  <Upload className="w-6 h-6 mb-1" />
+                  <Upload aria-hidden="true" className="w-6 h-6 mb-1" />
                   <span className="text-[10px] font-medium">Upload Logo</span>
                 </button>
               )}
@@ -178,7 +178,7 @@ export default function AddPartyDialog({ onPartyAdded }: AddPartyDialogProps) {
                 className="hidden"
               />
             </div>
-            {errors.logo && <p className="text-xs text-red-500">{errors.logo}</p>}
+            {errors.logo && <p role="alert" className="text-xs text-red-500">{errors.logo}</p>}
           </div>
 
           <div>
@@ -192,7 +192,7 @@ export default function AddPartyDialog({ onPartyAdded }: AddPartyDialogProps) {
               placeholder="Enter party name"
               className={errors.name ? 'border-red-500' : ''}
             />
-            {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
+            {errors.name && <p role="alert" className="text-sm text-red-600 mt-1">{errors.name}</p>}
           </div>
 
           <div>
@@ -207,7 +207,7 @@ export default function AddPartyDialog({ onPartyAdded }: AddPartyDialogProps) {
               rows={2}
               className={errors.description ? 'border-red-500' : ''}
             />
-            {errors.description && <p className="text-sm text-red-600 mt-1">{errors.description}</p>}
+            {errors.description && <p role="alert" className="text-sm text-red-600 mt-1">{errors.description}</p>}
           </div>
 
           <div>
@@ -259,7 +259,7 @@ export default function AddPartyDialog({ onPartyAdded }: AddPartyDialogProps) {
               placeholder="Enter registration year"
               className={errors.registrationYear ? 'border-red-500' : ''}
             />
-            {errors.registrationYear && <p className="text-sm text-red-600 mt-1">{errors.registrationYear}</p>}
+            {errors.registrationYear && <p role="alert" className="text-sm text-red-600 mt-1">{errors.registrationYear}</p>}
           </div>
 
           <DialogFooter className="pt-3">

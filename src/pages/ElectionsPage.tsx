@@ -2,10 +2,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -157,13 +160,15 @@ export default function ElectionsPage() {
           >
             {showOnlyActive ? 'Viewing Active Election' : 'View Active Election'}
           </Button>
-          <Button
-            className="bg-[#146c4f] hover:bg-[#115a42] text-white"
-            onClick={() => navigate('/k8s9d7f3-elections-add')}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Election
-          </Button>
+          <Can permission={Permissions.CREATE_ELECTION}>
+            <Button
+              className="bg-[#146c4f] hover:bg-[#115a42] text-white"
+              onClick={() => navigate('/k8s9d7f3-elections-add')}
+            >
+              <Plus aria-hidden="true" className="w-4 h-4 mr-2" />
+              Add Election
+            </Button>
+          </Can>
         </div>
       </div>
 
@@ -226,6 +231,7 @@ export default function ElectionsPage() {
 
         <div className="overflow-x-auto">
           <Table>
+            <TableCaption className="sr-only">Elections list</TableCaption>
             <TableHeader>
               <TableRow className="hover:bg-transparent border-gray-100 bg-gray-50/50">
                 <TableHead className="text-[0.65rem] font-bold text-gray-500 tracking-wider h-11 px-6">NAME</TableHead>
@@ -278,7 +284,7 @@ export default function ElectionsPage() {
                         className="text-[#146c4f] hover:text-[#115a42] hover:bg-[#146c4f]/10"
                         onClick={() => navigate(`/k8s9d7f3-elections-view/${election.id}`)}
                       >
-                        <Eye className="w-4 h-4 mr-1" />
+                        <Eye aria-hidden="true" className="w-4 h-4 mr-1" />
                         View
                       </Button>
                     </TableCell>

@@ -13,6 +13,8 @@ import {
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { roleService, Role as ServiceRole, Permission } from '@/services/roles'
 import { userService, CreateUserData } from '@/services/users'
@@ -120,7 +122,7 @@ export default function AddUserWizard() {
         role_id: user.role_id,
         state_id: user.state_id || 0,
         party_id: user.party_id || 0,
-        permissions: user.permissions.map(p => p.id)
+        permissions: (user.permissions ?? []).map(p => p.id)
       })
       
       // Also fetch permissions for the user's current role to show checkboxes
@@ -182,8 +184,9 @@ export default function AddUserWizard() {
         return (
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Full Name *</label>
+              <label htmlFor="wizard-full-name" className="text-sm font-medium text-gray-700">Full Name *</label>
               <Input
+                id="wizard-full-name"
                 placeholder="Enter full name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -192,8 +195,9 @@ export default function AddUserWizard() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Email Address *</label>
+                <label htmlFor="wizard-email" className="text-sm font-medium text-gray-700">Email Address *</label>
                 <Input
+                  id="wizard-email"
                   type="email"
                   placeholder="user@example.com"
                   value={formData.email}
@@ -202,8 +206,9 @@ export default function AddUserWizard() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Phone Number *</label>
+                <label htmlFor="wizard-phone" className="text-sm font-medium text-gray-700">Phone Number *</label>
                 <Input
+                  id="wizard-phone"
                   placeholder="Enter phone number"
                   value={formData.phoneNo}
                   onChange={(e) => setFormData({ ...formData, phoneNo: e.target.value })}
@@ -217,12 +222,12 @@ export default function AddUserWizard() {
         return (
           <div className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Administrative Role *</label>
+              <label htmlFor="wizard-role" className="text-sm font-medium text-gray-700">Administrative Role *</label>
               <Select
                 value={formData.role_id?.toString()}
                 onValueChange={handleRoleChange}
               >
-                <SelectTrigger className="h-12">
+                <SelectTrigger id="wizard-role" className="h-12">
                   <SelectValue placeholder="Select Role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -308,9 +313,14 @@ export default function AddUserWizard() {
                 <span className="font-semibold text-[#146c4f]">{submittedUser?.name}</span> has been successfully {isEditMode ? 'updated' : 'registered'}.
               </p>
               <div className="flex flex-col gap-2">
-                <Button className="bg-[#146c4f] hover:bg-[#115a42] text-white" onClick={() => navigate('/k8s9d7f3-users')}>
-                  <Eye className="w-4 h-4 mr-2" />
-                  View Users
+                <Button
+                  className="bg-[#146c4f] hover:bg-[#115a42] text-white"
+                  onClick={() => submittedUser?.id
+                    ? navigate(`/k8s9d7f3-users-view/${submittedUser.id}`)
+                    : navigate('/k8s9d7f3-users')}
+                >
+                  <Eye aria-hidden="true" className="w-4 h-4 mr-2" />
+                  View User Profile
                 </Button>
                 <Button variant="outline" onClick={() => navigate('/k8s9d7f3-users')}>
                   Return to User Management
@@ -337,7 +347,7 @@ export default function AddUserWizard() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <p className="text-sm text-gray-500">Configure credentials and administrative access for the new system user.</p>
         <Button variant="outline" onClick={() => navigate('/k8s9d7f3-users')} className="flex items-center gap-2">
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft aria-hidden="true" className="w-4 h-4" />
           Back to Users
         </Button>
       </div>
@@ -385,17 +395,19 @@ export default function AddUserWizard() {
             <Button variant="outline" onClick={handleBack} disabled={currentStep === 1}>
               Back
             </Button>
-            <Button 
-              className="bg-[#146c4f] hover:bg-[#115a42] text-white min-w-[120px]" 
-              onClick={handleNext}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : null}
-              {currentStep === 2 ? (isEditMode ? 'Update User' : 'Create User') : 'Next Step'}
-              {currentStep === 1 && <ArrowRight className="w-4 h-4 ml-2" />}
-            </Button>
+            <Can any={[Permissions.CREATE_USER, Permissions.CREATE_PARTY_USER, Permissions.CREATE_STATE_USER, Permissions.UPDATE_USER]}>
+              <Button 
+                className="bg-[#146c4f] hover:bg-[#115a42] text-white min-w-[120px]" 
+                onClick={handleNext}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <Loader2 aria-hidden="true" className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
+                {currentStep === 2 ? (isEditMode ? 'Update User' : 'Create User') : 'Next Step'}
+                {currentStep === 1 && <ArrowRight aria-hidden="true" className="w-4 h-4 ml-2" />}
+              </Button>
+            </Can>
           </div>
         )}
       </div>

@@ -108,10 +108,10 @@ export default function PublicHomePage() {
               <p className="text-gray-500 mt-2">Explore candidates and positions for upcoming and past elections.</p>
             </div>
             <div className="flex gap-2 hidden md:flex">
-              <button onClick={scrollPrev} className="p-3 rounded-full bg-gray-100 hover:bg-primary hover:text-white transition-colors text-gray-700">
+              <button aria-label="Previous elections" onClick={scrollPrev} className="p-3 rounded-full bg-gray-100 hover:bg-primary hover:text-white transition-colors text-gray-700">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <button onClick={scrollNext} className="p-3 rounded-full bg-gray-100 hover:bg-primary hover:text-white transition-colors text-gray-700">
+              <button aria-label="Next elections" onClick={scrollNext} className="p-3 rounded-full bg-gray-100 hover:bg-primary hover:text-white transition-colors text-gray-700">
                 <ChevronRight className="w-5 h-5" />
               </button>
             </div>
@@ -153,7 +153,7 @@ export default function PublicHomePage() {
                         to={`/election/${election.id}`} 
                         className="inline-flex items-center text-primary font-semibold hover:text-emerald-700 transition-colors group-hover/card:translate-x-1"
                       >
-                        View Positions & Candidates <ChevronRight className="w-4 h-4 ml-1" />
+                        View Positions & Candidates <ChevronRight aria-hidden="true" className="w-4 h-4 ml-1" />
                       </Link>
                     </div>
                   </div>
@@ -173,7 +173,7 @@ export default function PublicHomePage() {
               <h3 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Active Polls</h3>
             </div>
             <Link to="/polls" className="hidden md:flex items-center text-primary font-bold hover:text-emerald-700 transition-colors">
-              View All Polls <ChevronRight className="w-5 h-5 ml-1" />
+              View All Polls <ChevronRight aria-hidden="true" className="w-5 h-5 ml-1" />
             </Link>
           </div>
           
@@ -192,14 +192,14 @@ export default function PublicHomePage() {
                 )}
                 
                 <Link to={`/poll/${poll.id}`} className="mt-auto w-full inline-flex items-center justify-center gap-2 bg-primary text-white font-bold py-3.5 px-6 rounded-xl hover:bg-emerald-600 transition-colors">
-                  <BarChart2 className="w-5 h-5" /> Participate
+                  <BarChart2 aria-hidden="true" className="w-5 h-5" /> Participate
                 </Link>
               </div>
             ))}
           </div>
           <div className="mt-8 text-center md:hidden">
             <Link to="/polls" className="inline-flex items-center text-primary font-bold hover:text-emerald-700 transition-colors">
-              View All Polls <ChevronRight className="w-5 h-5 ml-1" />
+              View All Polls <ChevronRight aria-hidden="true" className="w-5 h-5 ml-1" />
             </Link>
           </div>
         </section>
@@ -214,7 +214,7 @@ export default function PublicHomePage() {
               <h3 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Latest Blogs</h3>
             </div>
             <Link to="/blogs" className="hidden md:flex items-center text-primary font-bold hover:text-emerald-700 transition-colors">
-              View All Blogs <ChevronRight className="w-5 h-5 ml-1" />
+              View All Blogs <ChevronRight aria-hidden="true" className="w-5 h-5 ml-1" />
             </Link>
           </div>
           
@@ -238,7 +238,7 @@ export default function PublicHomePage() {
                 <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
                   <span className="text-xs text-gray-400 font-medium">{new Date(post.created_at).toLocaleDateString()}</span>
                   <Link to={`/blog/${post.id}`} className="inline-flex items-center text-sm font-bold text-primary hover:text-emerald-700 transition-colors">
-                    Read Article <ChevronRight className="w-4 h-4 ml-1" />
+                    Read Article <ChevronRight aria-hidden="true" className="w-4 h-4 ml-1" />
                   </Link>
                 </div>
               </div>
@@ -246,7 +246,7 @@ export default function PublicHomePage() {
           </div>
           <div className="mt-8 text-center md:hidden">
             <Link to="/blogs" className="inline-flex items-center text-primary font-bold hover:text-emerald-700 transition-colors">
-              View All Blogs <ChevronRight className="w-5 h-5 ml-1" />
+              View All Blogs <ChevronRight aria-hidden="true" className="w-5 h-5 ml-1" />
             </Link>
           </div>
         </section>

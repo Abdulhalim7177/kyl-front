@@ -12,6 +12,8 @@ import { District, districtsService } from '@/services/districts'
 import { Election, electionService, SenateOffice } from '@/services/elections'
 import { ElectedLeader, leadersService, UpdateElectedHouseOfRepMemberData } from '@/services/leaders'
 import { getLogoUrl } from '@/lib/utils'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 
 const normalizeCandidateIdentifier = (value: string | number | undefined) =>
   String(value ?? '').toLowerCase().replace(/[\s()+-]/g, '')
@@ -428,7 +430,7 @@ export default function ElectedFederalHousePage() {
   return (
     <div className="space-y-6 p-4 md:p-0">
       <Link to="/k8s9d7f3-districts/federal" className="inline-flex items-center gap-2 text-sm font-medium text-[#146c4f] hover:underline">
-        <ArrowLeft className="h-4 w-4" /> Back to Federal Constituencies
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Federal Constituencies
       </Link>
       <Card className="border border-gray-100 shadow-md">
         <CardContent className="p-0">
@@ -469,18 +471,20 @@ export default function ElectedFederalHousePage() {
                   Show Active
                 </Button>
               </div>
-              <Button
-                type="button"
-                size="sm"
-                className="bg-[#146c4f] hover:bg-[#10563f]"
-                disabled={loading || isLoadingOptions}
-                onClick={() => {
-                  setFormError('')
-                  setIsAddOpen(true)
-                }}
-              >
-                <Plus className="mr-2 h-4 w-4" /> Add Elected Member
-              </Button>
+              <Can permission={Permissions.CREATE_LEADER}>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="bg-[#146c4f] hover:bg-[#10563f]"
+                  disabled={loading || isLoadingOptions}
+                  onClick={() => {
+                    setFormError('')
+                    setIsAddOpen(true)
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> Add Elected Member
+                </Button>
+              </Can>
             </div>
           </div>
           {searchOptionsError && <div role="alert" className="px-6 pt-4 text-sm text-red-600">{searchOptionsError}</div>}
@@ -533,35 +537,43 @@ export default function ElectedFederalHousePage() {
                         <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-800">
                           {member.status || 'Active'}
                         </span>
-                        <Button type="button" size="sm" variant="outline" className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => openEditMember(member)}>
-                          <Pencil className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Edit</span>
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="destructive"
-                          className="h-8 px-2 sm:h-9 sm:px-3"
-                          onClick={() => openConfirmation('terminate', member)}
-                          disabled={terminatingMemberId !== null || removingMemberId !== null}
-                        >
-                          {terminatingMemberId === Number(member.id)
-                            ? <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" />
-                            : <CircleStop className="h-4 w-4 sm:mr-2" />}
-                          <span className="hidden sm:inline">Terminate</span>
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="destructive"
-                          className="h-8 px-2 sm:h-9 sm:px-3"
-                          onClick={() => openConfirmation('delete', member)}
-                          disabled={terminatingMemberId !== null || removingMemberId !== null}
-                        >
-                          {removingMemberId === Number(member.id)
-                            ? <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" />
-                            : <Trash2 className="h-4 w-4 sm:mr-2" />}
-                          <span className="hidden sm:inline">Delete</span>
-                        </Button>
+                        <Can permission={Permissions.UPDATE_LEADER}>
+                          <Button type="button" size="sm" variant="outline" aria-label={`Edit ${name}`} className="h-8 px-2 sm:h-9 sm:px-3" onClick={() => openEditMember(member)}>
+                            <Pencil className="h-4 w-4 sm:mr-2" aria-hidden="true" /><span className="hidden sm:inline">Edit</span>
+                          </Button>
+                        </Can>
+                        <Can permission={Permissions.DELETE_LEADER}>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="destructive"
+                            aria-label={`Terminate ${name}`}
+                            className="h-8 px-2 sm:h-9 sm:px-3"
+                            onClick={() => openConfirmation('terminate', member)}
+                            disabled={terminatingMemberId !== null || removingMemberId !== null}
+                          >
+                            {terminatingMemberId === Number(member.id)
+                              ? <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" aria-hidden="true" />
+                              : <CircleStop className="h-4 w-4 sm:mr-2" aria-hidden="true" />}
+                            <span className="hidden sm:inline">Terminate</span>
+                          </Button>
+                        </Can>
+                        <Can permission={Permissions.DELETE_LEADER}>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="destructive"
+                            aria-label={`Delete ${name}`}
+                            className="h-8 px-2 sm:h-9 sm:px-3"
+                            onClick={() => openConfirmation('delete', member)}
+                            disabled={terminatingMemberId !== null || removingMemberId !== null}
+                          >
+                            {removingMemberId === Number(member.id)
+                              ? <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" aria-hidden="true" />
+                              : <Trash2 className="h-4 w-4 sm:mr-2" aria-hidden="true" />}
+                            <span className="hidden sm:inline">Delete</span>
+                          </Button>
+                        </Can>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm">
@@ -640,9 +652,11 @@ export default function ElectedFederalHousePage() {
             <Button type="button" variant="outline" onClick={() => setConfirmAction({ type: 'terminate', member: null })}>
               Cancel
             </Button>
-            <Button type="button" variant={confirmAction.type === 'terminate' ? 'destructive' : 'destructive'} onClick={confirmActionHandler}>
-              {confirmAction.type === 'terminate' ? 'Terminate' : 'Delete'}
-            </Button>
+            <Can permission={Permissions.DELETE_LEADER}>
+              <Button type="button" variant={confirmAction.type === 'terminate' ? 'destructive' : 'destructive'} onClick={confirmActionHandler}>
+                {confirmAction.type === 'terminate' ? 'Terminate' : 'Delete'}
+              </Button>
+            </Can>
           </div>
         </DialogContent>
       </Dialog>
@@ -664,9 +678,10 @@ export default function ElectedFederalHousePage() {
               <p><span className="text-gray-500">Party:</span> <strong>{editingMember?.party?.name ?? editingMember?.partyName ?? 'N/A'}</strong></p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="space-y-2 text-sm font-medium text-gray-700">
+              <label htmlFor="edit-fed-house-office" className="space-y-2 text-sm font-medium text-gray-700">
                 Office *
                 <select
+                  id="edit-fed-house-office"
                   className="h-10 w-full rounded-md border border-input bg-white px-3"
                   value={editData.office_id}
                   onChange={(event) => setEditData((current) => ({ ...current, office_id: Number(event.target.value) }))}
@@ -678,9 +693,10 @@ export default function ElectedFederalHousePage() {
                   )}
                 </select>
               </label>
-              <label className="space-y-2 text-sm font-medium text-gray-700">
+              <label htmlFor="edit-fed-house-election" className="space-y-2 text-sm font-medium text-gray-700">
                 Election *
                 <select
+                  id="edit-fed-house-election"
                   className="h-10 w-full rounded-md border border-input bg-white px-3"
                   value={editData.election_id}
                   onChange={(event) => setEditData((current) => ({ ...current, election_id: Number(event.target.value) }))}
@@ -691,30 +707,32 @@ export default function ElectedFederalHousePage() {
                     .map((election) => <option key={election.id} value={election.id}>{election.year} - {election.details}</option>)}
                 </select>
               </label>
-              <label className="space-y-2 text-sm font-medium text-gray-700">
+              <label htmlFor="edit-fed-house-tenure" className="space-y-2 text-sm font-medium text-gray-700">
                 Tenure *
-                <Input value={editData.tenure} onChange={(event) => setEditData((current) => ({ ...current, tenure: event.target.value }))} />
+                <Input id="edit-fed-house-tenure" value={editData.tenure} onChange={(event) => setEditData((current) => ({ ...current, tenure: event.target.value }))} />
               </label>
-              <label className="space-y-2 text-sm font-medium text-gray-700">
+              <label htmlFor="edit-fed-house-start-date" className="space-y-2 text-sm font-medium text-gray-700">
                 Start date *
-                <Input type="date" value={editData.start_date} onChange={(event) => setEditData((current) => ({ ...current, start_date: event.target.value }))} />
+                <Input id="edit-fed-house-start-date" type="date" value={editData.start_date} onChange={(event) => setEditData((current) => ({ ...current, start_date: event.target.value }))} />
               </label>
-              <label className="space-y-2 text-sm font-medium text-gray-700">
+              <label htmlFor="edit-fed-house-end-date" className="space-y-2 text-sm font-medium text-gray-700">
                 End date *
-                <Input type="date" value={editData.end_date} onChange={(event) => setEditData((current) => ({ ...current, end_date: event.target.value }))} />
+                <Input id="edit-fed-house-end-date" type="date" value={editData.end_date} onChange={(event) => setEditData((current) => ({ ...current, end_date: event.target.value }))} />
               </label>
-              <label className="space-y-2 text-sm font-medium text-gray-700 sm:col-span-2">
+              <label htmlFor="edit-fed-house-remark" className="space-y-2 text-sm font-medium text-gray-700 sm:col-span-2">
                 Remark
-                <Textarea value={editData.remark} onChange={(event) => setEditData((current) => ({ ...current, remark: event.target.value }))} rows={3} />
+                <Textarea id="edit-fed-house-remark" value={editData.remark} onChange={(event) => setEditData((current) => ({ ...current, remark: event.target.value }))} rows={3} />
               </label>
             </div>
             {editError && <p role="alert" className="text-sm text-red-600">{editError}</p>}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setEditingMember(null)} disabled={isUpdating}>Cancel</Button>
-              <Button type="button" onClick={updateElectedMember} disabled={isUpdating} className="bg-[#146c4f] hover:bg-[#10563f]">
-                {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {isUpdating ? 'Updating...' : 'Save Changes'}
-              </Button>
+              <Can permission={Permissions.UPDATE_LEADER}>
+                <Button type="button" onClick={updateElectedMember} disabled={isUpdating} className="bg-[#146c4f] hover:bg-[#10563f]">
+                  {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+                  {isUpdating ? 'Updating...' : 'Save Changes'}
+                </Button>
+              </Can>
             </div>
           </div>
         </DialogContent>
@@ -730,9 +748,10 @@ export default function ElectedFederalHousePage() {
           </DialogHeader>
           <div className="space-y-4">
             {metaError && <p role="alert" className="text-sm text-red-600">{metaError}</p>}
-            <label className="block space-y-2 text-sm font-medium text-gray-700">
+            <label htmlFor="fed-house-election" className="block space-y-2 text-sm font-medium text-gray-700">
               Election *
               <select
+                id="fed-house-election"
                 className="h-10 w-full rounded-md border border-input bg-white px-3"
                 value={formData.election_id}
                 onChange={(event) => {
@@ -762,9 +781,11 @@ export default function ElectedFederalHousePage() {
                   }}
                   placeholder="Enter NIN or phone number"
                 />
-                <Button type="button" variant="outline" onClick={verifyCandidate} disabled={isVerifying}>
-                  {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify'}
-                </Button>
+                <Can permission={Permissions.UPDATE_LEADER}>
+                  <Button type="button" variant="outline" onClick={verifyCandidate} disabled={isVerifying}>
+                    {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : 'Verify'}
+                  </Button>
+                </Can>
               </div>
               {candidateSearchError && <p role="alert" className="text-sm text-red-600">{candidateSearchError}</p>}
             </div>
@@ -780,9 +801,10 @@ export default function ElectedFederalHousePage() {
                   </div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="space-y-2 text-sm font-medium text-gray-700">
+                  <label htmlFor="fed-house-office" className="space-y-2 text-sm font-medium text-gray-700">
                     Office *
                     <select
+                      id="fed-house-office"
                       className="h-10 w-full rounded-md border border-input bg-white px-3"
                       value={formData.office_id}
                       onChange={(event) => setFormData((current) => ({ ...current, office_id: event.target.value }))}
@@ -791,33 +813,37 @@ export default function ElectedFederalHousePage() {
                       {offices.map((office) => <option key={office.id} value={office.id}>{office.title}</option>)}
                     </select>
                   </label>
-                  <label className="space-y-2 text-sm font-medium text-gray-700">
+                  <label htmlFor="fed-house-tenure" className="space-y-2 text-sm font-medium text-gray-700">
                     Tenure *
                     <Input
+                      id="fed-house-tenure"
                       value={formData.tenure}
                       onChange={(event) => setFormData((current) => ({ ...current, tenure: event.target.value }))}
                       placeholder="e.g. 2027-2031"
                     />
                   </label>
-                  <label className="space-y-2 text-sm font-medium text-gray-700">
+                  <label htmlFor="fed-house-start-date" className="space-y-2 text-sm font-medium text-gray-700">
                     Start date *
                     <Input
+                      id="fed-house-start-date"
                       type="date"
                       value={formData.start_date}
                       onChange={(event) => setFormData((current) => ({ ...current, start_date: event.target.value }))}
                     />
                   </label>
-                  <label className="space-y-2 text-sm font-medium text-gray-700">
+                  <label htmlFor="fed-house-end-date" className="space-y-2 text-sm font-medium text-gray-700">
                     End date *
                     <Input
+                      id="fed-house-end-date"
                       type="date"
                       value={formData.end_date}
                       onChange={(event) => setFormData((current) => ({ ...current, end_date: event.target.value }))}
                     />
                   </label>
-                  <label className="space-y-2 text-sm font-medium text-gray-700 sm:col-span-2">
+                  <label htmlFor="fed-house-remark" className="space-y-2 text-sm font-medium text-gray-700 sm:col-span-2">
                     Remark
                     <Textarea
+                      id="fed-house-remark"
                       value={formData.remark}
                       onChange={(event) => setFormData((current) => ({ ...current, remark: event.target.value }))}
                       placeholder="Administrative notes"
@@ -830,15 +856,17 @@ export default function ElectedFederalHousePage() {
             {formError && <p role="alert" className="text-sm text-red-600">{formError}</p>}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => handleAddDialogChange(false)} disabled={isSaving}>Cancel</Button>
-              <Button
-                type="button"
-                className="bg-[#146c4f] hover:bg-[#10563f]"
-                onClick={addElectedMember}
-                disabled={isSaving || !selectedCandidate}
-              >
-                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {isSaving ? 'Saving...' : 'Add Elected Member'}
-              </Button>
+              <Can permission={Permissions.CREATE_LEADER}>
+                <Button
+                  type="button"
+                  className="bg-[#146c4f] hover:bg-[#10563f]"
+                  onClick={addElectedMember}
+                  disabled={isSaving || !selectedCandidate}
+                >
+                  {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+                  {isSaving ? 'Saving...' : 'Add Elected Member'}
+                </Button>
+              </Can>
             </div>
           </div>
         </DialogContent>

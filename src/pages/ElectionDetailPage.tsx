@@ -4,9 +4,12 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import Can from '@/components/Can'
+import { Permissions } from '@/lib/permissions'
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -369,6 +372,7 @@ export default function ElectionDetailPage() {
           <Button 
             variant="ghost" 
             size="icon" 
+            aria-label="Back to elections"
             onClick={() => navigate('/k8s9d7f3-elections')}
             className="text-gray-500 hover:text-gray-900"
           >
@@ -387,15 +391,17 @@ export default function ElectionDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {!isCompletedElection && <Button
-            variant="outline"
-            onClick={() => navigate(`/k8s9d7f3-elections-edit/${election.id}`)}
-            className="rounded-xl flex items-center gap-2"
-          >
-            <Edit className="w-4 h-4" />
-            Edit Election
-          </Button>}
-          {!isCompletedElection && <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white shadow-sm">
+          {!isCompletedElection && <Can permission={Permissions.UPDATE_ELECTION}>
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/k8s9d7f3-elections-edit/${election.id}`)}
+              className="rounded-xl flex items-center gap-2"
+            >
+              <Edit aria-hidden="true" className="w-4 h-4" />
+              Edit Election
+            </Button>
+          </Can>}
+          {!isCompletedElection && <Can permission={Permissions.CHANGE_ELECTION_STATUS}><div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white shadow-sm">
             <select
               value={election.status || 'Upcoming'}
               onChange={(e) => handleStatusChange(e.target.value)}
@@ -409,16 +415,16 @@ export default function ElectionDetailPage() {
                 </option>
               ))}
             </select>
-          </div>}
-          {!isCompletedElection && <Button 
+          </div></Can>}
+          {!isCompletedElection && <Can permission={Permissions.DELETE_ELECTION}><Button 
             variant="outline"
             onClick={() => setShowDeleteConfirm(true)}
             className="rounded-xl flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
             disabled={deleting}
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 aria-hidden="true" className="w-4 h-4" />
             Delete
-          </Button>}
+          </Button></Can>}
           {changingStatus && <Loader2 className="w-5 h-5 animate-spin text-gray-400" />}
         </div>
       </div>
@@ -446,7 +452,7 @@ export default function ElectionDetailPage() {
             >
               {deleting ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 aria-hidden="true" className="w-4 h-4 mr-2 animate-spin" />
                   Deleting...
                 </>
               ) : (
@@ -461,7 +467,7 @@ export default function ElectionDetailPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
         <div className="p-6 border-b border-gray-100 flex items-center justify-between gap-3">
           <h2 className="text-lg font-bold text-gray-900">Election Timetable</h2>
-          {!isCompletedElection && <Button
+          {!isCompletedElection && <Can permission={Permissions.UPDATE_ELECTION}><Button
             variant="outline"
             size="sm"
             onClick={() => {
@@ -471,17 +477,18 @@ export default function ElectionDetailPage() {
             }}
             className="rounded-xl flex items-center gap-2"
           >
-            <Calendar className="w-4 h-4" />
+            <Calendar aria-hidden="true" className="w-4 h-4" />
             {showTimetableForm ? 'Close' : 'Add Election Timetable'}
-          </Button>}
+          </Button></Can>}
         </div>
 
         {!isCompletedElection && showTimetableForm && (
           <div className="p-6 border-b border-gray-100 bg-gray-50/40">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-gray-700">Description</label>
+                <label htmlFor="timetable-description" className="text-sm font-medium text-gray-700">Description</label>
                 <Textarea
+                  id="timetable-description"
                   value={timetableForm.description}
                   onChange={(e) => setTimetableForm((prev) => ({ ...prev, description: e.target.value }))}
                   placeholder="e.g. Presidential election voting window"
@@ -489,8 +496,9 @@ export default function ElectionDetailPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Date</label>
+                <label htmlFor="timetable-date" className="text-sm font-medium text-gray-700">Date</label>
                 <Input
+                  id="timetable-date"
                   type="date"
                   value={timetableForm.date}
                   onChange={(e) => setTimetableForm((prev) => ({ ...prev, date: e.target.value }))}
@@ -498,8 +506,9 @@ export default function ElectionDetailPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Office</label>
+                <label htmlFor="timetable-office" className="text-sm font-medium text-gray-700">Office</label>
                 <select
+                  id="timetable-office"
                   value={timetableForm.office_id}
                   onChange={(e) => setTimetableForm((prev) => ({ ...prev, office_id: e.target.value }))}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -517,8 +526,9 @@ export default function ElectionDetailPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Election Type</label>
+                <label htmlFor="timetable-election-type" className="text-sm font-medium text-gray-700">Election Type</label>
                 <select
+                  id="timetable-election-type"
                   value={timetableForm.election_type_id}
                   onChange={(e) => setTimetableForm((prev) => ({ ...prev, election_type_id: e.target.value }))}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -536,8 +546,9 @@ export default function ElectionDetailPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Start Time</label>
+                <label htmlFor="timetable-start-time" className="text-sm font-medium text-gray-700">Start Time</label>
                 <select
+                  id="timetable-start-time"
                   value={timetableForm.starttime}
                   onChange={(e) => setTimetableForm((prev) => ({ ...prev, starttime: e.target.value }))}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -552,8 +563,9 @@ export default function ElectionDetailPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">End Time</label>
+                <label htmlFor="timetable-end-time" className="text-sm font-medium text-gray-700">End Time</label>
                 <select
+                  id="timetable-end-time"
                   value={timetableForm.endtime}
                   onChange={(e) => setTimetableForm((prev) => ({ ...prev, endtime: e.target.value }))}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -579,15 +591,18 @@ export default function ElectionDetailPage() {
               >
                 Cancel
               </Button>
-              <Button onClick={handleAddTimetable} disabled={savingTimetable} className="bg-[#146c4f] hover:bg-[#115a42] text-white">
-                {savingTimetable ? 'Saving...' : editingTimetableId ? 'Update Timetable' : 'Save Timetable'}
-              </Button>
+              <Can permission={Permissions.UPDATE_ELECTION}>
+                <Button onClick={handleAddTimetable} disabled={savingTimetable} className="bg-[#146c4f] hover:bg-[#115a42] text-white">
+                  {savingTimetable ? 'Saving...' : editingTimetableId ? 'Update Timetable' : 'Save Timetable'}
+                </Button>
+              </Can>
             </div>
           </div>
         )}
 
         <div className="overflow-x-auto">
           <Table>
+            <TableCaption className="sr-only">Election timetable</TableCaption>
             <TableHeader>
               <TableRow className="hover:bg-transparent border-gray-100 bg-gray-50/50">
                 <TableHead className="text-xs font-semibold text-gray-500 tracking-wider h-11 px-6">DATE</TableHead>
@@ -655,24 +670,24 @@ export default function ElectionDetailPage() {
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
-                        {!isCompletedElection && <Button
+                        {!isCompletedElection && <Can permission={Permissions.UPDATE_ELECTION}><Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleEditTimetable(item)}
                           className="h-8 w-8 text-gray-600 hover:text-gray-900"
                           aria-label="Edit timetable"
                         >
-                          <Edit className="w-4 h-4" />
-                        </Button>}
-                        {!isCompletedElection && <Button
+                          <Edit aria-hidden="true" className="w-4 h-4" />
+                        </Button></Can>}
+                        {!isCompletedElection && <Can permission={Permissions.DELETE_ELECTION}><Button
                           variant="ghost"
                           size="icon"
                           onClick={() => item.id && handleDeleteTimetable(item.id)}
                           className="h-8 w-8 text-red-500 hover:text-red-700"
                           aria-label="Delete timetable"
                         >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>}
+                          <Trash2 aria-hidden="true" className="w-4 h-4" />
+                        </Button></Can>}
                       </div>
                     </TableCell>
                   </TableRow>
